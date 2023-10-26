@@ -86,7 +86,7 @@ jobs:
       - name: restore Nuget Packages
         run: nuget restore
       - name: Build Solution        
-        run: msbuild /p:Platform="Any CPU" /p:Configuration="Debug" /p:Version="${{ needs.GetVersionNumber.outputs.version }}" -m   
+        run: msbuild /p:Platform="Any CPU" /p:Configuration="${{ needs.GetVersionNumber.outputs.channel && 'Debug' || 'Release' }}" /p:Version="${{ needs.GetVersionNumber.outputs.version }}" -m   
       - name: Get release notes
         uses: actions/download-artifact@v3
         with:
@@ -107,6 +107,6 @@ jobs:
           nuget setApiKey ${{ secrets.GITHUB_TOKEN }} -Source github          
           nuget setApiKey ${{ secrets.NUGET_API_KEY }} -Source https://api.nuget.org/v3/index.json          
       - name: Publish to Nuget
-        run: nuget push .\output\*.nupkg -Source https://api.nuget.org/v3/index.json
+        run: nuget push **\*.nupkg -Source https://api.nuget.org/v3/index.json
       - name: Publish to Github Nuget
-        run: nuget push .\output\*.nupkg -Source github
+        run: nuget push **\*.nupkg -Source github
