@@ -12,7 +12,7 @@
 	<Title>PepperDash Core</Title>
 	<Company>PepperDash Technologies</Company>
 	<RepositoryType>git</RepositoryType>
-	<RepositoryUrl>https://github.com/PepperDash/PepperDashCore</RepositoryUrl>
+	<RepositoryUrl>https://github.com/PepperDash/PepperDash.Essentials.DM</RepositoryUrl>
 	<PackageTags>crestron;4series;</PackageTags>
 	<Version>$(Version)</Version>
 	<PackageOutputPath>../../package</PackageOutputPath>
