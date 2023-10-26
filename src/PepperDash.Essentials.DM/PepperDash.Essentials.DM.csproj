@@ -9,7 +9,7 @@
     <Copyright>Copyright ©  2023</Copyright>
     <OutputPath>bin\$(Configuration)\</OutputPath>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-	<Title>PepperDash Core</Title>
+	<Title>PepperDash Essentials DM</Title>
 	<Company>PepperDash Technologies</Company>
 	<RepositoryType>git</RepositoryType>
 	<RepositoryUrl>https://github.com/PepperDash/PepperDash.Essentials.DM</RepositoryUrl>
