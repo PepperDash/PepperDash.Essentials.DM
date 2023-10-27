@@ -1,4 +1,5 @@
-﻿
+﻿extern alias Full;
+
 using System;
 using System.Linq;
 using System.Collections.Generic;
@@ -10,8 +11,8 @@ using Crestron.SimplSharpPro.DM.AirMedia;
 using Crestron.SimplSharpPro.UI;
 using Crestron.SimplSharp.Reflection;
 
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using Full.Newtonsoft.Json;
+using Full.Newtonsoft.Json.Linq;
 using PepperDash.Core;
 using PepperDash.Essentials.Core;
 using PepperDash.Essentials.Core.Config;
