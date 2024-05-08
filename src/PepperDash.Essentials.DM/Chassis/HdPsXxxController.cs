@@ -10,7 +10,6 @@ using PepperDash.Core;
 using PepperDash.Essentials.Core;
 using PepperDash.Essentials.Core.Bridges;
 using PepperDash.Essentials.Core.Config;
-using PepperDash_Essentials_Core.Bridges;
 using PepperDash_Essentials_DM.Config;
 
 namespace PepperDash_Essentials_DM.Chassis
@@ -520,7 +519,7 @@ Selector: {4}
 		#region Factory
 
 
-		public class HdSp401ControllerFactory : EssentialsDeviceFactory<HdPsXxxController>
+		public class HdSp401ControllerFactory : EssentialsPluginDeviceFactory<HdPsXxxController>
 		{
 			public HdSp401ControllerFactory()
 			{

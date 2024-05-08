@@ -281,7 +281,7 @@ namespace PepperDash.Essentials.DM
         public ControlPropertiesConfig Control { get; set; }
     }
 
-    public class HdMdxxxCEControllerFactory : EssentialsDeviceFactory<HdMdxxxCEController>
+    public class HdMdxxxCEControllerFactory : EssentialsPluginDeviceFactory<HdMdxxxCEController>
     {
         public HdMdxxxCEControllerFactory()
         {

@@ -369,7 +369,7 @@ namespace PepperDash.Essentials.DM.AirMedia
         #endregion
     }
 
-    public class AirMediaControllerFactory : EssentialsDeviceFactory<AirMediaController>
+    public class AirMediaControllerFactory : EssentialsPluginDeviceFactory<AirMediaController>
     {
         public AirMediaControllerFactory()
         {

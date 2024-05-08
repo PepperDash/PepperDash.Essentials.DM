@@ -487,7 +487,7 @@ namespace PepperDash.Essentials.DM
 
     }
 
-    public class DmTxControllerFactory : EssentialsDeviceFactory<DmTxControllerBase>
+    public class DmTxControllerFactory : EssentialsPluginDeviceFactory<DmTxControllerBase>
     {
         public DmTxControllerFactory()
         {

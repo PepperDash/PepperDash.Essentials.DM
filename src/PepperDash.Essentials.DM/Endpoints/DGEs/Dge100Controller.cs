@@ -265,7 +265,7 @@ namespace PepperDash.Essentials.DM.Endpoints.DGEs
         #endregion
     }
 
-    public class Dge100ControllerFactory : EssentialsDeviceFactory<Dge100Controller>
+    public class Dge100ControllerFactory : EssentialsPluginDeviceFactory<Dge100Controller>
     {
         public Dge100ControllerFactory()
         {
