@@ -609,7 +609,7 @@ namespace PepperDash.Essentials.DM
         }
     }
 
-    public class DmRmcControllerFactory : EssentialsDeviceFactory<DmRmcControllerBase>
+    public class DmRmcControllerFactory : EssentialsPluginDeviceFactory<DmRmcControllerBase>
     {
         public DmRmcControllerFactory()
         {

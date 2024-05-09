@@ -24,11 +24,11 @@
     <DebugType>portable</DebugType>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Crestron.SimplSharp.SDK.ProgramLibrary" Version="2.20.31" />
+    <PackageReference Include="Crestron.SimplSharp.SDK.ProgramLibrary" Version="2.20.42" />
 	<PackageReference Include="Newtonsoft.Json" Version="13.0.3">
 		<Aliases>Full</Aliases>
 	</PackageReference>
-    <PackageReference Include="PepperDashEssentials" Version="2.0.0-alpha-2282" />
+    <PackageReference Include="PepperDashEssentials" Version="2.0.0-alpha-2461" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Data.DataSetExtensions" />

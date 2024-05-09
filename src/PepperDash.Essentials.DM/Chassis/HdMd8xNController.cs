@@ -481,7 +481,7 @@ namespace PepperDash.Essentials.DM.Chassis
 
 		#region Factory
 
-		public class HdMd8xNControllerFactory : EssentialsDeviceFactory<HdMd8xNController>
+		public class HdMd8xNControllerFactory : EssentialsPluginDeviceFactory<HdMd8xNController>
 		{
 			public HdMd8xNControllerFactory()
 			{

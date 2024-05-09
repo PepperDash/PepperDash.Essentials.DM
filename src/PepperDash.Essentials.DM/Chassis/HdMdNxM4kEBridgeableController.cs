@@ -466,7 +466,7 @@ namespace PepperDash.Essentials.DM.Chassis
 
 		#region Factory
 
-		public class HdMdNxM4kEControllerFactory : EssentialsDeviceFactory<HdMdNxM4kEBridgeableController>
+		public class HdMdNxM4kEControllerFactory : EssentialsPluginDeviceFactory<HdMdNxM4kEBridgeableController>
 		{
 			public HdMdNxM4kEControllerFactory()
 			{

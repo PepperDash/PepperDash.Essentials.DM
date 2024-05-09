@@ -141,7 +141,7 @@ namespace PepperDash.Essentials.DM.Chassis
 
         #region Factory
 
-        public class HdMdNxM4kEFactory : EssentialsDeviceFactory<HdMdNxM4kEController>
+        public class HdMdNxM4kEFactory : EssentialsPluginDeviceFactory<HdMdNxM4kEController>
         {
             public HdMdNxM4kEFactory()
             {

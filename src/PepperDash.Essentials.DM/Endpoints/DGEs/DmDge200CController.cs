@@ -62,7 +62,7 @@ namespace PepperDash.Essentials.DM.Endpoints.DGEs
         }
     }
 
-	public class DmDge200CControllerFactory : EssentialsDeviceFactory<DmDge200CController>
+	public class DmDge200CControllerFactory : EssentialsPluginDeviceFactory<DmDge200CController>
 	{
 		public DmDge200CControllerFactory()
 		{
