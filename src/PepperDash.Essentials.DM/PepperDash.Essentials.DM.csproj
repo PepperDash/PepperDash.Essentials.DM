@@ -8,13 +8,13 @@
     <Product>PepperDash.Essentials.DM</Product>
     <Copyright>Copyright ©  2023</Copyright>
     <OutputPath>bin\$(Configuration)\</OutputPath>
-	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-	<Title>PepperDash Essentials DM</Title>
-	<Company>PepperDash Technologies</Company>
-	<RepositoryType>git</RepositoryType>
-	<RepositoryUrl>https://github.com/PepperDash/PepperDash.Essentials.DM</RepositoryUrl>
-	<PackageTags>crestron;4series;</PackageTags>
-	<Version>$(Version)</Version>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>PepperDash Essentials DM</Title>
+    <Company>PepperDash Technologies</Company>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/PepperDash/PepperDash.Essentials.DM</RepositoryUrl>
+    <PackageTags>crestron;4series;</PackageTags>
+    <Version>$(Version)</Version>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>
