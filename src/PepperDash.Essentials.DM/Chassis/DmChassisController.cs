@@ -152,6 +152,8 @@ namespace PepperDash.Essentials.DM
 
                 controller.InputPorts.Add(clearInputPort);
 
+                var clearInput = new DmMatrixClearInput();
+                controller.InputSlots.Add(clearInput.Key, clearInput);
 
                 // add the cards and port names
                 foreach (var kvp in properties.InputSlots)
@@ -249,8 +251,6 @@ namespace PepperDash.Essentials.DM
 
             InputSlots = new Dictionary<string, IRoutingInputSlot>();
             OutputSlots = new Dictionary<string, IRoutingOutputSlot>();
-
-            AddPostActivationAction(BuildMatrixRouting);
 
             for (uint x = 1; x <= Chassis.NumberOfOutputs; x++)
             {
@@ -2148,18 +2148,6 @@ namespace PepperDash.Essentials.DM
                         {
                             port.HdcpReceiveCapability = (eHdcpCapabilityType)u;
                         });
-            }
-        }
-        private void BuildMatrixRouting()
-        {
-            try
-            {
-                var clearInput = new DmMatrixClearInput();
-                InputSlots.Add(clearInput.Key, clearInput);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogMessage(ex, "Exception building MatrixRouting: {message}", this, ex.Message);
             }
         }
 
