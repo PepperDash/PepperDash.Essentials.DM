@@ -4,12 +4,12 @@
     </PropertyGroup>
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
-    <AssemblyTitle>PepperDash.Essentials.DM</AssemblyTitle>
-    <Product>PepperDash.Essentials.DM</Product>
+    <AssemblyTitle>PepperDash.Essentials.Plugin.4Series.DM</AssemblyTitle>
+    <Product>PepperDash.Essentials.Plugin.4Series.DM</Product>
     <Copyright>Copyright ©  2023</Copyright>
     <OutputPath>bin\$(Configuration)\</OutputPath>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-	<Title>PepperDash Essentials DM</Title>
+	<Title>PepperDash Essentials DM 4Series Plugin</Title>
 	<Company>PepperDash Technologies</Company>
 	<RepositoryType>git</RepositoryType>
 	<RepositoryUrl>https://github.com/PepperDash/PepperDash.Essentials.DM</RepositoryUrl>
