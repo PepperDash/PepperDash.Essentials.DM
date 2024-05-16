@@ -6,6 +6,7 @@
     <TargetFramework>net472</TargetFramework>
     <AssemblyTitle>PepperDash.Essentials.Plugin.4Series.DM</AssemblyTitle>
     <Product>PepperDash.Essentials.Plugin.4Series.DM</Product>
+    <PackageId>PepperDash.Essentials.Plugin.4Series.DM</PackageId>
     <Copyright>Copyright ©  2023</Copyright>
     <OutputPath>bin\$(Configuration)\</OutputPath>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
