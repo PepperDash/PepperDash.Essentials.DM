@@ -41,6 +41,8 @@ namespace PepperDash.Essentials.DM.Routing
             uint inputNumber = 0;
             var routeType = eRoutingSignalType.Video;
 
+
+
             switch (args.EventId)
             {
                 case DMOutputEventIds.VideoOutEventId:
@@ -55,6 +57,7 @@ namespace PepperDash.Essentials.DM.Routing
                         routeType = eRoutingSignalType.Audio;
                         break;
                     }
+                default:    return;
             }
             var inputSlot = _chassis.InputSlots.Values.FirstOrDefault(input => input.SlotNumber == inputNumber);
             SetInputRoute(routeType, inputSlot);
