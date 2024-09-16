@@ -99,6 +99,8 @@ namespace PepperDash.Essentials.DM
                 // Catch constructor failures, mainly dues to IPID
                 try
                 {
+                    if (typeName.StartsWith("dmtx4kz100"))
+                        return new DmTx4kz100Controller(key, name, new DmTx4kz100C1G(ipid, Global.ControlSystem));
                     if (typeName.StartsWith("dmtx200"))
                         return new DmTx200Controller(key, name, new DmTx200C2G(ipid, Global.ControlSystem), false);
                     if (typeName.StartsWith("dmtx201c"))
