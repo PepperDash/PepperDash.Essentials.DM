@@ -22,7 +22,7 @@ namespace PepperDash.Essentials.DM
 
         public RoutingPortCollection<RoutingInputPort> InputPorts { get; private set; }
 
-        public RoutingPortCollection<RoutingOutputPort> OutputPorts { get; private set; }
+        public RoutingPortCollection<RoutingOutputPort> OutputWindowPorts { get; private set; }
 
         public DmRmc4k100C1GController(string key, string name, DmRmc4K100C1G rmc)
             : base(key, name, rmc)
@@ -34,7 +34,7 @@ namespace PepperDash.Essentials.DM
                 eRoutingPortConnectionType.Hdmi, null, this) {Port = _rmc};
 
             InputPorts = new RoutingPortCollection<RoutingInputPort> {DmIn};
-            OutputPorts = new RoutingPortCollection<RoutingOutputPort> {HdmiOut};
+            OutputWindowPorts = new RoutingPortCollection<RoutingOutputPort> {HdmiOut};
             PreventRegistration = true;
             rmc.Register();
         }

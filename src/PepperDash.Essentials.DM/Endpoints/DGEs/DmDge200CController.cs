@@ -36,7 +36,7 @@ namespace PepperDash.Essentials.DM.Endpoints.DGEs
             private set;
         }
 
-        public RoutingPortCollection<RoutingOutputPort> OutputPorts
+        public RoutingPortCollection<RoutingOutputPort> OutputWindowPorts
         {
             get;
             private set;
@@ -54,7 +54,7 @@ namespace PepperDash.Essentials.DM.Endpoints.DGEs
 
 
             InputPorts = new RoutingPortCollection<RoutingInputPort> { DmIn };
-            OutputPorts = new RoutingPortCollection<RoutingOutputPort> { HdmiOut };
+            OutputWindowPorts = new RoutingPortCollection<RoutingOutputPort> { HdmiOut };
 
             // Set Ports for CEC
             HdmiOut.Port = _dge.HdmiOut; ;

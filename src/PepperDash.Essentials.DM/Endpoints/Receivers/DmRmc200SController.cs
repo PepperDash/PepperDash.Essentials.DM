@@ -24,7 +24,7 @@ namespace PepperDash.Essentials.DM
 
 		public RoutingPortCollection<RoutingInputPort> InputPorts { get; private set; }
 
-		public RoutingPortCollection<RoutingOutputPort> OutputPorts
+		public RoutingPortCollection<RoutingOutputPort> OutputWindowPorts
 		{
 			get; private set;
 		}
@@ -49,7 +49,7 @@ namespace PepperDash.Essentials.DM
             VideoOutputResolutionFeedback = new StringFeedback(() => _rmc.HdmiOutput.GetVideoResolutionString());
 
 		    InputPorts = new RoutingPortCollection<RoutingInputPort> {DmIn};
-		    OutputPorts = new RoutingPortCollection<RoutingOutputPort> {HdmiOut};
+		    OutputWindowPorts = new RoutingPortCollection<RoutingOutputPort> {HdmiOut};
 
             _rmc.HdmiOutput.OutputStreamChange += HdmiOutput_OutputStreamChange;
             _rmc.HdmiOutput.ConnectedDevice.DeviceInformationChange += ConnectedDevice_DeviceInformationChange;

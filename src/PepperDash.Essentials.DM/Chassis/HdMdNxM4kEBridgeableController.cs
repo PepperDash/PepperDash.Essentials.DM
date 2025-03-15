@@ -31,7 +31,7 @@ namespace PepperDash.Essentials.DM.Chassis
 		public Dictionary<uint, string> OutputNames { get; set; }
 
 		public RoutingPortCollection<RoutingInputPort> InputPorts { get; private set; }
-		public RoutingPortCollection<RoutingOutputPort> OutputPorts { get; private set; }
+		public RoutingPortCollection<RoutingOutputPort> OutputWindowPorts { get; private set; }
 
 		public FeedbackCollection<BoolFeedback> VideoInputSyncFeedbacks { get; private set; }
 		public FeedbackCollection<IntFeedback> VideoOutputRouteFeedbacks { get; private set; }
@@ -85,7 +85,7 @@ namespace PepperDash.Essentials.DM.Chassis
 			InputHdcpEnableFeedback = new FeedbackCollection<BoolFeedback>();
 		                
 			InputPorts = new RoutingPortCollection<RoutingInputPort>();
-			OutputPorts = new RoutingPortCollection<RoutingOutputPort>();
+			OutputWindowPorts = new RoutingPortCollection<RoutingOutputPort>();
 
 			if (_Chassis.NumberOfInputs == 1)
 			{
@@ -118,7 +118,7 @@ namespace PepperDash.Essentials.DM.Chassis
 				//_Chassis.Outputs[index].Name.StringValue = outputName;
                 //_Chassis.HdmiOutputs[index].Name.StringValue = outputName;
 
-				OutputPorts.Add(new RoutingOutputPort(outputName, eRoutingSignalType.AudioVideo,
+				OutputWindowPorts.Add(new RoutingOutputPort(outputName, eRoutingSignalType.AudioVideo,
 					eRoutingPortConnectionType.Hdmi, _Chassis.HdmiOutputs[index], this)
 				{
 					FeedbackMatchObject = _Chassis.HdmiOutputs[index]
@@ -422,7 +422,7 @@ namespace PepperDash.Essentials.DM.Chassis
 		    }
 		    var inPort =
 		        InputPorts.FirstOrDefault(p => p.FeedbackMatchObject == _Chassis.HdmiOutputs[output].VideoOutFeedback);
-		    var outPort = OutputPorts.FirstOrDefault(p => p.FeedbackMatchObject == _Chassis.HdmiOutputs[output]);
+		    var outPort = OutputWindowPorts.FirstOrDefault(p => p.FeedbackMatchObject == _Chassis.HdmiOutputs[output]);
 
 		    feedback.FireUpdate();
 		    OnSwitchChange(new RoutingNumericEventArgs(output, inputNumber, outPort, inPort, eRoutingSignalType.AudioVideo));

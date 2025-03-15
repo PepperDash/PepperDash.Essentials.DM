@@ -85,7 +85,7 @@ namespace PepperDash.Essentials.DM
 				};
             }
         }
-        public RoutingPortCollection<RoutingOutputPort> OutputPorts
+        public RoutingPortCollection<RoutingOutputPort> OutputWindowPorts
         {
             get
             {
@@ -365,8 +365,8 @@ namespace PepperDash.Essentials.DM
             ActiveVideoInputFeedback.FireUpdate();
             VideoSourceNumericFeedback.FireUpdate();
             AudioSourceNumericFeedback.FireUpdate();
-            OnSwitchChange(new RoutingNumericEventArgs(1, VideoSourceNumericFeedback.UShortValue, OutputPorts.First(), localVideoInputPort, eRoutingSignalType.Video));
-            OnSwitchChange(new RoutingNumericEventArgs(1, AudioSourceNumericFeedback.UShortValue, OutputPorts.First(), localAudioInputPort, eRoutingSignalType.Audio));
+            OnSwitchChange(new RoutingNumericEventArgs(1, VideoSourceNumericFeedback.UShortValue, OutputWindowPorts.First(), localVideoInputPort, eRoutingSignalType.Video));
+            OnSwitchChange(new RoutingNumericEventArgs(1, AudioSourceNumericFeedback.UShortValue, OutputWindowPorts.First(), localAudioInputPort, eRoutingSignalType.Audio));
         }
 
 
@@ -382,13 +382,13 @@ namespace PepperDash.Essentials.DM
                     Debug.Console(2, this, "  Video Source: {0}", Tx.VideoSourceFeedback);
                     VideoSourceNumericFeedback.FireUpdate();
                     ActiveVideoInputFeedback.FireUpdate();
-                    OnSwitchChange(new RoutingNumericEventArgs(1, VideoSourceNumericFeedback.UShortValue, OutputPorts.First(), localVideoInputPort, eRoutingSignalType.Video));
+                    OnSwitchChange(new RoutingNumericEventArgs(1, VideoSourceNumericFeedback.UShortValue, OutputWindowPorts.First(), localVideoInputPort, eRoutingSignalType.Video));
                     break;
                 case EndpointTransmitterBase.AudioSourceFeedbackEventId:
                     var localInputAudioPort = InputPorts.FirstOrDefault(p => (eVst)p.Selector == Tx.VideoSourceFeedback);
                     Debug.Console(2, this, "  Audio Source: {0}", Tx.VideoSourceFeedback);
                     AudioSourceNumericFeedback.FireUpdate();
-                    OnSwitchChange(new RoutingNumericEventArgs(1, AudioSourceNumericFeedback.UShortValue, OutputPorts.First(), localInputAudioPort, eRoutingSignalType.Audio));
+                    OnSwitchChange(new RoutingNumericEventArgs(1, AudioSourceNumericFeedback.UShortValue, OutputWindowPorts.First(), localInputAudioPort, eRoutingSignalType.Audio));
                     break;
             }
         }

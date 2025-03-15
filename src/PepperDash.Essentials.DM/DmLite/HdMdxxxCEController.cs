@@ -66,7 +66,7 @@ namespace PepperDash.Essentials.DM
         /// </summary>
         public BoolFeedback RemoteEndDetectedFeedback { get; private set; }
 
-        public RoutingPortCollection<RoutingOutputPort> OutputPorts
+        public RoutingPortCollection<RoutingOutputPort> OutputWindowPorts
         {
             get { return new RoutingPortCollection<RoutingOutputPort> { HdmiOut }; }
         }
@@ -145,7 +145,7 @@ namespace PepperDash.Essentials.DM
             HdmiOut = new RoutingOutputPort(DmPortName.HdmiOut, eRoutingSignalType.Audio | eRoutingSignalType.Video,
                 eRoutingPortConnectionType.Hdmi, null, this);
 
-            OutputPorts[DmPortName.HdmiOut].Port = TxRxPair.HdmiOutputs[1];
+            OutputWindowPorts[DmPortName.HdmiOut].Port = TxRxPair.HdmiOutputs[1];
 
             TxRxPair.DMInputChange += new DMInputEventHandler(TxRxPair_DMInputChange);
             TxRxPair.DMOutputChange += new DMOutputEventHandler(TxRxPair_DMOutputChange);

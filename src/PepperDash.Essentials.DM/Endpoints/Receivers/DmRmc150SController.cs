@@ -26,7 +26,7 @@ namespace PepperDash.Essentials.DM
             get; private set;
         }
 
-        public RoutingPortCollection<RoutingOutputPort> OutputPorts
+        public RoutingPortCollection<RoutingOutputPort> OutputWindowPorts
         {
             get;
             private set ;
@@ -50,7 +50,7 @@ namespace PepperDash.Essentials.DM
             EdidSerialNumberFeedback = new StringFeedback(() => _rmc.HdmiOutput.ConnectedDevice.SerialNumber.StringValue);
 
             InputPorts = new RoutingPortCollection<RoutingInputPort> {DmIn};
-            OutputPorts = new RoutingPortCollection<RoutingOutputPort> {HdmiOut};
+            OutputWindowPorts = new RoutingPortCollection<RoutingOutputPort> {HdmiOut};
 
             _rmc.HdmiOutput.ConnectedDevice.DeviceInformationChange += ConnectedDevice_DeviceInformationChange;
 

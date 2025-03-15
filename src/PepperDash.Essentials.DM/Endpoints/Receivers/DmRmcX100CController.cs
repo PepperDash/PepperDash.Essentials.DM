@@ -23,7 +23,7 @@ namespace PepperDash.Essentials.DM
 
 	    public RoutingPortCollection<RoutingInputPort> InputPorts { get; protected set; }
 
-	    public RoutingPortCollection<RoutingOutputPort> OutputPorts { get; protected set; }
+	    public RoutingPortCollection<RoutingOutputPort> OutputWindowPorts { get; protected set; }
 
 		/// <summary>
 		///  Make a Crestron RMC and put it in here
@@ -38,7 +38,7 @@ namespace PepperDash.Essentials.DM
 				eRoutingPortConnectionType.Hdmi, null, this) {Port = _rmc};
 
 		    InputPorts = new RoutingPortCollection<RoutingInputPort> {DmIn};
-		    OutputPorts = new RoutingPortCollection<RoutingOutputPort> {HdmiOut};
+		    OutputWindowPorts = new RoutingPortCollection<RoutingOutputPort> {HdmiOut};
 		}
 
 	    public override void LinkToApi(BasicTriList trilist, uint joinStart, string joinMapKey, EiscApiAdvanced bridge)

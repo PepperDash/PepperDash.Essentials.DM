@@ -94,12 +94,16 @@ namespace PepperDash.Essentials.DM.Chassis
                     string inputName = InputNames[index];
                     _Chassis.Inputs[index].Name.StringValue = inputName;
 
+					var routingInputPort = new RoutingInputPort(inputName, eRoutingSignalType.AudioVideo, eRoutingPortConnectionType.Hdmi, _Chassis.Inputs[index], this);
+					routingInputPort.FeedbackMatchObject = _Chassis.Inputs[index];
+					InputPorts.Add(routingInputPort);
 
-                    InputPorts.Add(new RoutingInputPort(inputName, eRoutingSignalType.AudioVideo,
-                        eRoutingPortConnectionType.Hdmi, _Chassis.Inputs[index], this)
-                    {
-                        FeedbackMatchObject = _Chassis.Inputs[index]
-                    });
+      //              InputPorts.Add(
+						//new RoutingInputPort(inputName, eRoutingSignalType.AudioVideo, eRoutingPortConnectionType.Hdmi, _Chassis.Inputs[index], this)
+						//	{
+						//		FeedbackMatchObject = _Chassis.Inputs[index]
+						//	}
+						//);
 
                     VideoInputSyncFeedbacks.Add(new BoolFeedback(inputName, () => _Chassis.Inputs[index].VideoDetectedFeedback.BoolValue));
                     InputNameFeedbacks.Add(new StringFeedback(inputName, () => _Chassis.Inputs[index].NameFeedback.StringValue));
