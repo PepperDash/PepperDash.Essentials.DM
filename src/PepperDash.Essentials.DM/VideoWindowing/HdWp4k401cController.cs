@@ -44,6 +44,13 @@ namespace PepperDash.Essentials.DM.VideoWindowing
 
         #region Constructor
 
+        /// <summary>
+        /// Constructor class or wrapper for the HD-WP-4K-401-C video wall processor
+        /// </summary>  
+        /// <param name="key">The key for the device</param>
+        /// <param name="name">The name of the device</param>
+        /// <param name="chassis">The HD-WP-4K-401-C chassis</param>
+        /// <param name="props">The properties for the device</param>
         public HdWp4k401cController(string key, string name, HdWp4k401C chassis,
             HdWp4k401cConfig props)
             : base(key, name, chassis)
