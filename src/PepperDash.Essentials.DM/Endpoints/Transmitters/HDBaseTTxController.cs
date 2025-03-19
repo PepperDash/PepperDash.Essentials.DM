@@ -38,7 +38,7 @@ namespace PepperDash.Essentials.DM
                 eRoutingPortConnectionType.DmCat, null, this);
 
             InputPorts = new RoutingPortCollection<RoutingInputPort> { HdmiIn };
-            OutputWindowPorts = new RoutingPortCollection<RoutingOutputPort> { DmOut };
+            OutputPorts = new RoutingPortCollection<RoutingOutputPort> { DmOut };
 
             var parentDev = DeviceManager.GetDeviceForKey(key);
             var num = tx.DMInputOutput.Number;
@@ -67,7 +67,7 @@ namespace PepperDash.Essentials.DM
 
         #region IRoutingOutputs Members
 
-        public RoutingPortCollection<RoutingOutputPort> OutputWindowPorts { get; private set; }
+        public RoutingPortCollection<RoutingOutputPort> OutputPorts { get; private set; }
 
         #endregion
         

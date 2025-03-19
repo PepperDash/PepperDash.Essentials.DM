@@ -53,7 +53,7 @@ namespace PepperDash.Essentials.DM
 
         // Need a couple Lists of generic Backplane ports
         public RoutingPortCollection<RoutingInputPort> InputPorts { get; private set; }
-        public RoutingPortCollection<RoutingOutputPort> OutputWindowPorts { get; private set; }
+        public RoutingPortCollection<RoutingOutputPort> OutputPorts { get; private set; }
 
         public Dictionary<uint, string> TxDictionary { get; set; }
         public Dictionary<uint, string> RxDictionary { get; set; }
@@ -156,7 +156,7 @@ namespace PepperDash.Essentials.DM
             Debug.Console(1, this, "DMPS Type = {0}, 4K Type = {1}", systemControl.SystemControlType, Global.ControlSystemIsDmps4kType);
 
             InputPorts = new RoutingPortCollection<RoutingInputPort>();
-            OutputWindowPorts = new RoutingPortCollection<RoutingOutputPort>();
+            OutputPorts = new RoutingPortCollection<RoutingOutputPort>();
             VolumeControls = new Dictionary<uint, DmCardAudioOutputController>();
             DigitalAudioOutputs = new Dictionary<uint, DmpsDigitalOutputController>();
             TxDictionary = new Dictionary<uint, string>();
@@ -972,7 +972,7 @@ namespace PepperDash.Essentials.DM
             if (cecPort != null)
                 outputPort.Port = cecPort;
 
-            OutputWindowPorts.Add(outputPort);
+            OutputPorts.Add(outputPort);
         }
 
         /// <summary>

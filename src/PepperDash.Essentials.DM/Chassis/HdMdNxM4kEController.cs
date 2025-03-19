@@ -22,7 +22,7 @@ namespace PepperDash.Essentials.DM.Chassis
         public HdMdNxM Chassis { get; private set; }
 
         public RoutingPortCollection<RoutingInputPort> InputPorts { get; private set; }
-        public RoutingPortCollection<RoutingOutputPort> OutputWindowPorts { get; private set; }
+        public RoutingPortCollection<RoutingOutputPort> OutputPorts { get; private set; }
 
 
         /// <summary>
@@ -45,8 +45,8 @@ namespace PepperDash.Essentials.DM.Chassis
                 InputPorts.Add(new RoutingInputPort("hdmiIn" + i, eRoutingSignalType.Audio | eRoutingSignalType.Video,
                     eRoutingPortConnectionType.Hdmi, i, this));
             }
-            OutputWindowPorts = new RoutingPortCollection<RoutingOutputPort>();
-            OutputWindowPorts.Add(new RoutingOutputPort(DmPortName.HdmiOut, eRoutingSignalType.Audio | eRoutingSignalType.Video,
+            OutputPorts = new RoutingPortCollection<RoutingOutputPort>();
+            OutputPorts.Add(new RoutingOutputPort(DmPortName.HdmiOut, eRoutingSignalType.Audio | eRoutingSignalType.Video,
                 eRoutingPortConnectionType.Hdmi, null, this));
 	        
             // physical settings

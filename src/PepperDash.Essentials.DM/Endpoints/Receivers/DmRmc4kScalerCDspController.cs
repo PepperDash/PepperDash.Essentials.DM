@@ -26,7 +26,7 @@ namespace PepperDash.Essentials.DM
 
         public RoutingPortCollection<RoutingInputPort> InputPorts { get; private set; }
 
-        public RoutingPortCollection<RoutingOutputPort> OutputWindowPorts { get; private set; }
+        public RoutingPortCollection<RoutingOutputPort> OutputPorts { get; private set; }
 
         public EndpointDmInputStreamWithCec DmInput { get; private set; }
 
@@ -66,7 +66,7 @@ namespace PepperDash.Essentials.DM
 
 
             InputPorts = new RoutingPortCollection<RoutingInputPort> {DmIn};
-            OutputWindowPorts = new RoutingPortCollection<RoutingOutputPort> {HdmiOut, BalancedAudioOut};
+            OutputPorts = new RoutingPortCollection<RoutingOutputPort> {HdmiOut, BalancedAudioOut};
 
             _rmc.HdmiOutput.OutputStreamChange += HdmiOutput_OutputStreamChange;
             _rmc.HdmiOutput.ConnectedDevice.DeviceInformationChange += ConnectedDevice_DeviceInformationChange;

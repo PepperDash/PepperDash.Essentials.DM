@@ -37,7 +37,7 @@ namespace PepperDash.Essentials.DM
 
         public RoutingPortCollection<RoutingInputPort> InputPorts { get; private set; }
 
-        public RoutingPortCollection<RoutingOutputPort> OutputWindowPorts { get; private set; }
+        public RoutingPortCollection<RoutingOutputPort> OutputPorts { get; private set; }
 
         //IroutingNumericEvent
         public event EventHandler<RoutingNumericEventArgs> NumericSwitchChange;
@@ -88,7 +88,7 @@ namespace PepperDash.Essentials.DM
             VideoOutputResolutionFeedback = new StringFeedback(() => _rmc.HdmiOutput.GetVideoResolutionString());
 
             InputPorts = new RoutingPortCollection<RoutingInputPort> { DmIn, HdmiIn };
-            OutputWindowPorts = new RoutingPortCollection<RoutingOutputPort> { HdmiOut };
+            OutputPorts = new RoutingPortCollection<RoutingOutputPort> { HdmiOut };
 
             _rmc.HdmiOutput.OutputStreamChange += HdmiOutput_OutputStreamChange;
             _rmc.HdmiOutput.ConnectedDevice.DeviceInformationChange += ConnectedDevice_DeviceInformationChange;
@@ -138,7 +138,7 @@ namespace PepperDash.Essentials.DM
 
 
                 AudioVideoSourceNumericFeedback.FireUpdate();
-                OnSwitchChange(new RoutingNumericEventArgs(1, AudioVideoSourceNumericFeedback.UShortValue, OutputWindowPorts.First(), localInputPort, eRoutingSignalType.AudioVideo));
+                OnSwitchChange(new RoutingNumericEventArgs(1, AudioVideoSourceNumericFeedback.UShortValue, OutputPorts.First(), localInputPort, eRoutingSignalType.AudioVideo));
             }
         }
 

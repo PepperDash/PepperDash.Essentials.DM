@@ -59,7 +59,7 @@ namespace PepperDash.Essentials.DM
 
         // Need a couple Lists of generic Backplane ports
         public RoutingPortCollection<RoutingInputPort> InputPorts { get; private set; }
-        public RoutingPortCollection<RoutingOutputPort> OutputWindowPorts { get; private set; }
+        public RoutingPortCollection<RoutingOutputPort> OutputPorts { get; private set; }
 
         public Dictionary<uint, string> TxDictionary { get; set; }
         public Dictionary<uint, string> RxDictionary { get; set; }
@@ -150,7 +150,7 @@ namespace PepperDash.Essentials.DM
         {
             Chassis = chassis;
             InputPorts = new RoutingPortCollection<RoutingInputPort>();
-            OutputWindowPorts = new RoutingPortCollection<RoutingOutputPort>();
+            OutputPorts = new RoutingPortCollection<RoutingOutputPort>();
             VolumeControls = new Dictionary<uint, DmCardAudioOutputController>();
             TxDictionary = new Dictionary<uint, string>();
             RxDictionary = new Dictionary<uint, string>();
@@ -502,7 +502,7 @@ namespace PepperDash.Essentials.DM
                 {
                     FeedbackMatchObject = Chassis.Outputs[cardNum]
                 };
-                OutputWindowPorts.Add(outputPort);
+                OutputPorts.Add(outputPort);
             }
             catch (Exception ex)
             {
@@ -617,7 +617,7 @@ namespace PepperDash.Essentials.DM
                         {
                             var localInputPort = InputPorts.FirstOrDefault(p => (DMInput)p.FeedbackMatchObject == Chassis.Outputs[output].VideoOutFeedback);
                             var localOutputPort =
-                                OutputWindowPorts.FirstOrDefault(p => (DMOutput)p.FeedbackMatchObject == Chassis.Outputs[output]);
+                                OutputPorts.FirstOrDefault(p => (DMOutput)p.FeedbackMatchObject == Chassis.Outputs[output]);
 
 
                             VideoOutputFeedbacks[output].FireUpdate();

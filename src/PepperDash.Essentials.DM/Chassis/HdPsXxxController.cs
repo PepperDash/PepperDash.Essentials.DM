@@ -20,7 +20,7 @@ namespace PepperDash_Essentials_DM.Chassis
 		private readonly HdPsXxx _chassis;
 
 		public RoutingPortCollection<RoutingInputPort> InputPorts { get; private set; }
-		public RoutingPortCollection<RoutingOutputPort> OutputWindowPorts { get; private set; }
+		public RoutingPortCollection<RoutingOutputPort> OutputPorts { get; private set; }
 
 		public Dictionary<uint, string> InputNames { get; set; }
 		public Dictionary<uint, string> OutputNames { get; set; }
@@ -65,7 +65,7 @@ namespace PepperDash_Essentials_DM.Chassis
 			InputHdcpEnableFeedback = new FeedbackCollection<BoolFeedback>();
 			InputNames = new Dictionary<uint, string>();
 
-			OutputWindowPorts = new RoutingPortCollection<RoutingOutputPort>();
+			OutputPorts = new RoutingPortCollection<RoutingOutputPort>();
 			OutputNameFeedbacks = new FeedbackCollection<StringFeedback>();
 			OutputRouteNameFeedback = new FeedbackCollection<StringFeedback>();
 			OutputNames = new Dictionary<uint, string>();
@@ -185,7 +185,7 @@ namespace PepperDash_Essentials_DM.Chassis
 					Port = output.HdmiOutput.HdmiOutputPort
 				};
 				Debug.Console(1, this, "Adding Output port: {0} - {1}", hdmiPort.Key, name);
-				OutputWindowPorts.Add(hdmiPort);
+				OutputPorts.Add(hdmiPort);
 
 				var dmLiteKey = string.Format("dmLiteOut{0}", index);
 				var dmLitePort = new RoutingOutputPort(dmLiteKey, eRoutingSignalType.AudioVideo, eRoutingPortConnectionType.DmCat, output, this)
@@ -194,7 +194,7 @@ namespace PepperDash_Essentials_DM.Chassis
 					Port = output.DmLiteOutput.DmLiteOutputPort
 				};
 				Debug.Console(1, this, "Adding Output port: {0} - {1}", dmLitePort.Key, name);
-				OutputWindowPorts.Add(dmLitePort);
+				OutputPorts.Add(dmLitePort);
 				
 				OutputRouteNameFeedback.Add(new StringFeedback(index.ToString(CultureInfo.InvariantCulture), 
 					() => output.VideoOutFeedback.NameFeedback.StringValue));			
@@ -221,7 +221,7 @@ Selector: {4}
 ", port.Key, port.Port, port.Type, port.ConnectionType, port.Selector);
 				}
 
-				foreach (var port in OutputWindowPorts)
+				foreach (var port in OutputPorts)
 				{
 					Debug.Console(0, this, @"Output Port Key: {0}
 Port: {1}
@@ -488,7 +488,7 @@ Selector: {4}
 			var inputPort = InputPorts.FirstOrDefault(
 				p => p.FeedbackMatchObject == _chassis.HdmiDmLiteOutputs[output].VideoOutFeedback);
 
-			var outputPort = OutputWindowPorts.FirstOrDefault(
+			var outputPort = OutputPorts.FirstOrDefault(
 				p => p.FeedbackMatchObject == _chassis.HdmiDmLiteOutputs[output]);
 
 			feedback.FireUpdate();

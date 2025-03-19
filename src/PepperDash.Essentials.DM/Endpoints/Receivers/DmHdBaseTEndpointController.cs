@@ -18,7 +18,7 @@ namespace PepperDash.Essentials.DM
 
         public RoutingPortCollection<RoutingInputPort> InputPorts { get; private set; }
 
-        public RoutingPortCollection<RoutingOutputPort> OutputWindowPorts { get; private set; }
+        public RoutingPortCollection<RoutingOutputPort> OutputPorts { get; private set; }
 
         public HDBaseTRxController(string key, string name, HDRx3CB rmc)
             : base(key, name, rmc)
@@ -29,7 +29,7 @@ namespace PepperDash.Essentials.DM
                 eRoutingPortConnectionType.Hdmi, null, this) {Port = Rmc};
 
             InputPorts = new RoutingPortCollection<RoutingInputPort> {DmIn};
-            OutputWindowPorts = new RoutingPortCollection<RoutingOutputPort> {HDBaseTSink};
+            OutputPorts = new RoutingPortCollection<RoutingOutputPort> {HDBaseTSink};
             PreventRegistration = true;
             rmc.Register();
         }

@@ -82,7 +82,7 @@ namespace PepperDash.Essentials.DM
             }
         }
 
-        public RoutingPortCollection<RoutingOutputPort> OutputWindowPorts
+        public RoutingPortCollection<RoutingOutputPort> OutputPorts
         {
             get
             {

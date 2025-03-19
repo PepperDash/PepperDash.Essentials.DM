@@ -30,7 +30,7 @@ namespace PepperDash.Essentials.DM.AirMedia
 
         public RoutingPortCollection<RoutingInputPort> InputPorts { get; private set; }
 
-        public RoutingPortCollection<RoutingOutputPort> OutputWindowPorts { get; private set; }
+        public RoutingPortCollection<RoutingOutputPort> OutputPorts { get; private set; }
 
 
         //IroutingNumericEvent
@@ -58,7 +58,7 @@ namespace PepperDash.Essentials.DM.AirMedia
             PropertiesConfig = props;
 
             InputPorts = new RoutingPortCollection<RoutingInputPort>();
-            OutputWindowPorts = new RoutingPortCollection<RoutingOutputPort>();
+            OutputPorts = new RoutingPortCollection<RoutingOutputPort>();
 
             InputPorts.Add(new RoutingInputPort(DmPortName.Osd, eRoutingSignalType.AudioVideo,
                 eRoutingPortConnectionType.None, new Action(SelectPinPointUxLandingPage), this)
@@ -93,7 +93,7 @@ namespace PepperDash.Essentials.DM.AirMedia
                     });
             }
 
-            OutputWindowPorts.Add(new RoutingOutputPort(DmPortName.HdmiOut, eRoutingSignalType.AudioVideo,
+            OutputPorts.Add(new RoutingOutputPort(DmPortName.HdmiOut, eRoutingSignalType.AudioVideo,
                 eRoutingPortConnectionType.Hdmi, null, this));
 
             AirMedia.AirMedia.AirMediaChange += new Crestron.SimplSharpPro.DeviceSupport.GenericEventHandler(AirMedia_AirMediaChange);
@@ -241,7 +241,7 @@ namespace PepperDash.Essentials.DM.AirMedia
                 var localInputPort =
                     InputPorts.FirstOrDefault(p => (int) p.FeedbackMatchObject == VideoOutFeedback.UShortValue);
 
-                OnSwitchChange(new RoutingNumericEventArgs(1, VideoOutFeedback.UShortValue, OutputWindowPorts.First(),
+                OnSwitchChange(new RoutingNumericEventArgs(1, VideoOutFeedback.UShortValue, OutputPorts.First(),
                     localInputPort, eRoutingSignalType.AudioVideo));
             
                 AutomaticInputRoutingEnabledFeedback.FireUpdate();
