@@ -145,9 +145,12 @@ namespace PepperDash.Essentials.DM.VideoWindowing
            
             //_HdWpChassis.DMInputChange += Chassis_DMInputChange;
             //_HdWpChassis.DMOutputChange += Chassis_DMOutputChange;
+            _HdWpChassis.HdWpWindowLayout.WindowLayoutChange += HdWpWindowLayout_WindowLayoutChange;
 
             AddPostActivationAction(AddFeedbackCollections);
         }
+
+
         #endregion
 
         #region Methods
@@ -160,6 +163,30 @@ namespace PepperDash.Essentials.DM.VideoWindowing
         {
             var newEvent = NumericSwitchChange;
             if (newEvent != null) newEvent(this, e);
+        }
+
+        public void SetWindowLayout(uint layout)
+        {
+            WindowLayout.eLayoutType _layoutType;
+            switch (layout)
+            {
+                case 1:
+                    _layoutType = WindowLayout.eLayoutType.Fullscreen;
+                    break;
+                case 2:
+                    _layoutType = WindowLayout.eLayoutType.SideBySide;
+                    break;
+                case 3:
+                    _layoutType = WindowLayout.eLayoutType.ThreeSmallOneLarge;
+                    break;
+                case 4:
+                    _layoutType = WindowLayout.eLayoutType.Quadview;
+                    break;
+                default:
+                    Debug.Console(0, this, "Invalid layout value: {0}", layout);
+                    return;
+            }
+            _HdWpChassis.HdWpWindowLayout.Layout = _layoutType;
         }
 
         #region PostActivate
@@ -384,102 +411,9 @@ namespace PepperDash.Essentials.DM.VideoWindowing
             }
         }
 
-        void Chassis_DMOutputChange(Switch device, DMOutputEventArgs args)
+        void HdWpWindowLayout_WindowLayoutChange(object sender, GenericEventArgs args)
         {
-            switch (args.EventId)
-            {
-                case DMOutputEventIds.VideoOutEventId:
-                    {
-                        var output = args.Number;
-                        var inputNumber = _HdWpChassis.Outputs[output].VideoOutFeedback == null ? 0 : _HdWpChassis.Outputs[output].VideoOutFeedback.Number;
-
-                        var outputName = OutputWindowNames[output];
-
-                        var feedback = WindowRouteFeedbacks[outputName];
-
-                        if (feedback == null)
-                        {
-                            return;
-                        }
-                        var inPort = InputPorts.FirstOrDefault(p => p.FeedbackMatchObject == _HdWpChassis.Outputs[output].VideoOutFeedback);
-                        var outPort = OutputPorts.FirstOrDefault(p => p.FeedbackMatchObject == _HdWpChassis.Outputs[output]);
-
-                        feedback.FireUpdate();
-                        OnSwitchChange(new RoutingNumericEventArgs(output, inputNumber, outPort, inPort, eRoutingSignalType.Video));
-                        break;
-                    }
-                case DMOutputEventIds.AudioOutEventId:
-                    {
-                        var output = args.Number;
-                        var inputNumber = _HdWpChassis.Outputs[output].AudioOutFeedback == null ? 0 : _HdWpChassis.Outputs[output].AudioOutFeedback.Number;
-
-                        var outputName = OutputWindowNames[output];
-
-                        var feedback = AudioOutputRouteFeedbacks[outputName];
-
-                        if (feedback == null)
-                        {
-                            return;
-                        }
-                        var inPort = InputPorts.FirstOrDefault(p => p.FeedbackMatchObject == _HdWpChassis.Outputs[output].AudioOutFeedback);
-                        var outPort = OutputPorts.FirstOrDefault(p => p.FeedbackMatchObject == _HdWpChassis.Outputs[output]);
-
-                        feedback.FireUpdate();
-                        OnSwitchChange(new RoutingNumericEventArgs(output, inputNumber, outPort, inPort, eRoutingSignalType.Audio));
-                        break;
-                    }
-                case DMOutputEventIds.OutputNameEventId:
-                case DMOutputEventIds.NameFeedbackEventId:
-                    {
-                        Debug.Console(1, this, "Event ID {0}:  Updating name feedbacks.", args.EventId);
-                        Debug.Console(1, this, "Output {0} Name {1}", args.Number,
-                            _HdWpChassis.Outputs[args.Number].NameFeedback.StringValue);
-                        foreach (var item in _HdWpChassis.Outputs.HdmiOut.NameFeedback)
-                        {
-                            item.FireUpdate();
-                        }
-                        break;
-                    }
-                default:
-                    {
-                        Debug.Console(1, this, "Unhandled DM Output Event ID {0}", args.EventId);
-                        break;
-                    }
-            }
-        }
-
-        void Chassis_DMInputChange(Switch device, DMInputEventArgs args)
-        {
-            switch (args.EventId)
-            {
-                case DMInputEventIds.VideoDetectedEventId:
-                    {
-                        Debug.Console(1, this, "Event ID {0}: Updating VideoInputSyncFeedbacks", args.EventId);
-                        foreach (var item in VideoInputSyncFeedbacks)
-                        {
-                            item.FireUpdate();
-                        }
-                        break;
-                    }
-                case DMInputEventIds.InputNameFeedbackEventId:
-                case DMInputEventIds.InputNameEventId:
-                case DMInputEventIds.NameFeedbackEventId:
-                    {
-                        Debug.Console(1, this, "Event ID {0}:  Updating name feedbacks.", args.EventId);
-                        Debug.Console(1, this, "Input {0} Name {1}", args.Number,
-                            _HdWpChassis.Inputs[args.Number].NameFeedback.StringValue);
-                        foreach (var item in InputNameFeedbacks)
-                        {
-                            item.FireUpdate();
-                        }
-                        break;
-                    }
-                default:
-                    {
-                        Debug.Console(1, this, "Unhandled DM Input Event ID {0}", args.EventId);
-                        break;
-                    }
-            }
+            Debug.Console(1, "WindowLayoutChange event triggerend. EventId = {0}", args.EventId); 
         }
 
         #endregion
