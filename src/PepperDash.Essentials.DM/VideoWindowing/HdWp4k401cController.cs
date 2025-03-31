@@ -22,7 +22,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
     [Description("Wrapper class for all hdWp4k401c video wall processor")]
     public class HdWp4k401cController: CrestronGenericBridgeableBaseDevice, IRoutingNumericWithFeedback, IHasFeedback, IOnline
     {
-        #region Private members, felds, and properties
+        #region Private Members, Felds, and Properties
         private HdWp4k401C _HdWpChassis;     
         private bool _isOnline;
         private int _WindowCount = 4; // 4 windows for this multi-window controller
@@ -189,6 +189,8 @@ namespace PepperDash.Essentials.DM.VideoWindowing
             _HdWpChassis.HdWpWindowLayout.Layout = _layoutType;
         }
 
+        #endregion
+
         #region PostActivate
 
         public void AddFeedbackCollections()
@@ -335,8 +337,6 @@ namespace PepperDash.Essentials.DM.VideoWindowing
 
             ExecuteSwitch(input, output, signalType);
         }
-
-        #endregion
 
         #endregion
 
