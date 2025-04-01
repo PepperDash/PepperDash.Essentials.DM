@@ -1,20 +1,15 @@
-﻿extern alias Full;
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Crestron.SimplSharp;
 using Crestron.SimplSharpPro;
 using Crestron.SimplSharpPro.UI;
-
-using Full.Newtonsoft.Json;
-
+using Newtonsoft.Json;
 using PepperDash.Core;
 using PepperDash.Essentials.Core;
 using PepperDash.Essentials.Core.Config;
 using Crestron.SimplSharpPro.DeviceSupport;
-
 using Crestron.SimplSharpPro.DM;
 
 namespace PepperDash.Essentials.DM.Endpoints.DGEs
@@ -75,7 +70,7 @@ namespace PepperDash.Essentials.DM.Endpoints.DGEs
 			var comm = CommFactory.GetControlPropertiesConfig(dc);
 			var props = JsonConvert.DeserializeObject<CrestronTouchpanelPropertiesConfig>(dc.Properties.ToString());
 
-			Debug.Console(1, "Factory Attempting to create new DgeController  Device");
+			Debug.LogDebug("Factory Attempting to create new DgeController  Device");
 
 			DmDge200C dgeDevice = null;
 
@@ -84,7 +79,7 @@ namespace PepperDash.Essentials.DM.Endpoints.DGEs
 
 			if (dgeDevice == null)
 			{
-				Debug.Console(1, "Unable to create DGE device");
+				Debug.LogDebug("Unable to create DGE device");
 				return null;
 			}
 

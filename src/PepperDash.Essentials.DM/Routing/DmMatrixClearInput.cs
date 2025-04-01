@@ -20,6 +20,8 @@ namespace PepperDash.Essentials.DM.Routing
 
         public string Key => "none";
 
+        #pragma warning disable CS0067
         public event EventHandler VideoSyncChanged;
+        #pragma warning restore CS0067
     }
 }

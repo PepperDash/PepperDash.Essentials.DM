@@ -202,7 +202,7 @@ namespace PepperDash.Essentials.DM
         void VideoControls_ControlChange(object sender, Crestron.SimplSharpPro.DeviceSupport.GenericEventArgs args)
         {
             var id = args.EventId;
-            Debug.Console(2, this, "EventId {0}", args.EventId);
+            Debug.LogInformation(this, "EventId {0}", args.EventId);
 
             switch (id)
             {
@@ -306,7 +306,7 @@ namespace PepperDash.Essentials.DM
         /// <param name="type"></param>
         public void ExecuteNumericSwitch(ushort input, ushort output, eRoutingSignalType type)
         {
-            Debug.Console(2, this, "Executing Numeric Switch to input {0}.", input);
+            Debug.LogInformation(this, "Executing Numeric Switch to input {0}.", input);
 
             switch (input)
             {
@@ -344,20 +344,20 @@ namespace PepperDash.Essentials.DM
 		void Tx_BaseEvent(GenericBase device, BaseEventArgs args)
 		{
             var id = args.EventId;
-            Debug.Console(2, this, "EventId {0}", args.EventId);
+            Debug.LogInformation(this, "EventId {0}", args.EventId);
 
             switch (id)
             {
                 case EndpointTransmitterBase.VideoSourceFeedbackEventId:
                     var localVideoInputPort = InputPorts.FirstOrDefault(p => (DmTx200Base.eSourceSelection)p.Selector == Tx.VideoSourceFeedback);
-                    Debug.Console(2, this, "  Video Source: {0}", Tx.VideoSourceFeedback);
+                    Debug.LogInformation(this, "  Video Source: {0}", Tx.VideoSourceFeedback);
                     VideoSourceNumericFeedback.FireUpdate();
                     ActiveVideoInputFeedback.FireUpdate();
                     OnSwitchChange(new RoutingNumericEventArgs(1, VideoSourceNumericFeedback.UShortValue, OutputPorts.First(), localVideoInputPort, eRoutingSignalType.Video));
                     break;
                 case EndpointTransmitterBase.AudioSourceFeedbackEventId:
                     var localInputAudioPort = InputPorts.FirstOrDefault(p => (DmTx200Base.eSourceSelection)p.Selector == Tx.AudioSourceFeedback);
-                    Debug.Console(2, this, "  Audio Source: {0}", Tx.AudioSourceFeedback);
+                    Debug.LogInformation(this, "  Audio Source: {0}", Tx.AudioSourceFeedback);
                     AudioSourceNumericFeedback.FireUpdate();
                     OnSwitchChange(new RoutingNumericEventArgs(1, AudioSourceNumericFeedback.UShortValue, OutputPorts.First(), localInputAudioPort, eRoutingSignalType.Audio));
                     break;
@@ -366,7 +366,7 @@ namespace PepperDash.Essentials.DM
 
         void InputStreamChangeEvent(EndpointInputStream inputStream, EndpointInputStreamEventArgs args)
         {
-            Debug.Console(2, "{0} event {1} stream {2}", Tx.ToString(), inputStream.ToString(), args.EventId.ToString());
+            Debug.LogVerbose("{0} event {1} stream {2}", Tx.ToString(), inputStream.ToString(), args.EventId.ToString());
 
             switch (args.EventId)
             {
@@ -402,7 +402,7 @@ namespace PepperDash.Essentials.DM
 		void FireVideoAttributeChange(RoutingInputPortWithVideoStatuses inputPort, int eventId)
 		{
 			//// LOCATION: Crestron.SimplSharpPro.DM.VideoAttributeEventIds
-			//Debug.Console(2, this, "VideoAttributes_AttributeChange event id={0} from {1}",
+			//Debug.LogInformation(this, "VideoAttributes_AttributeChange event id={0} from {1}",
 			//    args.EventId, (sender as VideoAttributesEnhanced).Owner.GetType());
 			switch (eventId)
 			{

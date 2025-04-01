@@ -1,6 +1,4 @@
-﻿extern alias Full;
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
@@ -8,12 +6,8 @@ using System.Text;
 using Crestron.SimplSharp;
 using Crestron.SimplSharpPro;
 using Crestron.SimplSharpPro.UI;
-
 using Crestron.SimplSharpPro.DM;
-
-
-using Full.Newtonsoft.Json;
-
+using Newtonsoft.Json;
 using PepperDash.Core;
 using PepperDash.Essentials.Core;
 using PepperDash.Essentials.Core.Config;
@@ -121,7 +115,7 @@ namespace PepperDash.Essentials.DM.Endpoints.DGEs
         {
             if (String.IsNullOrEmpty(_dgeEthernetInfo.IpAddressFeedback.StringValue))
             {
-                Debug.Console(1, this, "IP Address information not yet received. No device is online");
+                Debug.LogDebug(this, "IP Address information not yet received. No device is online");
                 return;
             }
 
@@ -143,13 +137,13 @@ namespace PepperDash.Essentials.DM.Endpoints.DGEs
             {
                 try
                 {
-                    Debug.Console(1, this, "{0}", args.Text);
+                    Debug.LogDebug(this, "{0}", args.Text);
 
                     if (args.Text.ToLower().Contains("host"))
                     {
                         DeviceInfo.HostName = args.Text.Split(':')[1].Trim();
 
-                        Debug.Console(1, this, "hostname: {0}", DeviceInfo.HostName);
+                        Debug.LogDebug(this, "hostname: {0}", DeviceInfo.HostName);
                         tcpClient.Disconnect();
                         return;
                     }
@@ -157,13 +151,13 @@ namespace PepperDash.Essentials.DM.Endpoints.DGEs
                     //ignore console prompt
                     /*if (args.Text.ToLower().Contains(">"))
                     {
-                        Debug.Console(1, this, "Ignoring console");
+                        Debug.LogDebug(this, "Ignoring console");
                         return;
                     }
 
                     if (args.Text.ToLower().Contains("dge"))
                     {
-                        Debug.Console(1, this, "Ignoring DGE");
+                        Debug.LogDebug(this, "Ignoring DGE");
                         return;
                     }*/
 
@@ -175,21 +169,21 @@ namespace PepperDash.Essentials.DM.Endpoints.DGEs
 
                     foreach (string t in splitResponse)
                     {
-                        Debug.Console(1, this, "{0}", t);
+                        Debug.LogDebug(this, "{0}", t);
                     }
 
                     DeviceInfo.SerialNumber = splitResponse[1].Split(' ')[4].Replace("#", "");
                     DeviceInfo.FirmwareVersion = splitResponse[1].Split(' ')[0];
 
-                    Debug.Console(1, this, "Firmware: {0} SerialNumber: {1}", DeviceInfo.FirmwareVersion,
+                    Debug.LogDebug(this, "Firmware: {0} SerialNumber: {1}", DeviceInfo.FirmwareVersion,
                         DeviceInfo.SerialNumber);
 
                     tcpClient.SendText("host\r\n");
                 }
                 catch (Exception ex)
                 {
-                    Debug.Console(0, this, "Exception getting data: {0}", ex.Message);
-                    Debug.Console(0, this, "response: {0}", args.Text);
+                    Debug.LogVerbose(this, "Exception getting data: {0}", ex.Message);
+                    Debug.LogVerbose(this, "response: {0}", args.Text);
                 }
             };
 
@@ -224,10 +218,10 @@ namespace PepperDash.Essentials.DM.Endpoints.DGEs
             }
             else
             {
-                Debug.Console(0, this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
+                Debug.LogVerbose(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
             }
 
-            Debug.Console(1, this, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
+            Debug.LogDebug(this, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
 
 			//Presses
 			trilist.SetSigTrueAction(joinMap.HdmiInHdcpOn.JoinNumber, () => _dge.HdmiIn.HdcpSupportOn());
@@ -278,7 +272,7 @@ namespace PepperDash.Essentials.DM.Endpoints.DGEs
             var comm = CommFactory.GetControlPropertiesConfig(dc);
             var props = JsonConvert.DeserializeObject<CrestronTouchpanelPropertiesConfig>(dc.Properties.ToString());
 
-            Debug.Console(1, "Factory Attempting to create new DgeController Device");
+            Debug.LogDebug("Factory Attempting to create new DgeController Device");
 
             Dge100 dgeDevice = null;
             if (typeName == "dge100")
@@ -286,7 +280,7 @@ namespace PepperDash.Essentials.DM.Endpoints.DGEs
 
             if (dgeDevice == null)
             {
-                Debug.Console(1, "Unable to create DGE device");
+                Debug.LogDebug("Unable to create DGE device");
                 return null;
             }
 

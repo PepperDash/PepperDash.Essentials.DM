@@ -1,13 +1,11 @@
-﻿extern alias Full;
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Crestron.SimplSharpPro.DeviceSupport;
 using Crestron.SimplSharpPro.DM;
 using Crestron.SimplSharpPro.DM.Cards;
 using Crestron.SimplSharpPro.DM.Endpoints.Receivers;
-using Full.Newtonsoft.Json;
+using Newtonsoft.Json;
 using PepperDash.Core;
 using PepperDash.Essentials.Core;
 using PepperDash.Essentials.Core.Bridges;
@@ -60,7 +58,7 @@ namespace PepperDash.Essentials.DM
             }
             else
             {
-                Debug.Console(0, this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
+                Debug.LogVerbose(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
             }
 
             LinkDmRmcToApi(rmc, trilist, joinMap);
@@ -68,7 +66,7 @@ namespace PepperDash.Essentials.DM
 
         protected void LinkDmRmcToApi(DmRmcControllerBase rmc, BasicTriList trilist, DmRmcControllerJoinMap joinMap)
         {
-            Debug.Console(1, rmc, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
+            Debug.LogDebug(rmc, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
 
             IsOnline.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
             trilist.StringInput[joinMap.Name.JoinNumber].StringValue = rmc.Name;
@@ -150,7 +148,7 @@ namespace PepperDash.Essentials.DM
 
             if (dmRmcScalerCBasicVideoMuteWithFeedback != null)
             {
-                Debug.Console(1, this, "Device is IBasicVideoMuteWithFeedback, linking video mute");
+                Debug.LogDebug(this, "Device is IBasicVideoMuteWithFeedback, linking video mute");
                 trilist.SetSigTrueAction(joinMap.VideoMuteToggle.JoinNumber, () => dmRmcScalerCBasicVideoMuteWithFeedback.VideoMuteToggle());
                 trilist.SetSigTrueAction(joinMap.VideoMuteOn.JoinNumber, () => dmRmcScalerCBasicVideoMuteWithFeedback.VideoMuteOn());
                 trilist.SetSigTrueAction(joinMap.VideoMuteOff.JoinNumber, () => dmRmcScalerCBasicVideoMuteWithFeedback.VideoMuteOff());
@@ -178,11 +176,11 @@ namespace PepperDash.Essentials.DM
 
         public void UpdateDeviceInfo()
         {
-            Debug.Console(1, this, "Updating Device Info");
+            Debug.LogDebug(this, "Updating Device Info");
 
             if (_rmc.ConnectedIpList.Count == 0)
             {
-                Debug.Console(1, this, "IP Address information not yet received. No device is online");
+                Debug.LogDebug(this, "IP Address information not yet received. No device is online");
                 return;
             }
 
@@ -190,7 +188,7 @@ namespace PepperDash.Essentials.DM
 
             foreach (var ip in _rmc.ConnectedIpList)
             {
-                Debug.Console(0, this, "Connected IP Address: {0}", ip.DeviceIpAddress);
+                Debug.LogVerbose(this, "Connected IP Address: {0}", ip.DeviceIpAddress);
             }
 
             GetFirmwareAndSerialInfo();
@@ -420,10 +418,10 @@ namespace PepperDash.Essentials.DM
                 var dmps = parentDev as DmpsRoutingController;
                 //Check that the input is within range of this chassis' possible inputs
                 var num = props.ParentOutputNumber;
-                Debug.Console(1, "Creating DMPS device '{0}'. Output number '{1}'.", key, num);
+                Debug.LogDebug("Creating DMPS device '{0}'. Output number '{1}'.", key, num);
                 if (num <= 0 || num > dmps.Dmps.SwitcherOutputs.Count)
                 {
-                    Debug.Console(0, "Cannot create DMPS device '{0}'. Output number '{1}' is out of range",
+                    Debug.LogVerbose("Cannot create DMPS device '{0}'. Output number '{1}' is out of range",
                         key, num);
                     return null;
                 }
@@ -443,7 +441,7 @@ namespace PepperDash.Essentials.DM
                 }
                 if (useChassisForOfflineFeedback)
                 {
-                    Debug.Console(0, "DM endpoint output {0} does not have direct online feedback, changing online feedback to chassis", num);
+                    Debug.LogVerbose("DM endpoint output {0} does not have direct online feedback, changing online feedback to chassis", num);
                     rx.IsOnline.SetValueFunc(() => dmps.OutputEndpointOnlineFeedbacks[num].BoolValue);
                     dmps.OutputEndpointOnlineFeedbacks[num].OutputChange += (o, a) =>
                     {
@@ -461,11 +459,11 @@ namespace PepperDash.Essentials.DM
                 var controller = parentDev as IDmSwitchWithEndpointOnlineFeedback;
                 var chassis = controller.Chassis;
                 var num = props.ParentOutputNumber;
-                Debug.Console(1, "Creating DM Chassis device '{0}'. Output number '{1}'.", key, num);
+                Debug.LogDebug("Creating DM Chassis device '{0}'. Output number '{1}'.", key, num);
 
                 if (num <= 0 || num > chassis.NumberOfOutputs)
                 {
-                    Debug.Console(0, "Cannot create DM device '{0}'. Output number '{1}' is out of range",
+                    Debug.LogVerbose("Cannot create DM device '{0}'. Output number '{1}' is out of range",
                         key, num);
                     return null;
                 }
@@ -492,7 +490,7 @@ namespace PepperDash.Essentials.DM
                     }
                     if (useChassisForOfflineFeedback)
                     {
-                        Debug.Console(0, "DM endpoint output {0} does not have direct online feedback, changing online feedback to chassis", num);
+                        Debug.LogVerbose("DM endpoint output {0} does not have direct online feedback, changing online feedback to chassis", num);
                         rx.IsOnline.SetValueFunc(() => controller.OutputEndpointOnlineFeedbacks[num].BoolValue);
                         controller.OutputEndpointOnlineFeedbacks[num].OutputChange += (o, a) =>
                         {
@@ -507,13 +505,13 @@ namespace PepperDash.Essentials.DM
                 }
                 catch (Exception e)
                 {
-                    Debug.Console(0, "[{0}] WARNING: Cannot create DM-RMC device: {1}", key, e.Message);
+                    Debug.LogVerbose("[{0}] WARNING: Cannot create DM-RMC device: {1}", key, e.Message);
                     return null;
                 }
             }
             else
             {
-                Debug.Console(0, "Cannot create DM device '{0}'. '{1}' is not a DM Chassis or DMPS.",
+                Debug.LogVerbose("Cannot create DM device '{0}'. '{1}' is not a DM Chassis or DMPS.",
                     key, pKey);
                 return null;
             }
@@ -527,7 +525,7 @@ namespace PepperDash.Essentials.DM
             {
                 return handler(key, name, ipid, chassis.Outputs[num]);
             }
-            Debug.Console(0, "Cannot create DM-RMC of type '{0}' with parent device {1}", typeName, parentDev.Key);
+            Debug.LogVerbose("Cannot create DM-RMC of type '{0}' with parent device {1}", typeName, parentDev.Key);
             return null;
         }
 
@@ -539,7 +537,7 @@ namespace PepperDash.Essentials.DM
             {
                 return cpu3Handler(key, name, chassis.Outputs[num]);
             }
-            Debug.Console(0, "Cannot create DM-RMC of type '{0}' with parent device {1}", typeName, parentDev.Key);
+            Debug.LogVerbose("Cannot create DM-RMC of type '{0}' with parent device {1}", typeName, parentDev.Key);
             return null;
         }
 
@@ -555,13 +553,12 @@ namespace PepperDash.Essentials.DM
                 {
                     return dmpsHandler(key, name, ipid, output);
                 }
-                Debug.Console(0, Debug.ErrorLogLevel.Error,
-                    "Cannot attach DM-RMC of type '{0}' to output {1} on DMPS chassis. Output is not a DM Output.",
+                Debug.LogVerbose("Cannot attach DM-RMC of type '{0}' to output {1} on DMPS chassis. Output is not a DM Output.",
                     typeName, num);
                 return null;
             }
 
-            Debug.Console(0, Debug.ErrorLogLevel.Error, "Cannot create DM-RMC of type '{0}' to output {1} on DMPS chassis", typeName, num);
+            Debug.LogVerbose("Cannot create DM-RMC of type '{0}' to output {1} on DMPS chassis", typeName, num);
             return null;
         }
 
@@ -577,13 +574,11 @@ namespace PepperDash.Essentials.DM
                 {
                     return dmps4kHandler(key, name, output);
                 }
-                Debug.Console(0, Debug.ErrorLogLevel.Error,
-                    "Cannot attach DM-RMC of type '{0}' to output {1} on DMPS-4K chassis. Output is not a DM Output.",
-                    typeName, num);
+                Debug.LogVerbose("Cannot attach DM-RMC of type '{0}' to output {1} on DMPS-4K chassis. Output is not a DM Output.", typeName, num);
                 return null;
             }
 
-            Debug.Console(0, Debug.ErrorLogLevel.Error, "Cannot create DM-RMC of type '{0}' to output {1} on DMPS-4K chassis", typeName, num);
+            Debug.LogVerbose("Cannot create DM-RMC of type '{0}' to output {1} on DMPS-4K chassis", typeName, num);
             return null;
         }
 
@@ -597,13 +592,13 @@ namespace PepperDash.Essentials.DM
                 {
                     return handler(key, name, ipid);
                 }
-                Debug.Console(0, "Cannot create DM-RMC of type: '{0}'", typeName);
+                Debug.LogVerbose("Cannot create DM-RMC of type: '{0}'", typeName);
 
                 return null;
             }
             catch (Exception e)
             {
-                Debug.Console(0, "[{0}] WARNING: Cannot create DM-RMC device: {1}", key, e.Message);
+                Debug.LogVerbose("[{0}] WARNING: Cannot create DM-RMC device: {1}", key, e.Message);
                 return null;
             }
         }
@@ -623,7 +618,7 @@ namespace PepperDash.Essentials.DM
         {
             var type = dc.Type.ToLower();
 
-            Debug.Console(1, "Factory Attempting to create new DM-RMC Device");
+            Debug.LogDebug("Factory Attempting to create new DM-RMC Device");
 
             var props = JsonConvert.DeserializeObject
                 <DmRmcPropertiesConfig>(dc.Properties.ToString());

@@ -77,7 +77,7 @@ namespace PepperDash.Essentials.DM
 
         public override void LinkToApi(BasicTriList trilist, uint joinStart, string joinMapKey, EiscApiAdvanced bridge)
         {
-            Debug.Console(1, this, "No properties to link. Skipping device {0}", Name);
+            Debug.LogDebug(this, "No properties to link. Skipping device {0}", Name);
         }
 
         #region IIROutputPorts Members

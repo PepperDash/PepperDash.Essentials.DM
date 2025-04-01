@@ -1,10 +1,8 @@
-﻿extern alias Full;
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Crestron.SimplSharpPro.DM;
-using Full.Newtonsoft.Json;
-using Full.Newtonsoft.Json.Converters;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using PepperDash.Core;
 
 namespace PepperDash.Essentials.DM.Config

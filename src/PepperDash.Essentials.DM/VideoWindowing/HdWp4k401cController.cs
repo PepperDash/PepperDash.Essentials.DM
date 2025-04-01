@@ -65,8 +65,8 @@ namespace PepperDash.Essentials.DM.VideoWindowing
             Name = name;            
 
             if (props == null)
-            {
-                Debug.Console(PepperDashEssentialsDmDebug.Verbose, this, "HD-WP-4K-401-C Controller properties are null, failed to build the device");
+            {                
+                Debug.LogVerbose(this, "HD-WP-4K-401-C Controller properties are null, failed to build the device");
                 return;
             }
 
@@ -160,13 +160,13 @@ namespace PepperDash.Essentials.DM.VideoWindowing
                 var screen = item.Value;
                 var screenKey = item.Key;
 
-                Debug.Console(PepperDashEssentialsDmDebug.Verbose, this, "Adding A ScreenNameFeedback");
+                Debug.LogVerbose(this, "Adding A ScreenNameFeedback");
                 ScreenNamesFeedbacks.Add(new StringFeedback("ScreenName-" + screenKey, () => screen.Name));
 
-                Debug.Console(PepperDashEssentialsDmDebug.Verbose, this, "Adding A ScreenEnableFeedback");
+                Debug.LogVerbose(this, "Adding A ScreenEnableFeedback");
                 ScreenEnablesFeedbacks.Add(new BoolFeedback("ScreenEnable-" + screenKey, () => screen.Enabled));
 
-                Debug.Console(PepperDashEssentialsDmDebug.Verbose, this, "Adding A LayoutNameFeedback");
+                Debug.LogVerbose(this, "Adding A LayoutNameFeedback");
                 LayoutNamesFeedbacks.Add(new StringFeedback("LayoutNames-" + screenKey, () => LayoutNames[screenKey]));
 
                 foreach (var layout in screen.Layouts)
@@ -175,7 +175,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
                     _layouts.Add($"{layout.Key}", new HdWp4k401cLayouts.HdWp4k401cLayout(layout.Value.LayoutIndex, this));
                 }
                 _screenLayouts[screenKey] = new HdWp4k401cLayouts($"{Key}-screen-{screenKey}", $"{Key}-screen-{screenKey}", _layouts);
-                DeviceManager.AddDevice(_screenLayouts[screenKey]); //Add to device manager and will show up in devlist
+                DeviceManager.AddDevice(_screenLayouts[screenKey]); //Add to device manager which will show up in devlist
             }
 
             _HdWpChassis.HdWpWindowLayout.WindowLayoutChange += HdWpWindowLayout_WindowLayoutChange;
@@ -185,7 +185,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
 
         #endregion
 
-        #region Methods
+        #region CustomActicate
 
         public override bool CustomActivate()
         {
@@ -194,11 +194,11 @@ namespace PepperDash.Essentials.DM.VideoWindowing
 
         protected override void CreateMobileControlMessengers()
         {
-            // look in device manager for the first instance of MC, 
+            // look in device manager for the first instance of MC
             this.LogInformation("Adding Mobile Control Messengers for Aquilon");
             var mc = DeviceManager.AllDevices.OfType<IMobileControl>().FirstOrDefault();
-            
-            //if not there MC doesn't exist
+
+            //if device not in device manager then MC doesn't exist
             if (mc == null)
             {
                 this.LogInformation("Mobile Control not found");
@@ -215,6 +215,10 @@ namespace PepperDash.Essentials.DM.VideoWindowing
                 mc.AddDeviceMessenger(messenger);
             }
         }
+
+        #endregion
+
+        #region Methods
 
         /// <summary>
         /// Raise an event when the status of a switch object changes.
@@ -244,7 +248,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
                     _layoutType = WindowLayout.eLayoutType.Quadview;
                     break;
                 default:
-                    Debug.Console(PepperDashEssentialsDmDebug.Trace, this, "Invalid layout value: {0}", layout);
+                    Debug.LogDebug(this, "Invalid layout value: {0}", layout);
                     return;
             }
             _HdWpChassis.HdWpWindowLayout.Layout = _layoutType;
@@ -348,11 +352,11 @@ namespace PepperDash.Essentials.DM.VideoWindowing
         public void ExecuteSwitch(object inputSelector, object outputSelector, eRoutingSignalType sigType)
         {
 
-            Debug.Console(PepperDashEssentialsDmDebug.Verbose, this, "ExecuteSwitch: input={0} output={1} sigType={2}", inputSelector, outputSelector, sigType.ToString());
+            Debug.LogVerbose(this, "ExecuteSwitch: input={0} output={1} sigType={2}", inputSelector, outputSelector, sigType.ToString());
 
             if (outputSelector == null)
             {
-                Debug.Console(PepperDashEssentialsDmDebug.Trace, this, "Unable to make switch. Output selector is not DMOutput");
+                Debug.LogDebug(this, "Unable to make switch. Output selector is not DMOutput");
                 return;
             }
             
@@ -394,7 +398,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
                 output = outputSelector;
             }
 
-            Debug.Console(PepperDashEssentialsDmDebug.Verbose, this, "ExecuteNumericSwitch: input={0} output={1}", input, output);
+            Debug.LogVerbose(this, "ExecuteNumericSwitch: input={0} output={1}", input, output);
 
             ExecuteSwitch(input, output, signalType);
         }
@@ -418,7 +422,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
             }
             else
             {
-                Debug.Console(PepperDashEssentialsDmDebug.Trace, this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
+                Debug.LogDebug(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
             }
 
             IsOnline.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
@@ -443,11 +447,6 @@ namespace PepperDash.Essentials.DM.VideoWindowing
             AudioOutputRouteFeedbacks[OutputWindowNames[1]].LinkInputSig(trilist.UShortInput[joinMap.OutputAudio.JoinNumber]);
             trilist.SetUShortSigAction(joinMap.OutputAudio.JoinNumber, (a) => ExecuteNumericSwitch(a, (ushort)SingleOutputValue, eRoutingSignalType.Audio));
 
-            //Serial
-            //WindowNameFeedbacks[OutputWindowNames[1]].LinkInputSig(trilist.StringInput[joinMap.OutputNames.JoinNumber]);
-            //OutputWindowVideoRouteNameFeedbacks[OutputWindowNames[1]].LinkInputSig(trilist.StringInput[joinMap.OutputCurrentVideoInputNames.JoinNumber]);
-            //OutputWindowAudioRouteNameFeedbacks[OutputWindowNames[1]].LinkInputSig(trilist.StringInput[joinMap.OutputCurrentAudioInputNames.JoinNumber]);            
-            
             _HdWpChassis.OnlineStatusChange += Chassis_OnlineStatusChange;
 
             trilist.OnlineStatusChange += (d, args) =>
@@ -473,8 +472,8 @@ namespace PepperDash.Essentials.DM.VideoWindowing
         }
 
         void HdWpWindowLayout_WindowLayoutChange(object sender, GenericEventArgs args)
-        {
-            Debug.Console(PepperDashEssentialsDmDebug.Notice, "WindowLayoutChange event triggerend. EventId = {0}", args.EventId); 
+        {           
+            Debug.LogInformation(this, "WindowLayoutChange event triggerend. EventId = {0}", args.EventId);
         }
 
         #endregion
@@ -483,21 +482,15 @@ namespace PepperDash.Essentials.DM.VideoWindowing
 
         public class HdWp4k401cControllerFactory : EssentialsPluginDeviceFactory<HdWp4k401cController>
         {
-
             public HdWp4k401cControllerFactory()
             {
-                //MinimumEssentialsFrameworkVersion = "2.2.1";
+                MinimumEssentialsFrameworkVersion = "2.2.1";
                 TypeNames = new List<string>() { "hdWp4k401c" };
             }
 
             public override EssentialsDevice BuildDevice(DeviceConfig dc)
-            {
-                //Debug.Console(PepperDashEssentialsDmDebug.Notice, "Factory Attempting to create new HD-WP-4K-401-C Device");
-                Debug.LogMessage(LogEventLevel.Debug, "Factory Attempting to create new HD-WP-4K-401-C Device");
-
-                Debug.LogDebug("Factory Attempting to create new HD-WP-4K-401-C Device");
-
-                //Debug.LogMessage()
+            {                               
+                Debug.LogDebug("Factory Attempting to create new HD-WP-4K-401-C Device");                
 
                 var props = JsonConvert.DeserializeObject<HdWp4k401cConfig>(dc.Properties.ToString());
 

@@ -1,5 +1,3 @@
-extern alias Full;
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +9,7 @@ using Crestron.SimplSharpPro.DM;
 using Crestron.SimplSharpPro.DM.Cards;
 using Crestron.SimplSharpPro.DM.Endpoints;
 using Crestron.SimplSharpProInternal;
-using Full.Newtonsoft.Json;
+using Newtonsoft.Json;
 using PepperDash.Core;
 using PepperDash.Essentials.Core;
 using PepperDash.Essentials.Core.Routing;
@@ -182,11 +180,11 @@ namespace PepperDash.Essentials.DM
                 if (!string.IsNullOrEmpty(properties.NoRouteText))
                 {
                     controller.NoRouteText = properties.NoRouteText;
-                    Debug.Console(1, controller, "Setting No Route Text value to: {0}", controller.NoRouteText);
+                    Debug.LogDebug(controller, "Setting No Route Text value to: {0}", controller.NoRouteText);                   
                 }
                 else
                 {
-                    Debug.Console(1, controller, "NoRouteText not specified.  Defaulting to blank string.", controller.NoRouteText);
+                    Debug.LogDebug(controller, "NoRouteText not specified.  Defaulting to blank string.", controller.NoRouteText);
                 }
 
                 controller.PropertiesConfig = properties;
@@ -194,7 +192,7 @@ namespace PepperDash.Essentials.DM
             }
             catch (Exception e)
             {
-                Debug.Console(0, "Error creating DM chassis:\r{0}", e);
+                Debug.LogVerbose("Error creating DM chassis:\r{0}", e);
             }
 
             return null;
@@ -341,7 +339,7 @@ namespace PepperDash.Essentials.DM
 
                             if (outputCard.Card is DmcStroAV)
                             {
-                                Debug.Console(2, "Found output stream card in slot: {0}.", tempX);
+                                Debug.LogVerbose("Found output stream card in slot: {0}.", tempX);
                                 var streamCard = outputCard.Card as DmcStroAV;
                                 if (streamCard.Control.StartFeedback.BoolValue == true)
                                     return 1;
@@ -356,7 +354,7 @@ namespace PepperDash.Essentials.DM
                         }
                         catch (InvalidOperationException iopex)
                         {
-                            Debug.Console(0, this, Debug.ErrorLogLevel.Warning, "Error adding output stream card in slot: {0}. Error: {1}", tempX, iopex);
+                            Debug.LogVerbose(this, "Error adding output stream card in slot: {0}. Error: {1}", tempX, iopex);
                             return 0;
                         }
                     });
@@ -455,7 +453,7 @@ namespace PepperDash.Essentials.DM
                         }
                         catch (InvalidOperationException iopex)
                         {
-                            Debug.Console(0, this, Debug.ErrorLogLevel.Warning, "The Input Card in slot: {0} supports HDCP 2.  Please update the configuration value in the inputCardSupportsHdcp2 object to true. Error: {1}", tempX, iopex);
+                            Debug.LogVerbose(this, "The Input Card in slot: {0} supports HDCP 2.  Please update the configuration value in the inputCardSupportsHdcp2 object to true. Error: {1}", tempX, iopex);
                             return 0;
                         }   
                     });
@@ -467,7 +465,7 @@ namespace PepperDash.Essentials.DM
 
                             if (inputCard.Card is DmcStr)
                             {
-                                Debug.Console(2, "Found input stream card in slot: {0}.", tempX);
+                                Debug.LogVerbose("Found input stream card in slot: {0}.", tempX);
                                 var streamCard = inputCard.Card as DmcStr;
                                 if (streamCard.Control.StartFeedback.BoolValue == true)
                                     return 1;
@@ -482,7 +480,7 @@ namespace PepperDash.Essentials.DM
                         }
                         catch (InvalidOperationException iopex)
                         {
-                            Debug.Console(0, this, Debug.ErrorLogLevel.Warning, "Error adding input stream card in slot: {0}. Error: {1}", tempX, iopex);
+                            Debug.LogVerbose(this, "Error adding input stream card in slot: {0}. Error: {1}", tempX, iopex);
                             return 0;
                         }
                     });
@@ -502,13 +500,13 @@ namespace PepperDash.Essentials.DM
                 return;
             }
 
-            Debug.Console(1, this, "Registering for resolution feedback for input {0} using Routing Port {1}", number, inputPort.Key);
+            Debug.LogDebug(this, "Registering for resolution feedback for input {0} using Routing Port {1}", number, inputPort.Key);
 
             input.VideoAttributes.AttributeChange += (sender, args) =>
             {
-                Debug.Console(1, this, "Input {0} resolution updated", number);
+                Debug.LogDebug(this, "Input {0} resolution updated", number);
 
-                Debug.Console(1, this, "Updating resolution feedback for input {0}", number);
+                Debug.LogDebug(this, "Updating resolution feedback for input {0}", number);
                 inputPort.VideoStatus.VideoResolutionFeedback.FireUpdate();
             };
         }
@@ -520,7 +518,7 @@ namespace PepperDash.Essentials.DM
         /// <param name="number"></param>
         public void AddInputCard(string type, uint number)
         {
-            Debug.Console(2, this, "Adding input card '{0}', slot {1}", type, number);
+            Debug.LogInformation(this, "Adding input card '{0}', slot {1}", type, number);
 
             type = type.ToLower();
 
@@ -804,7 +802,7 @@ namespace PepperDash.Essentials.DM
         {
             type = type.ToLower();
 
-            Debug.Console(2, this, "Adding output card '{0}', slot {1}", type, number);
+            Debug.LogInformation(this, "Adding output card '{0}', slot {1}", type, number);
 
             CardDevice card1 = null;
             CardDevice card2 = null;
@@ -910,7 +908,7 @@ namespace PepperDash.Essentials.DM
                         eRoutingPortConnectionType.Streaming, Chassis.Outputs[2 * (number - 1) + 1]);
                     break;
                 default:
-                    Debug.Console(1, this, "  WARNING: Output card type '{0}' is not available", type);
+                    Debug.LogDebug(this, "  WARNING: Output card type '{0}' is not available", type);
                     break;
             }
 
@@ -971,19 +969,19 @@ namespace PepperDash.Essentials.DM
         void AddInputPortWithDebug(uint cardNum, string portName, eRoutingSignalType sigType, eRoutingPortConnectionType portType, ICec cecPort, IVideoAttributesBasic videoAttributesBasic)
         {
             var portKey = string.Format("inputCard{0}--{1}", cardNum, portName);
-            Debug.Console(2, this, "Adding input port '{0}'", portKey);
+            Debug.LogInformation(this, "Adding input port '{0}'", portKey);
 
             RoutingInputPort inputPort;
 
             if (videoAttributesBasic != null)
             {
-                Debug.Console(1, this, "card {0} supports IVideoAttributesBasic", cardNum);
+                Debug.LogDebug(this, "card {0} supports IVideoAttributesBasic", cardNum);
                 var statusFuncs = new VideoStatusFuncsWrapper
                 {
                     VideoResolutionFeedbackFunc = () =>
                     {
                         var resolution = videoAttributesBasic.VideoAttributes.GetVideoResolutionString();
-                        Debug.Console(1, this, "Updating resolution for input {0}. New resolution: {1}", cardNum, resolution);
+                        Debug.LogDebug(this, "Updating resolution for input {0}. New resolution: {1}", cardNum, resolution);
                         return resolution;
                     }
                 };
@@ -1024,7 +1022,7 @@ namespace PepperDash.Essentials.DM
         void AddOutputPortWithDebug(string cardName, string portName, eRoutingSignalType sigType, eRoutingPortConnectionType portType, object selector, ICec cecPort)
         {
             var portKey = string.Format("{0}--{1}", cardName, portName);
-            Debug.Console(2, this, "Adding output port '{0}'", portKey);
+            Debug.LogInformation(this, "Adding output port '{0}'", portKey);
             var outputPort = new RoutingOutputPort(portKey, sigType, portType, selector, this);
 
             if (portName.IndexOf("Loop", StringComparison.InvariantCultureIgnoreCase) < 0)
@@ -1056,26 +1054,26 @@ namespace PepperDash.Essentials.DM
             {
                 case DMSystemEventIds.SystemIdEventId:
                 {
-                    Debug.Console(2, this, "SystemIdEvent Value: {0}", (Chassis as DmMDMnxn).SystemIdFeedback.UShortValue);
+                    Debug.LogInformation(this, "SystemIdEvent Value: {0}", (Chassis as DmMDMnxn).SystemIdFeedback.UShortValue);
                     SystemIdFeebdack.FireUpdate();
                     break;
                 }
                 case DMSystemEventIds.SystemIdBusyEventId:
                 {
-                    Debug.Console(2, this, "SystemIdBusyEvent State: {0}", (Chassis as DmMDMnxn).SystemIdBusy.BoolValue);
+                    Debug.LogInformation(this, "SystemIdBusyEvent State: {0}", (Chassis as DmMDMnxn).SystemIdBusy.BoolValue);
                     SystemIdBusyFeedback.FireUpdate();
                     break;
                 }
                 case DMSystemEventIds.AudioBreakawayEventId:
                 {
-                    Debug.Console(2, this, "AudioBreakaway Event: value: {0}",
+                    Debug.LogInformation(this, "AudioBreakaway Event: value: {0}",
                         (Chassis as DmMDMnxn).EnableAudioBreakawayFeedback.BoolValue);
                     EnableAudioBreakawayFeedback.FireUpdate();
                     break;
                 }
                 case DMSystemEventIds.USBBreakawayEventId:
                 {
-                    Debug.Console(2, this, "USBBreakaway Event: value: {0}",
+                    Debug.LogInformation(this, "USBBreakaway Event: value: {0}",
                         (Chassis as DmMDMnxn).EnableUSBBreakawayFeedback.BoolValue);
                     EnableUsbBreakawayFeedback.FireUpdate();
                     break;
@@ -1091,75 +1089,75 @@ namespace PepperDash.Essentials.DM
                 {
                     case DMInputEventIds.EndpointOnlineEventId:
                         {
-                            Debug.Console(2, this, "DM Input EndpointOnlineEventId for input: {0}. State: {1}", args.Number, device.Inputs[args.Number].EndpointOnlineFeedback);
+                            Debug.LogInformation(this, "DM Input EndpointOnlineEventId for input: {0}. State: {1}", args.Number, device.Inputs[args.Number].EndpointOnlineFeedback);
                             InputEndpointOnlineFeedbacks[args.Number].FireUpdate();
                             break;
                         }
                     case DMInputEventIds.OnlineFeedbackEventId:
                         {
-                            Debug.Console(2, this, "DM Input OnlineFeedbackEventId for input: {0}. State: {1}", args.Number, device.Inputs[args.Number].EndpointOnlineFeedback);
+                            Debug.LogInformation(this, "DM Input OnlineFeedbackEventId for input: {0}. State: {1}", args.Number, device.Inputs[args.Number].EndpointOnlineFeedback);
                             InputEndpointOnlineFeedbacks[args.Number].FireUpdate();
                             break;
                         }
                     case DMInputEventIds.VideoDetectedEventId:
                         {
-                            Debug.Console(2, this, "DM Input {0} VideoDetectedEventId", args.Number);
+                            Debug.LogInformation(this, "DM Input {0} VideoDetectedEventId", args.Number);
                             VideoInputSyncFeedbacks[args.Number].FireUpdate();
                             break;
                         }
                     case DMInputEventIds.InputNameEventId:
                         {
-                            Debug.Console(2, this, "DM Input {0} NameFeedbackEventId", args.Number);
+                            Debug.LogInformation(this, "DM Input {0} NameFeedbackEventId", args.Number);
                             InputNameFeedbacks[args.Number].FireUpdate();
                             break;
                         }
                     case DMInputEventIds.UsbRoutedToEventId:
                         {
-                            Debug.Console(2, this, "DM Input {0} UsbRoutedToEventId", args.Number);
+                            Debug.LogInformation(this, "DM Input {0} UsbRoutedToEventId", args.Number);
                             if (UsbInputRoutedToFeebacks[args.Number] != null)
                                 UsbInputRoutedToFeebacks[args.Number].FireUpdate();
                             else
-                                Debug.Console(1, this, "No index of {0} found in UsbInputRoutedToFeedbacks");
+                                Debug.LogDebug(this, "No index of {0} found in UsbInputRoutedToFeedbacks");
                             break;
                         }
                     case DMInputEventIds.HdcpCapabilityFeedbackEventId:
                         {
-                            Debug.Console(2, this, "DM Input {0} HdcpCapabilityFeedbackEventId", args.Number);
+                            Debug.LogInformation(this, "DM Input {0} HdcpCapabilityFeedbackEventId", args.Number);
                             if (InputCardHdcpStateFeedbacks[args.Number] != null)
                                 InputCardHdcpStateFeedbacks[args.Number].FireUpdate();
                             else
-                                Debug.Console(1, this, "No index of {0} found in InputCardHdcpCapabilityFeedbacks");
+                                Debug.LogDebug(this, "No index of {0} found in InputCardHdcpCapabilityFeedbacks");
                             break;
                         }
                     case DMInputEventIds.HdcpSupportOffEventId:
                         {
-                            Debug.Console(2, this, "DM Input {0} HdcpSupportOffEventId", args.Number);
+                            Debug.LogInformation(this, "DM Input {0} HdcpSupportOffEventId", args.Number);
                             if (InputCardHdcpStateFeedbacks[args.Number] != null)
                                 InputCardHdcpStateFeedbacks[args.Number].FireUpdate();
                             else
-                                Debug.Console(1, this, "No index of {0} found in InputCardHdcpCapabilityFeedbacks");
+                                Debug.LogDebug(this, "No index of {0} found in InputCardHdcpCapabilityFeedbacks");
                             break;
                         }
                     case DMInputEventIds.HdcpSupportOnEventId:
                         {
-                            Debug.Console(2, this, "DM Input {0} HdcpSupportOnEventId", args.Number);
+                            Debug.LogInformation(this, "DM Input {0} HdcpSupportOnEventId", args.Number);
                             if (InputCardHdcpStateFeedbacks[args.Number] != null)
                                 InputCardHdcpStateFeedbacks[args.Number].FireUpdate();
                             else
-                                Debug.Console(1, this, "No index of {0} found in InputCardHdcpCapabilityFeedbacks");
+                                Debug.LogDebug(this, "No index of {0} found in InputCardHdcpCapabilityFeedbacks");
                             break;
                         }
                     case DMInputEventIds.StartEventId:
                     case DMInputEventIds.StopEventId:
                     case DMInputEventIds.PauseEventId:
                         {
-                            Debug.Console(2, this, "DM Input {0} Stream Status EventId", args.Number);
+                            Debug.LogInformation(this, "DM Input {0} Stream Status EventId", args.Number);
                             if (InputStreamCardStateFeedbacks[args.Number] != null)
                             {
                                 InputStreamCardStateFeedbacks[args.Number].FireUpdate();
                             }
                             else
-                                Debug.Console(2, this, "No index of {0} found in InputStreamCardStateFeedbacks");
+                                Debug.LogInformation(this, "No index of {0} found in InputStreamCardStateFeedbacks");
                             break;
                         }
                     case DMInputEventIds.HorizontalResolutionFeedbackEventId:
@@ -1167,28 +1165,28 @@ namespace PepperDash.Essentials.DM
                     case DMInputEventIds.FramesPerSecondFeedbackEventId:
                     case DMInputEventIds.ResolutionEventId:
                     {
-                        Debug.Console(1, this, "Input {0} resolution updated", args.Number);
+                        Debug.LogDebug(this, "Input {0} resolution updated", args.Number);
                         var inputPort =
                             InputPorts.Cast<RoutingInputPortWithVideoStatuses>()
                                 .FirstOrDefault((ip) => ip.Key.Contains(String.Format("inputCard{0}", args.Number)));
 
                         if (inputPort != null)
                         {
-                            Debug.Console(1, this, "Updating resolution feedback for input {0}", args.Number);
+                            Debug.LogDebug(this, "Updating resolution feedback for input {0}", args.Number);
                             inputPort.VideoStatus.VideoResolutionFeedback.FireUpdate();
                         }
                         break;
                     }
                     default:
                         {
-                            Debug.Console(2, this, "DMInputChange fired for Input {0} with Unhandled EventId: {1}", args.Number, args.EventId);
+                            Debug.LogInformation(this, "DMInputChange fired for Input {0} with Unhandled EventId: {1}", args.Number, args.EventId);
                             break;
                         }
                 }
             }
             catch (Exception ex)
             {
-                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "Error in Chassis_DMInputChange: {0}", ex);
+                Debug.LogVerbose(this, "Error in Chassis_DMInputChange: {0}", ex);
             }
         }
 
@@ -1222,14 +1220,14 @@ namespace PepperDash.Essentials.DM
                 }
                 case DMOutputEventIds.EndpointOnlineEventId:
                 {
-                    Debug.Console(2, this, "Output {0} DMOutputEventIds.EndpointOnlineEventId fired. State: {1}", args.Number,
+                    Debug.LogInformation(this, "Output {0} DMOutputEventIds.EndpointOnlineEventId fired. State: {1}", args.Number,
                         Chassis.Outputs[output].EndpointOnlineFeedback);
                     OutputEndpointOnlineFeedbacks[output].FireUpdate();
                     break;
                 }
                 case DMOutputEventIds.OnlineFeedbackEventId:
                 {
-                    Debug.Console(2, this, "Output {0} DMInputEventIds.OnlineFeedbackEventId fired. State: {1}", args.Number,
+                    Debug.LogInformation(this, "Output {0} DMInputEventIds.OnlineFeedbackEventId fired. State: {1}", args.Number,
                         Chassis.Outputs[output].EndpointOnlineFeedback);
                     OutputEndpointOnlineFeedbacks[output].FireUpdate();
                     break;
@@ -1240,7 +1238,7 @@ namespace PepperDash.Essentials.DM
                     var inputNumber = Chassis.Outputs[output].VideoOutFeedback == null ? 0 : Chassis.
                     Outputs[output].VideoOutFeedback.Number;
 
-                    Debug.Console(2, this, "DMSwitchVideo:{0} Routed Input:{1} Output:{2}'", Name, inputNumber, output);
+                    Debug.LogInformation(this, "DMSwitchVideo:{0} Routed Input:{1} Output:{2}'", Name, inputNumber, output);
 
                     if (VideoOutputFeedbacks.ContainsKey(output))
                     {
@@ -1267,7 +1265,7 @@ namespace PepperDash.Essentials.DM
                     var inputNumber = Chassis.Outputs[output].AudioOutFeedback == null ? 0 : Chassis.
                     Outputs[output].AudioOutFeedback.Number;
 
-                    Debug.Console(2, this, "DMSwitchAudio:{0} Routed Input:{1} Output:{2}'", Name, inputNumber, output);
+                    Debug.LogInformation(this, "DMSwitchAudio:{0} Routed Input:{1} Output:{2}'", Name, inputNumber, output);
 
                     if (AudioOutputFeedbacks.ContainsKey(output))
                     {
@@ -1291,19 +1289,19 @@ namespace PepperDash.Essentials.DM
                 }
                 case DMOutputEventIds.OutputNameEventId:
                 {
-                    Debug.Console(2, this, "DM Output {0} NameFeedbackEventId", output);
+                    Debug.LogInformation(this, "DM Output {0} NameFeedbackEventId", output);
                     OutputNameFeedbacks[output].FireUpdate();
                     break;
                 }
                 case DMOutputEventIds.UsbRoutedToEventId:
                 {
-                    Debug.Console(2, this, "DM Output {0} UsbRoutedToEventId", args.Number);
+                    Debug.LogInformation(this, "DM Output {0} UsbRoutedToEventId", args.Number);
                     UsbOutputRoutedToFeebacks[args.Number].FireUpdate();
                     break;
                 }
                 case DMOutputEventIds.DisabledByHdcpEventId:
                 {
-                    Debug.Console(2, this, "DM Output {0} DisabledByHdcpEventId", args.Number);
+                    Debug.LogInformation(this, "DM Output {0} DisabledByHdcpEventId", args.Number);
                     OutputDisabledByHdcpFeedbacks[args.Number].FireUpdate();
                     break;
                 }
@@ -1311,18 +1309,18 @@ namespace PepperDash.Essentials.DM
                 case DMOutputEventIds.StopEventId:
                 case DMOutputEventIds.PauseEventId:
                 {
-                    Debug.Console(2, this, "DM Output {0} Stream Status EventId", args.Number);
+                    Debug.LogInformation(this, "DM Output {0} Stream Status EventId", args.Number);
                     if (OutputStreamCardStateFeedbacks[args.Number] != null)
                     {
                         OutputStreamCardStateFeedbacks[args.Number].FireUpdate();
                     }
                     else
-                        Debug.Console(2, this, "No index of {0} found in OutputStreamCardStateFeedbacks");
+                        Debug.LogInformation(this, "No index of {0} found in OutputStreamCardStateFeedbacks");
                     break;
                 }
                 default:
                 {
-                    Debug.Console(2, this, "DMOutputChange fired for Output {0} with Unhandled EventId: {1}", args.Number, args.EventId);
+                    Debug.LogInformation(this, "DMOutputChange fired for Output {0} with Unhandled EventId: {1}", args.Number, args.EventId);
                     break;
                 }
             }
@@ -1363,7 +1361,7 @@ namespace PepperDash.Essentials.DM
         #region IRouting Members
         public void ExecuteSwitch(object inputSelector, object outputSelector, eRoutingSignalType sigType)
         {
-            Debug.Console(2, this, "Making an awesome DM route from {0} to {1} {2}", inputSelector, outputSelector, sigType);
+            Debug.LogInformation(this, "Making an awesome DM route from {0} to {1} {2}", inputSelector, outputSelector, sigType);
 
             var input = inputSelector as DMInput;//Input Selector could be null...
 
@@ -1374,8 +1372,7 @@ namespace PepperDash.Essentials.DM
 
             if (output == null && !(isUsbOutput || isUsbInput))
             {
-                Debug.Console(0, this, Debug.ErrorLogLevel.Warning,
-                    "Unable to execute switch for inputSelector {0} to outputSelector {1}", inputSelector,
+                Debug.LogVerbose(this, "Unable to execute switch for inputSelector {0} to outputSelector {1}", inputSelector,
                     outputSelector);
                 return;
             }
@@ -1390,7 +1387,7 @@ namespace PepperDash.Essentials.DM
             {
                 if (RouteOffTimers.ContainsKey(key))
                 {
-                    Debug.Console(2, this, "{0} cancelling route off due to new source", output);
+                    Debug.LogInformation(this, "{0} cancelling route off due to new source", output);
                     RouteOffTimers[key].Stop();
                     RouteOffTimers.Remove(key);
                 }
@@ -1467,8 +1464,7 @@ namespace PepperDash.Essentials.DM
 
             if (tempOutput == null)
             {
-                Debug.Console(0, this, Debug.ErrorLogLevel.Warning,
-                    "Unable to execute switch for inputSelector {0} to outputSelector {1}", inputSelector,
+                Debug.LogVerbose(this, "Unable to execute switch for inputSelector {0} to outputSelector {1}", inputSelector,
                     outputSelector);
                 return;
             }
@@ -1491,7 +1487,7 @@ namespace PepperDash.Essentials.DM
             //Routing Input to Input or Output to Input
             if ((sigType & eRoutingSignalType.UsbInput) == eRoutingSignalType.UsbInput)
             {
-                Debug.Console(2, this, "Executing USB Input switch.\r\n in:{0} output: {1}", inputSelector, outputSelector);
+                Debug.LogInformation(this, "Executing USB Input switch.\r\n in:{0} output: {1}", inputSelector, outputSelector);
                 if (outputSelector > chassisSize)
                 {
                     uint outputIndex;
@@ -1516,7 +1512,7 @@ namespace PepperDash.Essentials.DM
             }
             if ((sigType & eRoutingSignalType.UsbOutput) == eRoutingSignalType.UsbOutput)
             {
-                Debug.Console(2, this, "Executing USB Output switch.\r\n in:{0} output: {1}", inputSelector, outputSelector);
+                Debug.LogInformation(this, "Executing USB Output switch.\r\n in:{0} output: {1}", inputSelector, outputSelector);
 
                 //routing Output to Output or Input to Output
                 if (inputSelector > chassisSize)
@@ -1545,7 +1541,7 @@ namespace PepperDash.Essentials.DM
                 }
                 Chassis.USBEnter.BoolValue = true;
 
-                Debug.Console(2, this, "Routing USB for input {0} to {1}", inputSelector, dmCard);
+                Debug.LogInformation(this, "Routing USB for input {0} to {1}", inputSelector, dmCard);
                 ExecuteSwitch(dmCard, Chassis.Outputs[outputSelector], sigType);
                 return;
             }
@@ -1562,7 +1558,7 @@ namespace PepperDash.Essentials.DM
         {
             var joinMap = GetJoinMap(joinStart, joinMapKey, bridge);
 
-            Debug.Console(1, this, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
+            Debug.LogDebug(this, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
 
             LinkChassisToApi(trilist, joinMap);
 
@@ -1605,7 +1601,7 @@ namespace PepperDash.Essentials.DM
                 return;
             }
 
-            Debug.Console(1, "Port value for input card {0} is set", ioSlot);
+            Debug.LogDebug("Port value for input card {0} is set", ioSlot);
             var port = inputPort.Port;
 
             if (port == null)
@@ -1614,11 +1610,11 @@ namespace PepperDash.Essentials.DM
             }
             if (!(port is HdmiInputWithCEC))
             {
-                Debug.Console(0, this, "HDMI Input port on card {0} does not support HDCP settings.", ioSlot);
+                Debug.LogVerbose(this, "HDMI Input port on card {0} does not support HDCP settings.", ioSlot);
                 return;
             }
 
-            Debug.Console(1, "Port is HdmiInputWithCec");
+            Debug.LogDebug("Port is HdmiInputWithCec");
 
             var hdmiInPortWCec = port as HdmiInputWithCEC;
             
@@ -1646,7 +1642,7 @@ namespace PepperDash.Essentials.DM
                 return;
             }
 
-            Debug.Console(1, this, "Linking {0} to join {1} for resolution feedback.", videoStatus.Key, joinMap.InputCurrentResolution.JoinNumber + ioSlotJoin);
+            Debug.LogDebug(this, "Linking {0} to join {1} for resolution feedback.", videoStatus.Key, joinMap.InputCurrentResolution.JoinNumber + ioSlotJoin);
             videoStatus.VideoStatus.VideoResolutionFeedback.LinkInputSig(trilist.StringInput[joinMap.InputCurrentResolution.JoinNumber + ioSlotJoin]);
         }
 
@@ -1660,28 +1656,28 @@ namespace PepperDash.Essentials.DM
             var streamCard = Chassis.Inputs[ioSlot].Card as DmcStr;
             var join = joinMap.InputStreamCardState.JoinNumber + ioSlotJoin;
 
-            Debug.Console(1, "Port value for input card {0} is set as a stream card", ioSlot);
+            Debug.LogDebug("Port value for input card {0} is set as a stream card", ioSlot);
 
             trilist.SetUShortSigAction(join, s =>
             {
                 if (s == 1)
                 {
-                    Debug.Console(2, this, "Join {0} value {1}: Setting stream state to start", join, s);
+                    Debug.LogInformation(this, "Join {0} value {1}: Setting stream state to start", join, s);
                     streamCard.Control.Start();
                 }
                 else if (s == 2)
                 {
-                    Debug.Console(2, this, "Join {0} value {1}: Setting stream state to stop", join, s);
+                    Debug.LogInformation(this, "Join {0} value {1}: Setting stream state to stop", join, s);
                     streamCard.Control.Stop();
                 }
                 else if (s == 3)
                 {
-                    Debug.Console(2, this, "Join {0} value {1}: Setting stream state to pause", join, s);
+                    Debug.LogInformation(this, "Join {0} value {1}: Setting stream state to pause", join, s);
                     streamCard.Control.Pause();
                 }
                 else
                 {
-                    Debug.Console(2, this, "Join {0} value {1}: Ignore stream state", join, s);
+                    Debug.LogInformation(this, "Join {0} value {1}: Ignore stream state", join, s);
                 }
             });
 
@@ -1707,28 +1703,28 @@ namespace PepperDash.Essentials.DM
             var streamCard = Chassis.Outputs[ioSlot].Card as DmcStroAV;
             var join = joinMap.OutputStreamCardState.JoinNumber + ioSlotJoin;
 
-            Debug.Console(1, "Port value for output card {0} is set as a stream card", ioSlot);
+            Debug.LogDebug("Port value for output card {0} is set as a stream card", ioSlot);
 
             trilist.SetUShortSigAction(join, s =>
             {
                 if (s == 1)
                 {
-                    Debug.Console(2, this, "Join {0} value {1}: Setting stream state to start", join, s);
+                    Debug.LogInformation(this, "Join {0} value {1}: Setting stream state to start", join, s);
                     streamCard.Control.Start();
                 }
                 else if (s == 2)
                 {
-                    Debug.Console(2, this, "Join {0} value {1}: Setting stream state to stop", join, s);
+                    Debug.LogInformation(this, "Join {0} value {1}: Setting stream state to stop", join, s);
                     streamCard.Control.Stop();
                 }
                 else if (s == 3)
                 {
-                    Debug.Console(2, this, "Join {0} value {1}: Setting stream state to pause", join, s);
+                    Debug.LogInformation(this, "Join {0} value {1}: Setting stream state to pause", join, s);
                     streamCard.Control.Pause();
                 }
                 else
                 {
-                    Debug.Console(2, this, "Join {0} value {1}: Ignore stream state", join, s);
+                    Debug.LogInformation(this, "Join {0} value {1}: Ignore stream state", join, s);
                 }
             });
 
@@ -1739,7 +1735,7 @@ namespace PepperDash.Essentials.DM
 
         private void LinkRxToApi(BasicTriList trilist, uint ioSlot, DmChassisControllerJoinMap joinMap, uint ioSlotJoin)
         {
-            Debug.Console(2, "Creating Rx Feedbacks {0}", ioSlot);
+            Debug.LogVerbose("Creating Rx Feedbacks {0}", ioSlot);
             var rxKey = RxDictionary[ioSlot];
             var rxDevice = DeviceManager.GetDeviceForKey(rxKey) as DmRmcControllerBase;
             var hdBaseTDevice = DeviceManager.GetDeviceForKey(rxKey) as DmHdBaseTControllerBase;
@@ -1758,11 +1754,11 @@ namespace PepperDash.Essentials.DM
 
         private void LinkTxToApi(BasicTriList trilist, uint ioSlot, DmChassisControllerJoinMap joinMap, uint ioSlotJoin)
         {
-            Debug.Console(1, "Setting up actions and feedbacks on input card {0}", ioSlot);
+            Debug.LogDebug("Setting up actions and feedbacks on input card {0}", ioSlot);
             VideoInputSyncFeedbacks[ioSlot].LinkInputSig(
                 trilist.BooleanInput[joinMap.VideoSyncStatus.JoinNumber + ioSlotJoin]);
 
-            Debug.Console(2, "Creating Tx Feedbacks {0}", ioSlot);
+            Debug.LogVerbose("Creating Tx Feedbacks {0}", ioSlot);
             var txKey = TxDictionary[ioSlot];
             var txDevice = DeviceManager.GetDeviceForKey(txKey) as BasicDmTxControllerBase;
 
@@ -1797,10 +1793,10 @@ namespace PepperDash.Essentials.DM
 
             if (!(port is DMInputPortWithCec))
             {
-                Debug.Console(0, this, "DM Input port on card {0} does not support HDCP settings.", ioSlot);
+                Debug.LogVerbose(this, "DM Input port on card {0} does not support HDCP settings.", ioSlot);
                 return;
             }
-            Debug.Console(1, "Port is DMInputPortWithCec");
+            Debug.LogDebug("Port is DMInputPortWithCec");
 
             var dmInPortWCec = port as DMInputPortWithCec;
 
@@ -1811,8 +1807,7 @@ namespace PepperDash.Essentials.DM
             
             if(!PropertiesConfig.InputSlotSupportsHdcp2.TryGetValue(ioSlot, out supportsHdcp2))
             {
-                Debug.Console(0, this, Debug.ErrorLogLevel.Warning,
-                    "Input Slot Supports HDCP2 setting not found for slot {0}. Setting to false. Program may not function as intended.",
+                Debug.LogVerbose(this, "Input Slot Supports HDCP2 setting not found for slot {0}. Setting to false. Program may not function as intended.",
                     ioSlot);
             }
 
@@ -1838,7 +1833,7 @@ namespace PepperDash.Essentials.DM
             {
                 return;
             }
-            Debug.Console(1, this, "Linking {0} to join {1} for resolution feedback.", videoStatus.Key, joinMap.InputCurrentResolution.JoinNumber + ioSlotJoin);
+            Debug.LogDebug(this, "Linking {0} to join {1} for resolution feedback.", videoStatus.Key, joinMap.InputCurrentResolution.JoinNumber + ioSlotJoin);
             videoStatus.VideoStatus.VideoResolutionFeedback.LinkInputSig(trilist.StringInput[joinMap.InputCurrentResolution.JoinNumber + ioSlotJoin]);
         }
 
@@ -1863,7 +1858,7 @@ namespace PepperDash.Essentials.DM
 
             if (inputPorts.Count == 0)
             {
-                Debug.Console(1, this, "No HDCP-capable input ports found on transmitter for slot {0}", ioSlot);
+                Debug.LogDebug(this, "No HDCP-capable input ports found on transmitter for slot {0}", ioSlot);
                 return;
             }
 
@@ -1871,8 +1866,7 @@ namespace PepperDash.Essentials.DM
 
             if (!PropertiesConfig.InputSlotSupportsHdcp2.TryGetValue(ioSlot, out supportsHdcp2))
             {
-                Debug.Console(0, this, Debug.ErrorLogLevel.Warning,
-                    "Input Slot Supports HDCP2 setting not found for slot {0}. Setting to false. Program may not function as intended.",
+                Debug.LogVerbose(this, "Input Slot Supports HDCP2 setting not found for slot {0}. Setting to false. Program may not function as intended.",
                     ioSlot);
             }
 
@@ -1885,7 +1879,7 @@ namespace PepperDash.Essentials.DM
             }
             else
             {
-                Debug.Console(2, this, "Transmitter Hdcp Feedback null. Linking to card's feedback");
+                Debug.LogInformation(this, "Transmitter Hdcp Feedback null. Linking to card's feedback");
                 InputCardHdcpStateFeedbacks[ioSlot].LinkInputSig(
                     trilist.UShortInput[joinMap.HdcpSupportState.JoinNumber + ioSlotJoin]);
             }
@@ -1901,7 +1895,7 @@ namespace PepperDash.Essentials.DM
             {
                 return;
             }
-            Debug.Console(1, this, "Linking {0} to join {1} for resolution feedback.", videoStatus.Key,
+            Debug.LogDebug(this, "Linking {0} to join {1} for resolution feedback.", videoStatus.Key,
                 joinMap.InputCurrentResolution.JoinNumber + ioSlotJoin);
             videoStatus.VideoStatus.VideoResolutionFeedback.LinkInputSig(
                 trilist.StringInput[joinMap.InputCurrentResolution.JoinNumber + ioSlotJoin]);
@@ -1917,13 +1911,13 @@ namespace PepperDash.Essentials.DM
                  || Chassis is DmMd32x32Cpu3 || Chassis is DmMd32x32Cpu3rps) ||
                 advancedTxDevice == null)
             {
-                Debug.Console(2, "Linking Tx Online Feedback from Input Card {0}", ioSlot);
+                Debug.LogVerbose("Linking Tx Online Feedback from Input Card {0}", ioSlot);
                 InputEndpointOnlineFeedbacks[ioSlot].LinkInputSig(
                     trilist.BooleanInput[joinMap.InputEndpointOnline.JoinNumber + ioSlotJoin]);
                 return;
             }
 
-            Debug.Console(2, "Linking Tx Online Feedback from Advanced Transmitter at input {0}", ioSlot);
+            Debug.LogVerbose("Linking Tx Online Feedback from Advanced Transmitter at input {0}", ioSlot);
 
             advancedTxDevice.IsOnline.LinkInputSig(
                 trilist.BooleanInput[joinMap.InputEndpointOnline.JoinNumber + ioSlotJoin]);
@@ -2022,8 +2016,7 @@ namespace PepperDash.Essentials.DM
             }
             else
             {
-                Debug.Console(0, this,
-                    "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
+                Debug.LogVerbose(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
             }
             return joinMap;
         }
@@ -2037,12 +2030,12 @@ namespace PepperDash.Essentials.DM
                     {
                         if (s == 0)
                         {
-                            Debug.Console(2, this, "Join {0} value {1} Setting HdcpSupport to off", join, s); 
+                            Debug.LogInformation(this, "Join {0} value {1} Setting HdcpSupport to off", join, s); 
                             port.HdcpSupportOff();
                         }
                         else if (s > 0)
                         {
-                            Debug.Console(2, this, "Join {0} value {1} Setting HdcpSupport to on", join, s); 
+                            Debug.LogInformation(this, "Join {0} value {1} Setting HdcpSupport to on", join, s); 
                             port.HdcpSupportOn();
                         }
                     });
@@ -2052,7 +2045,7 @@ namespace PepperDash.Essentials.DM
                 trilist.SetUShortSigAction(join,
                         u =>
                         {
-                            Debug.Console(2, this, "Join {0} value {1} Setting HdcpReceiveCapability to: {2}", join, u, (eHdcpCapabilityType)u); 
+                            Debug.LogInformation(this, "Join {0} value {1} Setting HdcpReceiveCapability to: {2}", join, u, (eHdcpCapabilityType)u); 
                             port.HdcpReceiveCapability = (eHdcpCapabilityType)u;
                         });
             }
@@ -2067,12 +2060,12 @@ namespace PepperDash.Essentials.DM
                     {
                         if (s == 0)
                         {
-                            Debug.Console(2, this, "Join {0} value {1} Setting HdcpSupport to off", join, s);
+                            Debug.LogInformation(this, "Join {0} value {1} Setting HdcpSupport to off", join, s);
                             port.HdcpSupportOff();
                         }
                         else if (s > 0)
                         {
-                            Debug.Console(2, this, "Join {0} value {1} Setting HdcpSupport to on", join, s);
+                            Debug.LogInformation(this, "Join {0} value {1} Setting HdcpSupport to on", join, s);
                             port.HdcpSupportOn();
                         }
                     });
@@ -2082,7 +2075,7 @@ namespace PepperDash.Essentials.DM
                 trilist.SetUShortSigAction(join,
                         u =>
                         {
-                            Debug.Console(2, this, "Join {0} value {1} Setting HdcpReceiveCapability to: {2}", join, u, (eHdcpCapabilityType)u);
+                            Debug.LogInformation(this, "Join {0} value {1} Setting HdcpReceiveCapability to: {2}", join, u, (eHdcpCapabilityType)u);
                             port.HdcpCapability = (eHdcpCapabilityType)u;
                         });
             }
@@ -2163,13 +2156,13 @@ namespace PepperDash.Essentials.DM
         {
             if (!InputSlots.TryGetValue(inputSlotKey, out var inputSlot))
             {
-                Debug.Console(0, this, "Unable to find input slot with key {0}", inputSlotKey);
+                Debug.LogVerbose(this, "Unable to find input slot with key {0}", inputSlotKey);
                 return;
             }
 
             if (!OutputSlots.TryGetValue(outputSlotKey, out var outputSlot))
             {
-                Debug.Console(0, this, "Unable to find output slot with key {0}", outputSlotKey);
+                Debug.LogVerbose(this, "Unable to find output slot with key {0}", outputSlotKey);
                 return;
             }
 
@@ -2183,7 +2176,7 @@ namespace PepperDash.Essentials.DM
 
             if (outputDevice == null)
             {
-                Debug.Console(0, this, "Unable to get device to route");
+                Debug.LogVerbose(this, "Unable to get device to route");
                 return;
             }
 
@@ -2228,7 +2221,7 @@ namespace PepperDash.Essentials.DM
         {
             var type = dc.Type.ToLower();
 
-            Debug.Console(1, "Factory Attempting to create new DmChassisController Device");
+            Debug.LogDebug("Factory Attempting to create new DmChassisController Device");
 
             if (type.StartsWith("dmmd8x") || type.StartsWith("dmmd16x") || type.StartsWith("dmmd32x"))
             {
