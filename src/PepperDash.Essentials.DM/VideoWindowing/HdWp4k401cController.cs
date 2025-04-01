@@ -1,24 +1,20 @@
-﻿extern alias Full;
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using Full.Newtonsoft.Json;
 using Crestron.SimplSharp;
 using Crestron.SimplSharpPro.DeviceSupport;
 using Crestron.SimplSharpPro.DM;
 using PepperDash.Core;
 using PepperDash.Essentials.Core;
-using PepperDash.Essentials.DM;
 using PepperDash.Essentials.DM.Config;
 using PepperDash.Essentials.Core.Bridges;
 using PepperDash.Essentials.Core.Config;
 using Serilog.Events;
 using Crestron.SimplSharpPro.DM.VideoWindowing;
-using static Org.BouncyCastle.Math.EC.ECCurve;
 using PepperDash.Essentials.Core.DeviceTypeInterfaces;
+using Newtonsoft.Json;
+using PepperDash.Core.Logging;
+using PepperDash.Essentials.AppServer.Messengers;
 
 namespace PepperDash.Essentials.DM.VideoWindowing
 {
@@ -178,7 +174,8 @@ namespace PepperDash.Essentials.DM.VideoWindowing
                     //_layouts.Add($"{layout.Key}", new HdWp4k401cLayouts.HdWp4k401cLayout(layout.Value.LayoutName, layout.Value.LayoutName, screen.ScreenIndex, layout.Value.LayoutIndex, this));
                     _layouts.Add($"{layout.Key}", new HdWp4k401cLayouts.HdWp4k401cLayout(layout.Value.LayoutIndex, this));
                 }
-                _screenLayouts[screenKey] = new HdWp4k401cLayouts(_layouts);
+                _screenLayouts[screenKey] = new HdWp4k401cLayouts($"{Key}-screen-{screenKey}", $"{Key}-screen-{screenKey}", _layouts);
+                DeviceManager.AddDevice(_screenLayouts[screenKey]); //Add to device manager and will show up in devlist
             }
 
             _HdWpChassis.HdWpWindowLayout.WindowLayoutChange += HdWpWindowLayout_WindowLayoutChange;
@@ -189,6 +186,35 @@ namespace PepperDash.Essentials.DM.VideoWindowing
         #endregion
 
         #region Methods
+
+        public override bool CustomActivate()
+        {
+            return base.CustomActivate();
+        }
+
+        protected override void CreateMobileControlMessengers()
+        {
+            // look in device manager for the first instance of MC, 
+            this.LogInformation("Adding Mobile Control Messengers for Aquilon");
+            var mc = DeviceManager.AllDevices.OfType<IMobileControl>().FirstOrDefault();
+            
+            //if not there MC doesn't exist
+            if (mc == null)
+            {
+                this.LogInformation("Mobile Control not found");
+                return;
+            }
+
+            var screenMessenger = new IHasScreensWithLayoutsMessenger($"{Key}-screens", $"/device/{Key}", this);
+            mc.AddDeviceMessenger(screenMessenger);
+
+            foreach (var screen in Screens)
+            {
+                var screenKey = screen.Key;
+                var messenger = new ISelectableItemsMessenger<string>($"{Key}-screen-{screenKey}", $"/device/{Key}/screen-{screenKey}", _screenLayouts[screenKey], $"screen-{screenKey}");
+                mc.AddDeviceMessenger(messenger);
+            }
+        }
 
         /// <summary>
         /// Raise an event when the status of a switch object changes.
@@ -460,12 +486,18 @@ namespace PepperDash.Essentials.DM.VideoWindowing
 
             public HdWp4k401cControllerFactory()
             {
+                //MinimumEssentialsFrameworkVersion = "2.2.1";
                 TypeNames = new List<string>() { "hdWp4k401c" };
             }
 
             public override EssentialsDevice BuildDevice(DeviceConfig dc)
             {
-                Debug.Console(PepperDashEssentialsDmDebug.Notice, "Factory Attempting to create new HD-WP-4K-401-C Device");                
+                //Debug.Console(PepperDashEssentialsDmDebug.Notice, "Factory Attempting to create new HD-WP-4K-401-C Device");
+                Debug.LogMessage(LogEventLevel.Debug, "Factory Attempting to create new HD-WP-4K-401-C Device");
+
+                Debug.LogDebug("Factory Attempting to create new HD-WP-4K-401-C Device");
+
+                //Debug.LogMessage()
 
                 var props = JsonConvert.DeserializeObject<HdWp4k401cConfig>(dc.Properties.ToString());
 
@@ -480,7 +512,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
         #endregion
 
         #region Layouts
-        class HdWp4k401cLayouts : ISelectableItems<string>
+        class HdWp4k401cLayouts : ISelectableItems<string>, IKeyName
         {
             private Dictionary<string, ISelectableItem> _items = new Dictionary<string, ISelectableItem>();
             public Dictionary<string, ISelectableItem> Items
@@ -504,12 +536,18 @@ namespace PepperDash.Essentials.DM.VideoWindowing
                 }
             }
 
+            public string Name { get; private set; }
+
+            public string Key { get; private set; }
+
             public event EventHandler ItemsUpdated;
             public event EventHandler CurrentItemChanged;
 
-            public HdWp4k401cLayouts(Dictionary<string, ISelectableItem> items)
+            public HdWp4k401cLayouts(string key, string name, Dictionary<string, ISelectableItem> items)
             {
                 Items = items;
+                Key = key;
+                Name = name;
             }
 
             public class HdWp4k401cLayout : ISelectableItem
