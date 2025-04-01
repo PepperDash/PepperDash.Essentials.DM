@@ -6,7 +6,7 @@
     <TargetFramework>net472</TargetFramework>
     <AssemblyTitle>PepperDash.Essentials.DM</AssemblyTitle>
     <Product>PepperDash.Essentials.DM</Product>
-    <Copyright>Copyright ©  2023</Copyright>
+    <Copyright>Copyright ©  2025</Copyright>
     <OutputPath>bin\$(Configuration)\</OutputPath>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 	<Title>PepperDash Essentials DM</Title>
@@ -28,7 +28,9 @@
 	<PackageReference Include="Newtonsoft.Json" Version="13.0.3">
 		<Aliases>Full</Aliases>
 	</PackageReference>
-    <PackageReference Include="PepperDashEssentials" Version="2.0.0-alpha-2461" />
+    <PackageReference Include="PepperDashEssentials" Version="2.0.0-alpha-2461">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Data.DataSetExtensions" />

@@ -36,9 +36,36 @@ namespace PepperDash.Essentials.DM.Config
         [JsonProperty("inputSlotSupportsHdcp2")]
         public Dictionary<uint, bool> InputSlotSupportsHdcp2 { get; set; }
 
+        [JsonProperty("screens")]
+        public Dictionary<uint, ScreenInfo> Screens { get; set; }
+
         public HdWp4k401cConfig()
         {
             InputSlotSupportsHdcp2 = new Dictionary<uint, bool>();
         }
+    }
+
+    public class ScreenInfo
+    {
+        [JsonProperty("enabled")]
+        public bool Enabled { get; set; }
+
+        [JsonProperty("name")]
+        public string Name { get; set; }
+
+        [JsonProperty("screenIndex")]
+        public int ScreenIndex { get; set; }
+
+        [JsonProperty("layouts")]
+        public Dictionary<uint, LayoutInfo> Layouts { get; set; }
+    }
+
+    public class LayoutInfo
+    {
+        [JsonProperty("layoutName")]
+        public string LayoutName { get; set; }
+
+        [JsonProperty("layoutIndex")]
+        public int LayoutIndex { get; set; }
     }
 }

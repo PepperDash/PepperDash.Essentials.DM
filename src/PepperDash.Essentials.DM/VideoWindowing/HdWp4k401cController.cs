@@ -11,20 +11,22 @@ using Crestron.SimplSharpPro.DeviceSupport;
 using Crestron.SimplSharpPro.DM;
 using PepperDash.Core;
 using PepperDash.Essentials.Core;
+using PepperDash.Essentials.DM;
 using PepperDash.Essentials.DM.Config;
 using PepperDash.Essentials.Core.Bridges;
 using PepperDash.Essentials.Core.Config;
 using Serilog.Events;
 using Crestron.SimplSharpPro.DM.VideoWindowing;
+using static Org.BouncyCastle.Math.EC.ECCurve;
+using PepperDash.Essentials.Core.DeviceTypeInterfaces;
 
 namespace PepperDash.Essentials.DM.VideoWindowing
 {
     [Description("Wrapper class for all hdWp4k401c video wall processor")]
-    public class HdWp4k401cController: CrestronGenericBridgeableBaseDevice, IRoutingNumericWithFeedback, IHasFeedback, IOnline
+    public class HdWp4k401cController: CrestronGenericBridgeableBaseDevice, IRoutingNumericWithFeedback, IHasFeedback, IOnline, IHasScreensWithLayouts
     {
         #region Private Members, Felds, and Properties
-        private HdWp4k401C _HdWpChassis;     
-        private bool _isOnline;
+        private readonly HdWp4k401C _HdWpChassis;           
         private int _WindowCount = 4; // 4 windows for this multi-window controller
         public event EventHandler<RoutingNumericEventArgs> NumericSwitchChange;
         public Dictionary<uint, string> InputNames { get; set; } // 4 inputs
@@ -35,10 +37,18 @@ namespace PepperDash.Essentials.DM.VideoWindowing
         public FeedbackCollection<IntFeedback> WindowRouteFeedbacks { get; private set; }
         public FeedbackCollection<IntFeedback> AudioOutputRouteFeedbacks { get; private set; }
         public FeedbackCollection<StringFeedback> InputNameFeedbacks { get; private set; }
-        //public FeedbackCollection<StringFeedback> WindowNameFeedbacks { get; private set; }
-        //public FeedbackCollection<StringFeedback> OutputWindowVideoRouteNameFeedbacks { get; private set; }
-        //public FeedbackCollection<StringFeedback> OutputWindowAudioRouteNameFeedbacks { get; private set; }
+
         public StringFeedback DeviceNameFeedback { get; private set; }
+        public Dictionary<uint, ScreenInfo> Screens { get; private set; }
+
+        public FeedbackCollection<StringFeedback> ScreenNamesFeedbacks { get; private set; }
+        public FeedbackCollection<BoolFeedback> ScreenEnablesFeedbacks { get; private set; }
+        public FeedbackCollection<StringFeedback> LayoutNamesFeedbacks { get; private set; }
+
+        private Dictionary<uint, string> LayoutNames { get; set; }
+        private Dictionary<uint, string> ImageNames { get; set; }
+
+        private Dictionary<uint, HdWp4k401cLayouts> _screenLayouts = new Dictionary<uint, HdWp4k401cLayouts>();
 
         #endregion
 
@@ -50,7 +60,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
         /// <param name="key">The key for the device</param>
         /// <param name="name">The name of the device</param>
         /// <param name="chassis">The HD-WP-4K-401-C chassis</param>
-        /// <param name="props">The properties for the device</param>
+        /// <param name="props">The properties for the device</param>      
         public HdWp4k401cController(string key, string name, HdWp4k401C chassis,
             HdWp4k401cConfig props)
             : base(key, name, chassis)
@@ -60,7 +70,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
 
             if (props == null)
             {
-                Debug.Console(1, this, "HD-WP-4K-401-C Controller properties are null, failed to build the device");
+                Debug.Console(PepperDashEssentialsDmDebug.Verbose, this, "HD-WP-4K-401-C Controller properties are null, failed to build the device");
                 return;
             }
 
@@ -74,18 +84,23 @@ namespace PepperDash.Essentials.DM.VideoWindowing
             {
                 OutputWindowNames = props.OutputNames;
             }
-            
+
+            Screens = new Dictionary<uint, ScreenInfo>(props.Screens);
+
             DeviceNameFeedback = new StringFeedback(() => Name);
             InputNameFeedbacks = new FeedbackCollection<StringFeedback>();
             VideoInputSyncFeedbacks = new FeedbackCollection<BoolFeedback>();                       
             AudioOutputRouteFeedbacks = new FeedbackCollection<IntFeedback>(); 
-            
-            //WindowNameFeedbacks = new FeedbackCollection<StringFeedback>();
+                       
             WindowRouteFeedbacks = new FeedbackCollection<IntFeedback>();
-            //OutputWindowVideoRouteNameFeedbacks = new FeedbackCollection<StringFeedback>();
-            //OutputWindowAudioRouteNameFeedbacks = new FeedbackCollection<StringFeedback>();
             InputPorts = new RoutingPortCollection<RoutingInputPort>();
             OutputPorts = new RoutingPortCollection<RoutingOutputPort>();
+
+            ScreenNamesFeedbacks = new FeedbackCollection<StringFeedback>();
+            ScreenEnablesFeedbacks = new FeedbackCollection<BoolFeedback>();
+            LayoutNamesFeedbacks = new FeedbackCollection<StringFeedback>();
+            LayoutNames = new Dictionary<uint, string>();
+            ImageNames = new Dictionary<uint, string>();
 
             // Set initial input names, 4 inputs
             for (uint i = 1; i <= _HdWpChassis.Inputs.HdmiIn.Count; i++)
@@ -141,15 +156,35 @@ namespace PepperDash.Essentials.DM.VideoWindowing
                 {
                     ErrorLog.Error("Exception creating output {0} on HD-WP-4K-401-C Chassis: {1}", i, ex);
                 }
-            }            
-           
-            //_HdWpChassis.DMInputChange += Chassis_DMInputChange;
-            //_HdWpChassis.DMOutputChange += Chassis_DMOutputChange;
+            }
+
+            foreach (var item in Screens)
+            {
+                var _layouts = new Dictionary<string, ISelectableItem>();
+                var screen = item.Value;
+                var screenKey = item.Key;
+
+                Debug.Console(PepperDashEssentialsDmDebug.Verbose, this, "Adding A ScreenNameFeedback");
+                ScreenNamesFeedbacks.Add(new StringFeedback("ScreenName-" + screenKey, () => screen.Name));
+
+                Debug.Console(PepperDashEssentialsDmDebug.Verbose, this, "Adding A ScreenEnableFeedback");
+                ScreenEnablesFeedbacks.Add(new BoolFeedback("ScreenEnable-" + screenKey, () => screen.Enabled));
+
+                Debug.Console(PepperDashEssentialsDmDebug.Verbose, this, "Adding A LayoutNameFeedback");
+                LayoutNamesFeedbacks.Add(new StringFeedback("LayoutNames-" + screenKey, () => LayoutNames[screenKey]));
+
+                foreach (var layout in screen.Layouts)
+                {
+                    //_layouts.Add($"{layout.Key}", new HdWp4k401cLayouts.HdWp4k401cLayout(layout.Value.LayoutName, layout.Value.LayoutName, screen.ScreenIndex, layout.Value.LayoutIndex, this));
+                    _layouts.Add($"{layout.Key}", new HdWp4k401cLayouts.HdWp4k401cLayout(layout.Value.LayoutIndex, this));
+                }
+                _screenLayouts[screenKey] = new HdWp4k401cLayouts(_layouts);
+            }
+
             _HdWpChassis.HdWpWindowLayout.WindowLayoutChange += HdWpWindowLayout_WindowLayoutChange;
 
             AddPostActivationAction(AddFeedbackCollections);
         }
-
 
         #endregion
 
@@ -183,7 +218,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
                     _layoutType = WindowLayout.eLayoutType.Quadview;
                     break;
                 default:
-                    Debug.Console(0, this, "Invalid layout value: {0}", layout);
+                    Debug.Console(PepperDashEssentialsDmDebug.Trace, this, "Invalid layout value: {0}", layout);
                     return;
             }
             _HdWpChassis.HdWpWindowLayout.Layout = _layoutType;
@@ -287,11 +322,11 @@ namespace PepperDash.Essentials.DM.VideoWindowing
         public void ExecuteSwitch(object inputSelector, object outputSelector, eRoutingSignalType sigType)
         {
 
-            Debug.Console(2, this, "ExecuteSwitch: input={0} output={1} sigType={2}", inputSelector, outputSelector, sigType.ToString());
+            Debug.Console(PepperDashEssentialsDmDebug.Verbose, this, "ExecuteSwitch: input={0} output={1} sigType={2}", inputSelector, outputSelector, sigType.ToString());
 
             if (outputSelector == null)
             {
-                Debug.Console(0, this, "Unable to make switch. Output selector is not DMOutput");
+                Debug.Console(PepperDashEssentialsDmDebug.Trace, this, "Unable to make switch. Output selector is not DMOutput");
                 return;
             }
             
@@ -333,7 +368,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
                 output = outputSelector;
             }
 
-            Debug.Console(2, this, "ExecuteNumericSwitch: input={0} output={1}", input, output);
+            Debug.Console(PepperDashEssentialsDmDebug.Verbose, this, "ExecuteNumericSwitch: input={0} output={1}", input, output);
 
             ExecuteSwitch(input, output, signalType);
         }
@@ -357,7 +392,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
             }
             else
             {
-                Debug.Console(0, this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
+                Debug.Console(PepperDashEssentialsDmDebug.Trace, this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
             }
 
             IsOnline.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
@@ -413,7 +448,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
 
         void HdWpWindowLayout_WindowLayoutChange(object sender, GenericEventArgs args)
         {
-            Debug.Console(1, "WindowLayoutChange event triggerend. EventId = {0}", args.EventId); 
+            Debug.Console(PepperDashEssentialsDmDebug.Notice, "WindowLayoutChange event triggerend. EventId = {0}", args.EventId); 
         }
 
         #endregion
@@ -430,7 +465,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
 
             public override EssentialsDevice BuildDevice(DeviceConfig dc)
             {
-                Debug.Console(1, "Factory Attempting to create new HD-WP-4K-401-C Device");                
+                Debug.Console(PepperDashEssentialsDmDebug.Notice, "Factory Attempting to create new HD-WP-4K-401-C Device");                
 
                 var props = JsonConvert.DeserializeObject<HdWp4k401cConfig>(dc.Properties.ToString());
 
@@ -444,5 +479,102 @@ namespace PepperDash.Essentials.DM.VideoWindowing
 
         #endregion
 
+        #region Layouts
+        class HdWp4k401cLayouts : ISelectableItems<string>
+        {
+            private Dictionary<string, ISelectableItem> _items = new Dictionary<string, ISelectableItem>();
+            public Dictionary<string, ISelectableItem> Items
+            {
+                get => _items;
+                set
+                {
+                    _items = value;
+                    ItemsUpdated?.Invoke(this, EventArgs.Empty);
+                }
+            }
+
+            private string _currentItem;
+            public string CurrentItem
+            {
+                get => _currentItem;
+                set
+                {
+                    _currentItem = value;
+                    CurrentItemChanged?.Invoke(this, EventArgs.Empty);
+                }
+            }
+
+            public event EventHandler ItemsUpdated;
+            public event EventHandler CurrentItemChanged;
+
+            public HdWp4k401cLayouts(Dictionary<string, ISelectableItem> items)
+            {
+                Items = items;
+            }
+
+            public class HdWp4k401cLayout : ISelectableItem
+            {
+                public string Key { get; private set; }
+                public string Name { get; private set; }
+
+                private HdWp4k401cController _parent;
+
+                private bool _isSelected;
+
+                public int Id { get; set; }
+                public bool IsSelected
+                {
+                    get { return _isSelected; }
+                    set
+                    {
+                        if (_isSelected == value) return;
+                        _isSelected = value;
+                        var handler = ItemUpdated;
+                        if (handler != null)
+                            handler(this, EventArgs.Empty);
+                    }
+                }
+
+                private readonly int screenIndex;
+
+                public event EventHandler ItemUpdated;
+
+                /// <summary>
+                /// Constructor for the HD-WP-4K-401-C layout, full parameters
+                /// </summary>
+                /// <param name="key"></param>
+                /// <param name="name"></param>
+                /// <param name="screenIndex"></param>
+                /// <param name="id"></param>
+                /// <param name="parent"></param>
+                public HdWp4k401cLayout(string key, string name, int screenIndex, int id, HdWp4k401cController parent)
+                {
+                    Key = key;
+                    Name = name;
+                    this.screenIndex = screenIndex;
+                    Id = id;
+                    _parent = parent;
+                }
+
+                /// <summary>
+                /// Constructor for the HD-WP-4K-401-C layout, minimal parameters
+                /// </summary>
+                /// <param name="id"></param>
+                /// <param name="parent"></param>
+                public HdWp4k401cLayout(int id, HdWp4k401cController parent)
+                {                    
+                    Id = id;
+                    _parent = parent;
+                }
+
+                public void Select()
+                {
+                    //_parent.RecallPreset((ushort)0, (ushort)Id);
+                    _parent.SetWindowLayout((uint)Id);
+                }
+            }
+        }
+
+        #endregion
     }
 }
