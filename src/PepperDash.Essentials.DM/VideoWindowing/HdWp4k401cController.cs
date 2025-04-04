@@ -18,7 +18,7 @@ using PepperDash.Essentials.AppServer.Messengers;
 
 namespace PepperDash.Essentials.DM.VideoWindowing
 {
-    [Description("Wrapper class for all hdWp4k401c video wall processor")]
+    [Description("Wrapper class for hdWp4k401c video wall processor")]
     public class HdWp4k401cController: CrestronGenericBridgeableBaseDevice, IRoutingNumericWithFeedback, IHasFeedback, IOnline, IHasScreensWithLayouts
     {
         #region Private Members, Felds, and Properties
