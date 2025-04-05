@@ -134,6 +134,9 @@ namespace PepperDash.Essentials.DM.VideoWindowing
             if (newEvent != null) newEvent(this, e);
         }
 
+        /// <summary>
+        /// Set the default window routes for the HD-WP-4K-401-C.
+        /// </summary>
         public void DefaultWindowRoutes()
         {             
             _HdWpChassis.HdWpWindowLayout.SetVideoSource(1, WindowLayout.eVideoSourceType.Input1);
@@ -314,7 +317,10 @@ namespace PepperDash.Essentials.DM.VideoWindowing
         {
             IsOnline.FireUpdate();
 
+            // return if device is offline, otherwise continue with actions below
             if (!args.DeviceOnLine) return;
+
+            DefaultWindowRoutes();
 
             foreach (var feedback in Feedbacks)
             {
@@ -324,7 +330,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
 
         void HdWpWindowLayout_WindowLayoutChange(object sender, GenericEventArgs args)
         {           
-            Debug.LogInformation(this, "WindowLayoutChange event triggerend. EventId = {0}", args.EventId);
+            Debug.LogDebug(this, "WindowLayoutChange event triggerend. EventId = {0}", args.EventId);
         }
 
         #endregion
