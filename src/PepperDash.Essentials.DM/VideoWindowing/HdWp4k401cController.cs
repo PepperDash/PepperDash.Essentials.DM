@@ -9,40 +9,27 @@ using PepperDash.Essentials.Core;
 using PepperDash.Essentials.DM.Config;
 using PepperDash.Essentials.Core.Bridges;
 using PepperDash.Essentials.Core.Config;
-using Serilog.Events;
 using Crestron.SimplSharpPro.DM.VideoWindowing;
 using PepperDash.Essentials.Core.DeviceTypeInterfaces;
 using Newtonsoft.Json;
 using PepperDash.Core.Logging;
 using PepperDash.Essentials.AppServer.Messengers;
+using static Crestron.SimplSharpPro.DM.Audio;
 
 namespace PepperDash.Essentials.DM.VideoWindowing
 {
     [Description("Wrapper class for hdWp4k401c video wall processor")]
-    public class HdWp4k401cController: CrestronGenericBridgeableBaseDevice, IRoutingNumericWithFeedback, IHasFeedback, IOnline, IHasScreensWithLayouts
+    public class HdWp4k401cController: CrestronGenericBridgeableBaseDevice, IHasFeedback, IOnline, IHasScreensWithLayouts
     {
         #region Private Members, Felds, and Properties
         private readonly HdWp4k401C _HdWpChassis;           
-        private int _WindowCount = 4; // 4 windows for this multi-window controller
         public event EventHandler<RoutingNumericEventArgs> NumericSwitchChange;
-        public Dictionary<uint, string> InputNames { get; set; } // 4 inputs
-        public Dictionary<uint, string> OutputWindowNames { get; set; } // 4 outputs also called windows for this multi-window controller
-        public RoutingPortCollection<RoutingInputPort> InputPorts { get; private set; }
-        public RoutingPortCollection<RoutingOutputPort> OutputPorts { get; private set; } // 4 outputs also called windows for this multi-window controller
-        public FeedbackCollection<BoolFeedback> VideoInputSyncFeedbacks { get; private set; }
-        public FeedbackCollection<IntFeedback> WindowRouteFeedbacks { get; private set; }
-        public FeedbackCollection<IntFeedback> AudioOutputRouteFeedbacks { get; private set; }
-        public FeedbackCollection<StringFeedback> InputNameFeedbacks { get; private set; }
 
         public StringFeedback DeviceNameFeedback { get; private set; }
         public Dictionary<uint, ScreenInfo> Screens { get; private set; }
 
-        public FeedbackCollection<StringFeedback> ScreenNamesFeedbacks { get; private set; }
-        public FeedbackCollection<BoolFeedback> ScreenEnablesFeedbacks { get; private set; }
         public FeedbackCollection<StringFeedback> LayoutNamesFeedbacks { get; private set; }
-
         private Dictionary<uint, string> LayoutNames { get; set; }
-        private Dictionary<uint, string> ImageNames { get; set; }
 
         private Dictionary<uint, HdWp4k401cLayouts> _screenLayouts = new Dictionary<uint, HdWp4k401cLayouts>();
 
@@ -70,89 +57,10 @@ namespace PepperDash.Essentials.DM.VideoWindowing
                 return;
             }
 
-            InputNames = new Dictionary<uint, string>();
-            if (props.InputNames != null)
-            {
-                InputNames = props.InputNames;
-            }
-            OutputWindowNames = new Dictionary<uint, string>();
-            if (props.OutputNames != null)
-            {
-                OutputWindowNames = props.OutputNames;
-            }
-
             Screens = new Dictionary<uint, ScreenInfo>(props.Screens);
-
             DeviceNameFeedback = new StringFeedback(() => Name);
-            InputNameFeedbacks = new FeedbackCollection<StringFeedback>();
-            VideoInputSyncFeedbacks = new FeedbackCollection<BoolFeedback>();                       
-            AudioOutputRouteFeedbacks = new FeedbackCollection<IntFeedback>(); 
-                       
-            WindowRouteFeedbacks = new FeedbackCollection<IntFeedback>();
-            InputPorts = new RoutingPortCollection<RoutingInputPort>();
-            OutputPorts = new RoutingPortCollection<RoutingOutputPort>();
-
-            ScreenNamesFeedbacks = new FeedbackCollection<StringFeedback>();
-            ScreenEnablesFeedbacks = new FeedbackCollection<BoolFeedback>();
-            LayoutNamesFeedbacks = new FeedbackCollection<StringFeedback>();
             LayoutNames = new Dictionary<uint, string>();
-            ImageNames = new Dictionary<uint, string>();
-
-            // Set initial input names, 4 inputs
-            for (uint i = 1; i <= _HdWpChassis.Inputs.HdmiIn.Count; i++)
-            {
-                try
-                {
-                    var index = i;
-                    if (!InputNames.ContainsKey(index))
-                    {
-                        InputNames.Add(index, string.Format("Input{0}", index));
-                    }
-                    string inputName = InputNames[index];
-                    _HdWpChassis.Inputs.HdmiIn[index].Name.StringValue = inputName;
-
-
-                    InputPorts.Add(new RoutingInputPort(inputName, eRoutingSignalType.AudioVideo,
-                        eRoutingPortConnectionType.Hdmi, _HdWpChassis.Inputs.HdmiIn[index], this)
-                    {
-                        FeedbackMatchObject = _HdWpChassis.Inputs.HdmiIn[index]
-                    });
-                   
-                    VideoInputSyncFeedbacks.Add(new BoolFeedback(inputName, () => _HdWpChassis.Inputs.HdmiIn[index].SyncDetectedFeedback.BoolValue));
-                    InputNameFeedbacks.Add(new StringFeedback(inputName, () => _HdWpChassis.Inputs.HdmiIn[index].NameFeedback.StringValue));
-                }
-                catch (Exception ex)
-                {
-                    ErrorLog.Error("Exception creating input {0} on HD-WP-4K-401-C Chassis: {1}", i, ex);
-                }
-            }
-
-            // Should always be a count of 4 audio/video outputs (windows)
-            for (uint i = 1; i <= _WindowCount; i++)
-            {
-                try
-                {                    
-                    uint index = i;
-                    if (!OutputWindowNames.ContainsKey(index))
-                    {
-                        OutputWindowNames.Add(index, string.Format("Window{0}", index));
-                    }
-                   string outputName = OutputWindowNames[index];
-
-                    OutputPorts.Add(new RoutingOutputPort(outputName, eRoutingSignalType.Video,
-                        eRoutingPortConnectionType.Hdmi, index, this)
-                    {
-                        FeedbackMatchObject = index
-                    });
-                    
-                    WindowRouteFeedbacks.Add(new IntFeedback(outputName, () => _HdWpChassis.HdWpWindowLayout.VideoSourceFeedback == null ? 0 : (int)_HdWpChassis.HdWpWindowLayout.VideoSourceFeedback[index]));
-                    AudioOutputRouteFeedbacks.Add(new IntFeedback(outputName, () => (int)_HdWpChassis.HdWpWindowLayout.AudioSourceFeedback));
-                }
-                catch (Exception ex)
-                {
-                    ErrorLog.Error("Exception creating output {0} on HD-WP-4K-401-C Chassis: {1}", i, ex);
-                }
-            }
+            LayoutNamesFeedbacks = new FeedbackCollection<StringFeedback>();
 
             foreach (var item in Screens)
             {
@@ -160,20 +68,14 @@ namespace PepperDash.Essentials.DM.VideoWindowing
                 var screen = item.Value;
                 var screenKey = item.Key;
 
-                Debug.LogVerbose(this, "Adding A ScreenNameFeedback");
-                ScreenNamesFeedbacks.Add(new StringFeedback("ScreenName-" + screenKey, () => screen.Name));
-
-                Debug.LogVerbose(this, "Adding A ScreenEnableFeedback");
-                ScreenEnablesFeedbacks.Add(new BoolFeedback("ScreenEnable-" + screenKey, () => screen.Enabled));
-
                 Debug.LogVerbose(this, "Adding A LayoutNameFeedback");
                 LayoutNamesFeedbacks.Add(new StringFeedback("LayoutNames-" + screenKey, () => LayoutNames[screenKey]));
 
                 foreach (var layout in screen.Layouts)
                 {
-                    //_layouts.Add($"{layout.Key}", new HdWp4k401cLayouts.HdWp4k401cLayout(layout.Value.LayoutName, layout.Value.LayoutName, screen.ScreenIndex, layout.Value.LayoutIndex, this));
                     _layouts.Add($"{layout.Key}", new HdWp4k401cLayouts.HdWp4k401cLayout(layout.Value.LayoutIndex, this));
                 }
+                
                 _screenLayouts[screenKey] = new HdWp4k401cLayouts($"{Key}-screen-{screenKey}", $"{Key}-screen-{screenKey}", _layouts);
                 DeviceManager.AddDevice(_screenLayouts[screenKey]); //Add to device manager which will show up in devlist
             }
@@ -181,6 +83,8 @@ namespace PepperDash.Essentials.DM.VideoWindowing
             _HdWpChassis.HdWpWindowLayout.WindowLayoutChange += HdWpWindowLayout_WindowLayoutChange;
 
             AddPostActivationAction(AddFeedbackCollections);
+
+            DefaultWindowRoutes();
         }
 
         #endregion
@@ -195,13 +99,13 @@ namespace PepperDash.Essentials.DM.VideoWindowing
         protected override void CreateMobileControlMessengers()
         {
             // look in device manager for the first instance of MC
-            this.LogInformation("Adding Mobile Control Messengers for Aquilon");
+            this.LogInformation("Adding Mobile Control Messengers for HD-WP-4K-401-C");
             var mc = DeviceManager.AllDevices.OfType<IMobileControl>().FirstOrDefault();
 
             //if device not in device manager then MC doesn't exist
             if (mc == null)
             {
-                this.LogInformation("Mobile Control not found");
+                this.LogInformation("Mobile Control not found.");
                 return;
             }
 
@@ -230,28 +134,53 @@ namespace PepperDash.Essentials.DM.VideoWindowing
             if (newEvent != null) newEvent(this, e);
         }
 
+        public void DefaultWindowRoutes()
+        {             
+            _HdWpChassis.HdWpWindowLayout.SetVideoSource(1, WindowLayout.eVideoSourceType.Input1);
+            _HdWpChassis.HdWpWindowLayout.SetVideoSource(2, WindowLayout.eVideoSourceType.Input2);
+            _HdWpChassis.HdWpWindowLayout.SetVideoSource(3, WindowLayout.eVideoSourceType.Input3);
+            _HdWpChassis.HdWpWindowLayout.SetVideoSource(4, WindowLayout.eVideoSourceType.Input4);
+            _HdWpChassis.HdWpWindowLayout.AudioSource = (WindowLayout.eAudioSourceType.Auto);
+        }
+
+        /// <summary>
+        /// Change the current window layout using values from 0-6. 
+        /// </summary>
+        /// <param name="layout">Values from 0 - 6</param>
         public void SetWindowLayout(uint layout)
         {
             WindowLayout.eLayoutType _layoutType;
             switch (layout)
             {
+                case 0:
+                    _layoutType = WindowLayout.eLayoutType.Automatic;
+                    break;
                 case 1:
                     _layoutType = WindowLayout.eLayoutType.Fullscreen;
                     break;
                 case 2:
-                    _layoutType = WindowLayout.eLayoutType.SideBySide;
+                    _layoutType = WindowLayout.eLayoutType.PictureInPicture;
                     break;
                 case 3:
-                    _layoutType = WindowLayout.eLayoutType.ThreeSmallOneLarge;
+                    _layoutType = WindowLayout.eLayoutType.SideBySide;
                     break;
                 case 4:
+                    _layoutType = WindowLayout.eLayoutType.ThreeUp;                    
+                    break;
+                case 5:
                     _layoutType = WindowLayout.eLayoutType.Quadview;
                     break;
+                case 6:
+                    _layoutType = WindowLayout.eLayoutType.ThreeSmallOneLarge;
+                    break;
                 default:
-                    Debug.LogDebug(this, "Invalid layout value: {0}", layout);
+                    Debug.LogDebug(this, "Invalid layout value: {0}. Valid range 0 - 6.", layout);
                     return;
             }
             _HdWpChassis.HdWpWindowLayout.Layout = _layoutType;
+
+            //Reset AV Routes when SetWindowLayout is called
+            DefaultWindowRoutes();
         }
 
         #endregion
@@ -261,9 +190,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
         public void AddFeedbackCollections()
         {
             AddFeedbackToList(DeviceNameFeedback);
-            AddCollectionsToList(VideoInputSyncFeedbacks);
-            AddCollectionsToList(WindowRouteFeedbacks, AudioOutputRouteFeedbacks);
-            AddCollectionsToList(InputNameFeedbacks);
+            AddCollectionsToList(LayoutNamesFeedbacks);
         }
 
         #endregion
@@ -347,64 +274,6 @@ namespace PepperDash.Essentials.DM.VideoWindowing
 
         #endregion
 
-        #region IRouting Members
-
-        public void ExecuteSwitch(object inputSelector, object outputSelector, eRoutingSignalType sigType)
-        {
-
-            Debug.LogVerbose(this, "ExecuteSwitch: input={0} output={1} sigType={2}", inputSelector, outputSelector, sigType.ToString());
-
-            if (outputSelector == null)
-            {
-                Debug.LogDebug(this, "Unable to make switch. Output selector is not DMOutput");
-                return;
-            }
-            
-
-            if ((sigType & eRoutingSignalType.Video) == eRoutingSignalType.Video)
-            {                
-                if (outputSelector != null && inputSelector != null)
-                {
-                    var input = (uint)inputSelector;
-                    _HdWpChassis.HdWpWindowLayout.SetVideoSource((uint)outputSelector, (WindowLayout.eVideoSourceType)(uint)input); // Set the video source for the output window           
-                }
-            }
-
-            if ((sigType & eRoutingSignalType.Audio) == eRoutingSignalType.Audio)
-            {
-                if (inputSelector != null)
-                {
-                    _HdWpChassis.HdWpWindowLayout.AudioSource = (WindowLayout.eAudioSourceType)(uint)inputSelector; // Set the audio source for the output window
-                }
-            }
-        }
-
-        #endregion
-
-        #region IRoutingNumeric Members
-
-        public void ExecuteNumericSwitch(ushort inputSelector, ushort outputSelector, eRoutingSignalType signalType)
-        {
-
-            var input = inputSelector == 0 ? null : _HdWpChassis.Inputs.HdmiIn[inputSelector];
-            // check if outputSelector is a value of 0 and if so set it to null, otherwise set to outputSelector value
-            object output;
-            if (outputSelector == 0)
-            {
-                output = null;
-            }
-            else
-            {
-                output = outputSelector;
-            }
-
-            Debug.LogVerbose(this, "ExecuteNumericSwitch: input={0} output={1}", input, output);
-
-            ExecuteSwitch(input, output, signalType);
-        }
-
-        #endregion
-
         #region Bridge Linking
 
         public override void LinkToApi(BasicTriList trilist, uint joinStart, string joinMapKey, EiscApiAdvanced bridge)
@@ -428,24 +297,6 @@ namespace PepperDash.Essentials.DM.VideoWindowing
             IsOnline.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
 
             trilist.StringInput[joinMap.Name.JoinNumber].StringValue = this.Name;
-
-            for (uint i = 1; i <= _HdWpChassis.Inputs.HdmiIn.Count; i++)
-            {
-                var joinIndexLocal = i - 1;
-                var input = i;
-                //Digital
-                VideoInputSyncFeedbacks[InputNames[input]].LinkInputSig(trilist.BooleanInput[joinMap.VideoSyncStatus.JoinNumber + joinIndexLocal]);
-
-                //Serial                
-                InputNameFeedbacks[InputNames[input]].LinkInputSig(trilist.StringInput[joinMap.InputNames.JoinNumber + joinIndexLocal]);
-            }
-
-            var SingleOutputValue = 1;
-            //Analog
-            WindowRouteFeedbacks[OutputWindowNames[1]].LinkInputSig(trilist.UShortInput[joinMap.OutputVideo.JoinNumber]);
-            trilist.SetUShortSigAction(joinMap.OutputVideo.JoinNumber, (a) => ExecuteNumericSwitch(a, (ushort)SingleOutputValue, eRoutingSignalType.Video));
-            AudioOutputRouteFeedbacks[OutputWindowNames[1]].LinkInputSig(trilist.UShortInput[joinMap.OutputAudio.JoinNumber]);
-            trilist.SetUShortSigAction(joinMap.OutputAudio.JoinNumber, (a) => ExecuteNumericSwitch(a, (ushort)SingleOutputValue, eRoutingSignalType.Audio));
 
             _HdWpChassis.OnlineStatusChange += Chassis_OnlineStatusChange;
 
@@ -505,6 +356,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
         #endregion
 
         #region Layouts
+
         class HdWp4k401cLayouts : ISelectableItems<string>, IKeyName
         {
             private Dictionary<string, ISelectableItem> _items = new Dictionary<string, ISelectableItem>();
@@ -536,6 +388,12 @@ namespace PepperDash.Essentials.DM.VideoWindowing
             public event EventHandler ItemsUpdated;
             public event EventHandler CurrentItemChanged;
 
+            /// <summary>
+            /// Constructor for the HD-WP-4K-401-C layouts, full parameters
+            /// </summary>
+            /// <param name="key"></param>
+            /// <param name="name"></param>
+            /// <param name="items"></param>
             public HdWp4k401cLayouts(string key, string name, Dictionary<string, ISelectableItem> items)
             {
                 Items = items;
