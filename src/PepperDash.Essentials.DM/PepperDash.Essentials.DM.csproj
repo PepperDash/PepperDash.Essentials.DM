@@ -4,21 +4,20 @@
     </PropertyGroup>
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
+    <RootNamespace>PepperDash.Essentials.DM</RootNamespace>
+    <Deterministic>false</Deterministic>
     <AssemblyTitle>PepperDash.Essentials.DM</AssemblyTitle>
-    <Product>PepperDash.Essentials.DM</Product>
+    <Company>PepperDash Technologies</Company>
+    <Description>This software is a PepperDash Essentials Plugin for PepperDash.Essentials.DM.</Description>
     <Copyright>Copyright ©  2025</Copyright>
-    <OutputPath>bin\$(Configuration)\</OutputPath>
-    <Version>$(PackageVersion)</Version>
-	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-	<Title>PepperDash Essentials DM</Title>
-	<Company>PepperDash Technologies</Company>
-	<RepositoryType>git</RepositoryType>
-	<RepositoryUrl>https://github.com/PepperDash/PepperDash.Essentials.DM</RepositoryUrl>
-	<PackageTags>crestron;4series;</PackageTags>
-	<Version>$(Version)</Version>
-	<PackageOutputPath>../../package</PackageOutputPath>
-	<PackAsTool>False</PackAsTool>
-	<AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <Version>1.0.0-local</Version>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <InformationalVersion>$(Version)</InformationalVersion>
+    <OutputPath>4Series\bin\$(Configuration)\</OutputPath>
+    <Authors>PepperDash Technologies</Authors>
+    <PackageId>Pepperdash.Essentials.DM</PackageId>
+    <PackageProjectUrl>https://github.com/PepperDash/PepperDash.Essentials.DM.git</PackageProjectUrl>
+    <PackageTags>crestron 4series essentials plugin</PackageTags>	 		  	
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>

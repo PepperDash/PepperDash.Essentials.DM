@@ -101,7 +101,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
 
         #endregion
 
-        #region CustomActicate
+        #region CustomActivate
 
         public override bool CustomActivate()
         {           
@@ -354,7 +354,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
         {
             public HdWp4k401cControllerFactory()
             {
-                MinimumEssentialsFrameworkVersion = "2.2.1";
+                MinimumEssentialsFrameworkVersion = "2.4.1";
                 TypeNames = new List<string>() { "hdWp4k401c" };
             }
 
