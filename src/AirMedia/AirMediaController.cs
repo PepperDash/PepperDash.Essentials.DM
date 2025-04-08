@@ -1,6 +1,4 @@
-﻿extern alias Full;
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,8 +8,8 @@ using Crestron.DeviceSupport.Support;
 using Crestron.SimplSharpPro.DeviceSupport;
 using Crestron.SimplSharpPro.DM;
 using Crestron.SimplSharpPro.DM.AirMedia;
-using Full.Newtonsoft.Json;
-using Full.Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using PepperDash.Core;
 using PepperDash.Essentials.Core;
 using PepperDash.Essentials.Core.Bridges;
@@ -150,11 +148,11 @@ namespace PepperDash.Essentials.DM.AirMedia
             }
             else
             {
-                Debug.Console(0, this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
+                Debug.LogVerbose(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
             }
 
-            Debug.Console(1, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
-            Debug.Console(0, "Linking to Airmedia: {0}", Name);
+            Debug.LogDebug("Linking to Trilist '{0}'", trilist.ID.ToString("X"));
+            Debug.LogVerbose("Linking to Airmedia: {0}", Name);
 
             trilist.StringInput[joinMap.Name.JoinNumber].StringValue = Name;
 
@@ -348,7 +346,7 @@ namespace PepperDash.Essentials.DM.AirMedia
             if ((signalType & eRoutingSignalType.Video) != eRoutingSignalType.Video) return;
             if (!Enum.IsDefined(typeof (AmX00DisplayControl.eAirMediaX00VideoSource), input))
             {
-                Debug.Console(2, this, "Invalid Video Source Index : {0}", input);
+                Debug.LogInformation(this, "Invalid Video Source Index : {0}", input);
                 return;
             }
             AirMedia.DisplayControl.VideoOut = (AmX00DisplayControl.eAirMediaX00VideoSource) input;
@@ -360,7 +358,7 @@ namespace PepperDash.Essentials.DM.AirMedia
 
         public void ExecuteSwitch(object inputSelector, object outputSelector, eRoutingSignalType signalType)
         {
-            Debug.Console(2, this, "Input Selector = {0}", inputSelector.ToString());
+            Debug.LogInformation(this, "Input Selector = {0}", inputSelector.ToString());
             var handler = inputSelector as Action;
             if (handler == null) return;
             handler();
@@ -380,7 +378,7 @@ namespace PepperDash.Essentials.DM.AirMedia
         {
             var type = dc.Type.ToLower();
 
-            Debug.Console(1, "Factory Attempting to create new AirMedia Device");
+            Debug.LogDebug("Factory Attempting to create new AirMedia Device");
 
             var props = dc.Properties.ToObject<AirMediaPropertiesConfig>();
             Am3x00 amDevice = null;

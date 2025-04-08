@@ -1,6 +1,4 @@
-﻿extern alias Full;
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,7 +8,7 @@ using Crestron.SimplSharpPro.DeviceSupport;
 using Crestron.SimplSharpPro.DM;
 using Crestron.SimplSharpPro.DM.Endpoints;
 using Crestron.SimplSharpPro.DM.Endpoints.Receivers;
-using Full.Newtonsoft.Json;
+using Newtonsoft.Json;
 using PepperDash.Core;
 using PepperDash.Essentials.Core;
 using PepperDash.Essentials.Core.Bridges;
@@ -238,10 +236,10 @@ namespace PepperDash.Essentials.DM
             }
             else
             {
-                Debug.Console(0, this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
+                Debug.LogVerbose(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
             }
 
-            Debug.Console(1, this, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
+            Debug.LogDebug(this, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
 
             IsOnline.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
             RemoteEndDetectedFeedback.LinkInputSig(trilist.BooleanInput[joinMap.RemoteEndDetected.JoinNumber]);
@@ -294,7 +292,7 @@ namespace PepperDash.Essentials.DM
             var key = dc.Key;
             var name = dc.Name;
 
-            Debug.Console(1, "Factory Attempting to create new HD-MD Device");
+            Debug.LogDebug("Factory Attempting to create new HD-MD Device");
 
             var props = JsonConvert.DeserializeObject
                 <PepperDash.Essentials.DM.HdMdxxxCEPropertiesConfig>(dc.Properties.ToString());

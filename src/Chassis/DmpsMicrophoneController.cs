@@ -21,12 +21,12 @@ namespace PepperDash.Essentials.DM
 
         public DmpsMicrophoneController(CrestronControlSystem dmps)
         {
-            Debug.Console(2, "Creating Dmps Microphone Controller");
+            Debug.LogVerbose("Creating Dmps Microphone Controller");
             Mics = new Dictionary<uint,DmpsMicrophone>();
 
             foreach (var mic in dmps.Microphones)
             {
-                Debug.Console(0, "Dmps Microphone Controller Adding Mic: {0} Name: {1}", mic.ID, mic.Name);
+                Debug.LogVerbose("Dmps Microphone Controller Adding Mic: {0} Name: {1}", mic.ID, mic.Name);
                 var dmpsMic = new DmpsMicrophone("processor-microphone" + mic.ID, mic.Name, mic);
 
                 DeviceManager.AddDevice(dmpsMic);
@@ -41,7 +41,7 @@ namespace PepperDash.Essentials.DM
             if (args.EventId == MicrophoneEventIds.VuFeedBackEventId)
                 return;
 
-            Debug.Console(2, "Dmps Microphone Controller Index: {0} EventId: {1}", mic.ID, args.EventId.ToString());
+            Debug.LogVerbose("Dmps Microphone Controller Index: {0} EventId: {1}", mic.ID, args.EventId.ToString());
 
             if(Mics.ContainsKey(mic.ID))
             {
@@ -98,10 +98,10 @@ namespace PepperDash.Essentials.DM
             }
             else
             {
-                Debug.Console(0, this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
+                Debug.LogVerbose(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
             }
 
-            Debug.Console(1, this, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
+            Debug.LogDebug(this, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
  
             VolumeLevelFeedback.LinkInputSig(trilist.UShortInput[joinMap.MicGain.JoinNumber]);
             VolumeLevelScaledFeedback.LinkInputSig(trilist.UShortInput[joinMap.MicGainScaled.JoinNumber ]);

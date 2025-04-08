@@ -1,6 +1,4 @@
-﻿extern alias Full;
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,8 +7,7 @@ using Crestron.SimplSharpPro;
 using Crestron.SimplSharpPro.DeviceSupport;
 using Crestron.SimplSharpPro.DM.Endpoints.Transmitters;
 using Crestron.SimplSharpPro.DM;
-using Full.Newtonsoft.Json;
-
+using Newtonsoft.Json;
 using PepperDash.Core;
 using PepperDash.Essentials.Core;
 using PepperDash.Essentials.Core.Bridges;
@@ -96,10 +93,10 @@ namespace PepperDash.Essentials.DM
             }
             else
             {
-                Debug.Console(0, this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
+                Debug.LogVerbose(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
             }
 
-            Debug.Console(1, this, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
+            Debug.LogDebug(this, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
 
             this.IsOnline.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
             trilist.StringInput[joinMap.Name.JoinNumber].StringValue = this.Name;

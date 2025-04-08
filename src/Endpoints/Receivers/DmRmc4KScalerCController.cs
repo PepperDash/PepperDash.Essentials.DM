@@ -159,7 +159,7 @@ namespace PepperDash.Essentials.DM
         /// </summary>
         public void MuteOff()
         {
-            Debug.Console(2, this, "DM Endpoint {0} does not have a mute function", Key);
+            Debug.LogInformation(this, "DM Endpoint {0} does not have a mute function", Key);
         }
 
         /// <summary>
@@ -167,7 +167,7 @@ namespace PepperDash.Essentials.DM
         /// </summary>
         public void MuteOn()
         {
-            Debug.Console(2, this, "DM Endpoint {0} does not have a mute function", Key);
+            Debug.LogInformation(this, "DM Endpoint {0} does not have a mute function", Key);
         }
 
         public void SetVolume(ushort level)
@@ -190,7 +190,7 @@ namespace PepperDash.Essentials.DM
         /// </summary>
         public void MuteToggle()
         {
-            Debug.Console(2, this, "DM Endpoint {0} does not have a mute function", Key);
+            Debug.LogInformation(this, "DM Endpoint {0} does not have a mute function", Key);
         }
 
         public void VolumeDown(bool pressRelease)
@@ -233,13 +233,13 @@ namespace PepperDash.Essentials.DM
 
         public void VideoMuteOn()
         {
-            Debug.Console(2, this, "Video Mute On");
+            Debug.LogInformation(this, "Video Mute On");
             _rmc.HdmiOutput.BlankEnabled();          
         }
 
         public void VideoMuteOff()
         {
-            Debug.Console(2, this, "Video Mute Off");
+            Debug.LogInformation(this, "Video Mute Off");
             _rmc.HdmiOutput.BlankDisabled();
         }
 
@@ -249,7 +249,7 @@ namespace PepperDash.Essentials.DM
 
         public void VideoMuteToggle()
         {
-            Debug.Console(2, this, "Video Mute Toggle");
+            Debug.LogInformation(this, "Video Mute Toggle");
             if (_rmc.HdmiOutput.BlankEnabledFeedback.BoolValue == true) 
                 VideoMuteOff();
             else 

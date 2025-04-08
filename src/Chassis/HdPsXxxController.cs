@@ -56,7 +56,7 @@ namespace PepperDash_Essentials_DM.Chassis
 
 			if (props == null)
 			{
-				Debug.Console(1, this, "HdPsXxxController properties are null, failed to build device");
+				Debug.LogDebug(this, "HdPsXxxController properties are null, failed to build device");
 				return;
 			}
 
@@ -94,7 +94,7 @@ namespace PepperDash_Essentials_DM.Chassis
 		{
 			if (dict == null)
 			{
-				Debug.Console(1, this, "Failed to setup inputs, properties are null");
+				Debug.LogDebug(this, "Failed to setup inputs, properties are null");
 				return;
 			}
 			
@@ -117,7 +117,7 @@ namespace PepperDash_Essentials_DM.Chassis
 				{
 					FeedbackMatchObject = input
 				};
-				Debug.Console(1, this, "Adding Input port: {0} - {1}", port.Key, name);
+				Debug.LogDebug(this, "Adding Input port: {0} - {1}", port.Key, name);
 				InputPorts.Add(port);
 
 				InputHdcpEnableFeedback.Add(new BoolFeedback(index.ToString(CultureInfo.InvariantCulture), 
@@ -146,7 +146,7 @@ namespace PepperDash_Essentials_DM.Chassis
 				{
 					FeedbackMatchObject = input
 				};
-				Debug.Console(0, this, "Adding Input port: {0} - {1}", port.Key, name);
+				Debug.LogVerbose(this, "Adding Input port: {0} - {1}", port.Key, name);
 				InputPorts.Add(port);
 
 				InputHdcpEnableFeedback.Add(new BoolFeedback(index.ToString(CultureInfo.InvariantCulture), 
@@ -164,7 +164,7 @@ namespace PepperDash_Essentials_DM.Chassis
 		{
 			if (dict == null)
 			{
-				Debug.Console(1, this, "Failed to setup outputs, properties are null");
+				Debug.LogDebug(this, "Failed to setup outputs, properties are null");
 				return;
 			}
 
@@ -184,7 +184,7 @@ namespace PepperDash_Essentials_DM.Chassis
 					FeedbackMatchObject = output,
 					Port = output.HdmiOutput.HdmiOutputPort
 				};
-				Debug.Console(1, this, "Adding Output port: {0} - {1}", hdmiPort.Key, name);
+				Debug.LogDebug(this, "Adding Output port: {0} - {1}", hdmiPort.Key, name);
 				OutputPorts.Add(hdmiPort);
 
 				var dmLiteKey = string.Format("dmLiteOut{0}", index);
@@ -193,7 +193,7 @@ namespace PepperDash_Essentials_DM.Chassis
 					FeedbackMatchObject = output,
 					Port = output.DmLiteOutput.DmLiteOutputPort
 				};
-				Debug.Console(1, this, "Adding Output port: {0} - {1}", dmLitePort.Key, name);
+				Debug.LogDebug(this, "Adding Output port: {0} - {1}", dmLitePort.Key, name);
 				OutputPorts.Add(dmLitePort);
 				
 				OutputRouteNameFeedback.Add(new StringFeedback(index.ToString(CultureInfo.InvariantCulture), 
@@ -213,7 +213,7 @@ namespace PepperDash_Essentials_DM.Chassis
 			{
 				foreach (var port in InputPorts)
 				{
-					Debug.Console(0, this, @"Input Port Key: {0}
+					Debug.LogVerbose(this, @"Input Port Key: {0}
 Port: {1}
 Type: {2}
 ConnectionType: {3}
@@ -223,7 +223,7 @@ Selector: {4}
 
 				foreach (var port in OutputPorts)
 				{
-					Debug.Console(0, this, @"Output Port Key: {0}
+					Debug.LogVerbose(this, @"Output Port Key: {0}
 Port: {1}
 Type: {2}
 ConnectionType: {3}
@@ -233,9 +233,9 @@ Selector: {4}
 			}
 			catch (Exception ex)
 			{
-				Debug.Console(0, this, "ListRoutingPorts Exception Message: {0}", ex.Message);
-				Debug.Console(0, this, "ListRoutingPorts Exception StackTrace: {0}", ex.StackTrace);
-				if (ex.InnerException != null) Debug.Console(0, this, "ListRoutingPorts InnerException: {0}", ex.InnerException);
+				Debug.LogVerbose(this, "ListRoutingPorts Exception Message: {0}", ex.Message);
+				Debug.LogVerbose(this, "ListRoutingPorts Exception StackTrace: {0}", ex.StackTrace);
+				if (ex.InnerException != null) Debug.LogVerbose(this, "ListRoutingPorts InnerException: {0}", ex.InnerException);
 			}
 		}
 
@@ -258,7 +258,7 @@ Selector: {4}
 			}
 			else
 			{
-				Debug.Console(0, this, "Please update config to use 'eiscApiAdvanced' to get all join map features for this device");
+				Debug.LogVerbose(this, "Please update config to use 'eiscApiAdvanced' to get all join map features for this device");
 			}
 
 			IsOnline.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
@@ -333,11 +333,11 @@ Selector: {4}
 			var input = inputSelector as HdPsXxxInput;
 			var output = outputSelector as HdPsXxxOutput;			
 			
-			Debug.Console(2, this, "ExecuteSwitch: input={0}, output={1}", input, output);
+			Debug.LogInformation(this, "ExecuteSwitch: input={0}, output={1}", input, output);
 
 			if (output == null)
 			{
-				Debug.Console(0, this, "Unable to make switch, output selector is not HdPsXxxHdmiOutput");
+				Debug.LogVerbose(this, "Unable to make switch, output selector is not HdPsXxxHdmiOutput");
 				return;
 			}
 
@@ -359,7 +359,7 @@ Selector: {4}
 			var input = inputSelector == 0 ? null : _chassis.Inputs[inputSelector];
 			var output = _chassis.Outputs[outputSelector];
 
-			Debug.Console(2, this, "ExecuteNumericSwitch: input={0}, output={1}", input, output);
+			Debug.LogInformation(this, "ExecuteNumericSwitch: input={0}, output={1}", input, output);
 
 			ExecuteSwitch(input, output, signalType);
 		}
@@ -439,7 +439,7 @@ Selector: {4}
 			{
 				case DMInputEventIds.VideoDetectedEventId:
 					{
-						Debug.Console(1, this, "Event ID {0}: Updating VideoInputSyncFeedbacks", eventId);
+						Debug.LogDebug(this, "Event ID {0}: Updating VideoInputSyncFeedbacks", eventId);
 						foreach (var item in VideoInputSyncFeedbacks)
 						{
 							item.FireUpdate();
@@ -450,17 +450,17 @@ Selector: {4}
 				case DMInputEventIds.InputNameEventId:
 				case DMInputEventIds.NameFeedbackEventId:
 					{
-						Debug.Console(1, this, "Event ID {0}: Updating name feedbacks", eventId);
+						Debug.LogDebug(this, "Event ID {0}: Updating name feedbacks", eventId);
 
 						var input = args.Number;
 						var name = _chassis.HdmiInputs[input].NameFeedback.StringValue;
 
-						Debug.Console(1, this, "Input {0} Name {1}", input, name);
+						Debug.LogDebug(this, "Input {0} Name {1}", input, name);
 						break;
 					}
 				default:
 					{
-						Debug.Console(1, this, "Uhandled DM Input Event ID {0}", eventId);
+						Debug.LogDebug(this, "Uhandled DM Input Event ID {0}", eventId);
 						break;
 					}
 			}
@@ -531,12 +531,12 @@ Selector: {4}
 				var name = dc.Name;
 				var type = dc.Type.ToLower();
 
-				Debug.Console(1, "Factory Attempting to create new {0} device", type);
+				Debug.LogDebug("Factory Attempting to create new {0} device", type);
 
 				var props = JsonConvert.DeserializeObject<HdPsXxxPropertiesConfig>(dc.Properties.ToString());
 				if (props == null)
 				{
-					Debug.Console(1, "Factory failed to create new HD-PSXxx device, properties config was null");
+					Debug.LogDebug("Factory failed to create new HD-PSXxx device, properties config was null");
 					return null;
 				}
 
@@ -562,7 +562,7 @@ Selector: {4}
 						}
 					default:
 						{
-							Debug.Console(1, "Factory failed to create new {0} device", type);
+							Debug.LogDebug("Factory failed to create new {0} device", type);
 							return null;
 						}
 				}

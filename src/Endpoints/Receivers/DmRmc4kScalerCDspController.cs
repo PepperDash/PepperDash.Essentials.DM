@@ -152,7 +152,7 @@ namespace PepperDash.Essentials.DM
         /// </summary>
         public void MuteOff()
         {
-            Debug.Console(2, this, "DM Endpoint {0} does not have a mute function", Key);
+            Debug.LogInformation(this, "DM Endpoint {0} does not have a mute function", Key);
         }
 
         /// <summary>
@@ -160,7 +160,7 @@ namespace PepperDash.Essentials.DM
         /// </summary>
         public void MuteOn()
         {
-            Debug.Console(2, this, "DM Endpoint {0} does not have a mute function", Key);
+            Debug.LogInformation(this, "DM Endpoint {0} does not have a mute function", Key);
         }
 
         public void SetVolume(ushort level)
@@ -183,7 +183,7 @@ namespace PepperDash.Essentials.DM
         /// </summary>
         public void MuteToggle()
         {
-            Debug.Console(2, this, "DM Endpoint {0} does not have a mute function", Key);
+            Debug.LogInformation(this, "DM Endpoint {0} does not have a mute function", Key);
         }
 
         public void VolumeDown(bool pressRelease)

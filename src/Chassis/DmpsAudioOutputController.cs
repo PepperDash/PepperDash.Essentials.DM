@@ -1,6 +1,4 @@
-﻿extern alias Full;
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,12 +7,11 @@ using Crestron.SimplSharpPro;
 using Crestron.SimplSharpPro.DeviceSupport;
 using Crestron.SimplSharpPro.DM;
 using Crestron.SimplSharpPro.DM.Cards;
-using Full.Newtonsoft.Json;
+using Newtonsoft.Json;
 using PepperDash.Core;
 using PepperDash.Essentials.Core;
 using PepperDash.Essentials.Core.Bridges;
 using PepperDash.Essentials.DM.Config;
-
 
 namespace PepperDash.Essentials.DM
 {
@@ -107,7 +104,7 @@ namespace PepperDash.Essentials.DM
 
         void BaseDevice_DMOutputChange(Switch device, DMOutputEventArgs args)
         {
-            Debug.Console(2, this, "Dmps Audio Controller Event Output: {0} EventId: {1}", args.Number, args.EventId.ToString());
+            Debug.LogInformation(this, "Dmps Audio Controller Event Output: {0} EventId: {1}", args.Number, args.EventId.ToString());
             switch (args.EventId)
             {
                 case DMOutputEventIds.OutputVuFeedBackEventId:
@@ -180,7 +177,7 @@ namespace PepperDash.Essentials.DM
                     }
                 case DMOutputEventIds.MinVolumeFeedBackEventId:
                     {
-                        Debug.Console(2, this, "MinVolumeFeedBackEventId: {0}", args.Index);
+                        Debug.LogInformation(this, "MinVolumeFeedBackEventId: {0}", args.Index);
                         var level = MasterVolumeLevel as DmpsAudioOutputWithMixer;
                         if (level != null)
                         {
@@ -190,7 +187,7 @@ namespace PepperDash.Essentials.DM
                     }
                 case DMOutputEventIds.MaxVolumeFeedBackEventId:
                     {
-                        Debug.Console(2, this, "MaxVolumeFeedBackEventId: {0}", args.Index);
+                        Debug.LogInformation(this, "MaxVolumeFeedBackEventId: {0}", args.Index);
                         var level = MasterVolumeLevel as DmpsAudioOutputWithMixer;
                         if (level != null)
                         {
@@ -211,10 +208,10 @@ namespace PepperDash.Essentials.DM
             }
             else
             {
-                Debug.Console(0, this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
+                Debug.LogVerbose(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
             }
 
-            Debug.Console(1, this, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
+            Debug.LogDebug(this, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
 
             if (MasterVolumeLevel != null)
             {
@@ -341,7 +338,7 @@ namespace PepperDash.Essentials.DM
             ushort startupVol = Output.StartupVolumeFeedback.UShortValue;
             //Reset startup vol due to bug on DMPS3 where getting the value from above method clears the startup volume
             Output.StartupVolume.UShortValue = startupVol;
-            Debug.Console(1, "DMPS Recalling Startup Volume {0}", startupVol);
+            Debug.LogDebug("DMPS Recalling Startup Volume {0}", startupVol);
             SetVolume(startupVol);
             MuteOff();
         }

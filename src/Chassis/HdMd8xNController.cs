@@ -1,11 +1,9 @@
-﻿extern alias Full;
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Full.Newtonsoft.Json;
+using Newtonsoft.Json;
 using Crestron.SimplSharp;
 using Crestron.SimplSharpPro.DeviceSupport;
 using Crestron.SimplSharpPro.DM;
@@ -15,7 +13,6 @@ using PepperDash.Essentials.DM.Config;
 using Crestron.SimplSharpPro.DM.Cards;
 using PepperDash.Essentials.Core.Bridges;
 using PepperDash.Essentials.Core.Config;
-
 
 namespace PepperDash.Essentials.DM.Chassis
 {
@@ -53,7 +50,7 @@ namespace PepperDash.Essentials.DM.Chassis
 
 			if (props == null)
 			{
-				Debug.Console(1, this, "HdMd8xNController properties are null, failed to build the device");
+				Debug.LogDebug(this, "HdMd8xNController properties are null, failed to build the device");
 				return;
 			}
 
@@ -94,12 +91,16 @@ namespace PepperDash.Essentials.DM.Chassis
                     string inputName = InputNames[index];
                     _Chassis.Inputs[index].Name.StringValue = inputName;
 
+					var routingInputPort = new RoutingInputPort(inputName, eRoutingSignalType.AudioVideo, eRoutingPortConnectionType.Hdmi, _Chassis.Inputs[index], this);
+					routingInputPort.FeedbackMatchObject = _Chassis.Inputs[index];
+					InputPorts.Add(routingInputPort);
 
-                    InputPorts.Add(new RoutingInputPort(inputName, eRoutingSignalType.AudioVideo,
-                        eRoutingPortConnectionType.Hdmi, _Chassis.Inputs[index], this)
-                    {
-                        FeedbackMatchObject = _Chassis.Inputs[index]
-                    });
+      //              InputPorts.Add(
+						//new RoutingInputPort(inputName, eRoutingSignalType.AudioVideo, eRoutingPortConnectionType.Hdmi, _Chassis.Inputs[index], this)
+						//	{
+						//		FeedbackMatchObject = _Chassis.Inputs[index]
+						//	}
+						//);
 
                     VideoInputSyncFeedbacks.Add(new BoolFeedback(inputName, () => _Chassis.Inputs[index].VideoDetectedFeedback.BoolValue));
                     InputNameFeedbacks.Add(new StringFeedback(inputName, () => _Chassis.Inputs[index].NameFeedback.StringValue));
@@ -257,11 +258,11 @@ namespace PepperDash.Essentials.DM.Chassis
 		{		    
             var input = inputSelector as DMInput;
 		    var output = outputSelector as DMOutput;
-            Debug.Console(2, this, "ExecuteSwitch: input={0} output={1} sigType={2}", input, output, sigType.ToString());
+            Debug.LogInformation(this, "ExecuteSwitch: input={0} output={1} sigType={2}", input, output, sigType.ToString());
 
 		    if (output == null)
 		    {
-		        Debug.Console(0, this, "Unable to make switch. Output selector is not DMOutput");
+		        Debug.LogVerbose(this, "Unable to make switch. Output selector is not DMOutput");
 		        return;
 		    }
 
@@ -294,7 +295,7 @@ namespace PepperDash.Essentials.DM.Chassis
             var input = inputSelector == 0 ? null : _Chassis.Inputs[inputSelector];
 		    var output = _Chassis.Outputs[outputSelector];
 
-            Debug.Console(2, this, "ExecuteNumericSwitch: input={0} output={1}", input, output);
+            Debug.LogInformation(this, "ExecuteNumericSwitch: input={0} output={1}", input, output);
 
 			ExecuteSwitch(input, output, signalType);
 		}
@@ -320,7 +321,7 @@ namespace PepperDash.Essentials.DM.Chassis
 			}
 			else
 			{
-				Debug.Console(0, this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
+				Debug.LogVerbose(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
 			}
 
 			IsOnline.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
@@ -426,8 +427,8 @@ namespace PepperDash.Essentials.DM.Chassis
                 case DMOutputEventIds.OutputNameEventId:
                 case DMOutputEventIds.NameFeedbackEventId:
                 {
-                    Debug.Console(1, this, "Event ID {0}:  Updating name feedbacks.", args.EventId);
-                    Debug.Console(1, this, "Output {0} Name {1}", args.Number,
+                    Debug.LogDebug(this, "Event ID {0}:  Updating name feedbacks.", args.EventId);
+                    Debug.LogDebug(this, "Output {0} Name {1}", args.Number,
                         _Chassis.Outputs[args.Number].NameFeedback.StringValue);
                     foreach (var item in OutputNameFeedbacks)
                     {
@@ -437,7 +438,7 @@ namespace PepperDash.Essentials.DM.Chassis
                 }
                 default:
                 {
-                    Debug.Console(1, this, "Unhandled DM Output Event ID {0}", args.EventId);
+                    Debug.LogDebug(this, "Unhandled DM Output Event ID {0}", args.EventId);
                     break;
                 }
             }
@@ -449,7 +450,7 @@ namespace PepperDash.Essentials.DM.Chassis
 		    {
                 case DMInputEventIds.VideoDetectedEventId:
 		        {
-                    Debug.Console(1, this, "Event ID {0}: Updating VideoInputSyncFeedbacks", args.EventId);
+                    Debug.LogDebug(this, "Event ID {0}: Updating VideoInputSyncFeedbacks", args.EventId);
                     foreach (var item in VideoInputSyncFeedbacks)
                     {
                         item.FireUpdate();
@@ -460,8 +461,8 @@ namespace PepperDash.Essentials.DM.Chassis
                 case DMInputEventIds.InputNameEventId:
                 case DMInputEventIds.NameFeedbackEventId:
 		        {
-		            Debug.Console(1, this, "Event ID {0}:  Updating name feedbacks.", args.EventId);
-		            Debug.Console(1, this, "Input {0} Name {1}", args.Number,
+		            Debug.LogDebug(this, "Event ID {0}:  Updating name feedbacks.", args.EventId);
+		            Debug.LogDebug(this, "Input {0} Name {1}", args.Number,
 		                _Chassis.Inputs[args.Number].NameFeedback.StringValue);
                     foreach (var item in InputNameFeedbacks)
                     {
@@ -471,7 +472,7 @@ namespace PepperDash.Essentials.DM.Chassis
 		        }
                 default:
 		        {
-                    Debug.Console(1, this, "Unhandled DM Input Event ID {0}", args.EventId);
+                    Debug.LogDebug(this, "Unhandled DM Input Event ID {0}", args.EventId);
 		            break;
 		        }
 		    }			
@@ -490,7 +491,7 @@ namespace PepperDash.Essentials.DM.Chassis
 
 			public override EssentialsDevice BuildDevice(DeviceConfig dc)
 			{
-				Debug.Console(1, "Factory Attempting to create new HD-MD-8xN Device");
+				Debug.LogDebug("Factory Attempting to create new HD-MD-8xN Device");
 
                 var props = JsonConvert.DeserializeObject<DMChassisPropertiesConfig>(dc.Properties.ToString());
 

@@ -4,18 +4,21 @@
     </PropertyGroup>
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
-    <AssemblyTitle>PepperDash.Essentials.Plugin.4Series.DM</AssemblyTitle>
-    <Product>PepperDash.Essentials.Plugin.4Series.DM</Product>
+    <RootNamespace>PepperDash.Essentials.DM</RootNamespace>
+    <Deterministic>false</Deterministic>
+    <AssemblyTitle>PepperDash.Essentials.DM</AssemblyTitle>
+    <Description>This software is a PepperDash Essentials Plugin for PepperDash.Essentials.DM.</Description>    
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <OutputPath>4Series\bin\$(Configuration)\</OutputPath>    
     <PackageId>PepperDash.Essentials.Plugin.4Series.DM</PackageId>
-    <Copyright>Copyright ©  2023</Copyright>
-    <OutputPath>bin\$(Configuration)\</OutputPath>
-	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-	<Title>PepperDash Essentials DM 4Series Plugin</Title>
-	<Company>PepperDash Technologies</Company>
-	<RepositoryType>git</RepositoryType>
-	<RepositoryUrl>https://github.com/PepperDash/PepperDash.Essentials.DM</RepositoryUrl>
-	<PackageTags>crestron;4series;</PackageTags>
-	<Version>$(Version)</Version>
+    <PackageProjectUrl>https://github.com/PepperDash/PepperDash.Essentials.DM.git</PackageProjectUrl>
+    <PackageTags>crestron 4series essentials plugin</PackageTags>
+    <Product>PepperDash Essentials DM</Product>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>PepperDash Essentials DM 4Series Plugin</Title>    
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/PepperDash/PepperDash.Essentials.DM</RepositoryUrl>
+    <PackageTags>crestron;4series;</PackageTags>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>
@@ -24,17 +27,9 @@
     <DebugType>portable</DebugType>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="BouncyCastle.Cryptography" Version="2.4.0" />
-    <PackageReference Include="Crestron.SimplSharp.SDK.ProgramLibrary" Version="2.21.90" />
-	<PackageReference Include="Newtonsoft.Json" Version="13.0.3">
-		<Aliases>Full</Aliases>
-	</PackageReference>
-	
-	  <PackageReference Include="PepperDashEssentials" Version="2.1.0">
-		  <ExcludeAssets>runtime</ExcludeAssets>
-	  </PackageReference>
-	  
-	 
+    <PackageReference Include="PepperDashEssentials" Version="2.2.1">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Data.DataSetExtensions" />

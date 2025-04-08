@@ -1,14 +1,11 @@
-﻿extern alias Full;
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Crestron.SimplSharp;
 using Crestron.SimplSharpPro.DM;
-using Full.Newtonsoft.Json;
-
+using Newtonsoft.Json;
 using PepperDash.Core;
 using PepperDash.Essentials.Core;
 using PepperDash.Essentials.Core.Config;
@@ -35,7 +32,7 @@ namespace PepperDash.Essentials.DM.Chassis
             HdMdNxM4kEPropertiesConfig props)
             : base(key, name, chassis)
         {
-            Debug.Console(0, this, "Type hdmd4x14ke is obsolete. Please use hdmd4x14ke-bridgeable");
+            Debug.LogVerbose(this, "Type hdmd4x14ke is obsolete. Please use hdmd4x14ke-bridgeable");
             Chassis = chassis;
 
             // logical ports
@@ -66,7 +63,7 @@ namespace PepperDash.Essentials.DM.Chassis
                     // set hdcp disables
                     if (kvp.Value.DisableHdcp)
                     {
-                        Debug.Console(0, this, "Configuration disables HDCP support on {0}", kvp.Key);
+                        Debug.LogVerbose(this, "Configuration disables HDCP support on {0}", kvp.Key);
                         port.HdcpSupportOff();
                     }
                     else
@@ -80,7 +77,7 @@ namespace PepperDash.Essentials.DM.Chassis
             var result = Chassis.Register();
             if (result != Crestron.SimplSharpPro.eDeviceRegistrationUnRegistrationResponse.Success)
             {
-                Debug.Console(0, this, "Device registration failed: {0}", result);
+                Debug.LogVerbose(this, "Device registration failed: {0}", result);
                 return false;
             }
 
@@ -134,7 +131,7 @@ namespace PepperDash.Essentials.DM.Chassis
             }
             catch (Exception e)
             {
-                Debug.Console(0, "ERROR Creating device key {0}: \r{1}", key, e);
+                Debug.LogVerbose("ERROR Creating device key {0}: \r{1}", key, e);
                 return null;
             }
         }*/
@@ -151,7 +148,7 @@ namespace PepperDash.Essentials.DM.Chassis
 
             public override EssentialsDevice BuildDevice(DeviceConfig dc)
             {
-                Debug.Console(1, "Factory Attempting to create new HD-MD-NxM-4K-E Device");
+                Debug.LogDebug("Factory Attempting to create new HD-MD-NxM-4K-E Device");
 
                 var props = JsonConvert.DeserializeObject<HdMdNxM4kEPropertiesConfig>(dc.Properties.ToString());
 
