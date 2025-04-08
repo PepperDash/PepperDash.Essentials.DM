@@ -8,7 +8,7 @@
     <Product>PepperDash.Essentials.DM</Product>
     <Copyright>Copyright ©  2025</Copyright>
     <OutputPath>bin\$(Configuration)\</OutputPath>
-    <Version>1.0.0-local</Version>
+    <Version>$(PackageVersion)</Version>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 	<Title>PepperDash Essentials DM</Title>
 	<Company>PepperDash Technologies</Company>
