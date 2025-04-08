@@ -2179,6 +2179,13 @@ namespace PepperDash.Essentials.DM
                 return;
             }
 
+
+            if (inputSlot is DmMatrixClearInput)
+            {
+
+                ExecuteSwitch(null, Chassis.Outputs[(uint)outputSlot.SlotNumber], type);
+                return;
+            }
             ExecuteSwitch(Chassis.Inputs[(uint)inputSlot.SlotNumber], Chassis.Outputs[(uint)outputSlot.SlotNumber], type);
         }
     }
