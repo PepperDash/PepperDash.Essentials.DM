@@ -85,7 +85,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
 
                 foreach (var layout in screen.Layouts)
                 {
-                    _layouts.Add($"{layout.Key}", new HdWp4k401cLayouts.HdWp4k401cLayout(layout.Value.LayoutIndex, this));
+                    _layouts.Add($"{layout.Key}", new HdWp4k401cLayouts.HdWp4k401cLayout(layout.Key.ToString(), layout.Value.LayoutName, screen.ScreenIndex, layout.Value.LayoutIndex, this));
                 }
                 
                 _screenLayouts[screenKey] = new HdWp4k401cLayouts($"{Key}-screen-{screenKey}", $"{Key}-screen-{screenKey}", _layouts);
@@ -104,8 +104,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
         #region CustomActicate
 
         public override bool CustomActivate()
-        {
-            CreateMobileControlMessengers();
+        {           
             return base.CustomActivate();
         }
 
@@ -128,7 +127,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
             foreach (var screen in Screens)
             {
                 var screenKey = screen.Key;
-                var messenger = new ISelectableItemsMessenger<string>($"{Key}-screen-{screenKey}", $"/device/{Key}/screen-{screenKey}", _screenLayouts[screenKey], $"screen-{screenKey}");
+                var messenger = new ISelectableItemsMessenger<string>($"{Key}-screen-{screenKey}", $"/device/{Key}-screen-{screenKey}", _screenLayouts[screenKey], $"screen-{screenKey}");
                 mc.AddDeviceMessenger(messenger);
             }
         }
@@ -461,17 +460,6 @@ namespace PepperDash.Essentials.DM.VideoWindowing
                     Key = key;
                     Name = name;
                     this.screenIndex = screenIndex;
-                    Id = id;
-                    _parent = parent;
-                }
-
-                /// <summary>
-                /// Constructor for the HD-WP-4K-401-C layout, minimal parameters
-                /// </summary>
-                /// <param name="id"></param>
-                /// <param name="parent"></param>
-                public HdWp4k401cLayout(int id, HdWp4k401cController parent)
-                {                    
                     Id = id;
                     _parent = parent;
                 }
