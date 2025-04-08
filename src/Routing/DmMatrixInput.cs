@@ -12,11 +12,12 @@ namespace PepperDash.Essentials.DM.Routing
         private readonly CardDevice _device;
         private readonly string _key;
 
-        public DmMatrixInput(CardDevice device, string key, BoolFeedback videoSyncfeedback):base()
+        public DmMatrixInput(CardDevice device, string key, string name, BoolFeedback videoSyncfeedback):base()
         {
             _device = device;
             _key = key;
             IsOnline = new BoolFeedback(() => _device.IsOnline);
+            Name = name;
 
             _device.OnlineStatusChange += _device_OnlineStatusChange;
             videoSyncfeedback.OutputChange += VideoSyncfeedback_OutputChange;
@@ -45,7 +46,7 @@ namespace PepperDash.Essentials.DM.Routing
 
         public eRoutingSignalType SupportedSignalTypes => eRoutingSignalType.AudioVideo | eRoutingSignalType.SecondaryAudio;
 
-        public string Name => _device.Name;
+        public string Name { get; private set; }
 
         public BoolFeedback IsOnline { get; private set; }
 

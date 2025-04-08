@@ -15,13 +15,14 @@ namespace PepperDash.Essentials.DM.Routing
         private readonly DmChassisController _chassis;
         private readonly string _key;
 
-        public DmMatrixOutput(CardDevice device, DmChassisController chassis, string key)
+        public DmMatrixOutput(CardDevice device, DmChassisController chassis, string key, string name)
         {
             try
             {
                 _device = device;
                 _chassis = chassis;
                 _key = key;
+                Name = name;
 
                 _device.OnlineStatusChange += _device_OnlineStatusChange;
 
@@ -40,6 +41,8 @@ namespace PepperDash.Essentials.DM.Routing
             uint inputNumber = 0;
             var routeType = eRoutingSignalType.Video;
 
+
+
             switch (args.EventId)
             {
                 case DMOutputEventIds.VideoOutEventId:
@@ -54,6 +57,7 @@ namespace PepperDash.Essentials.DM.Routing
                         routeType = eRoutingSignalType.Audio;
                         break;
                     }
+                default:    return;
             }
             var inputSlot = _chassis.InputSlots.Values.FirstOrDefault(input => input.SlotNumber == inputNumber);
             SetInputRoute(routeType, inputSlot);
@@ -94,7 +98,7 @@ namespace PepperDash.Essentials.DM.Routing
         public int SlotNumber => (int)_device.SwitcherInputOutput.Number;
         public eRoutingSignalType SupportedSignalTypes => eRoutingSignalType.AudioVideo;
         public CardDevice Device => _device;
-        public string Name => _device.Name;
+        public string Name { get; private set; }
         public BoolFeedback IsOnline { get; private set; }
 
         public string Key => $"{_key}";
