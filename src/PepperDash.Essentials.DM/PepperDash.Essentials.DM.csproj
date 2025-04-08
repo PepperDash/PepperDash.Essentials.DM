@@ -9,9 +9,7 @@
     <AssemblyTitle>PepperDash.Essentials.DM</AssemblyTitle>
     <Company>PepperDash Technologies</Company>
     <Description>This software is a PepperDash Essentials Plugin for PepperDash.Essentials.DM.</Description>
-    <Copyright>Copyright ©  2025</Copyright>
-    <Version>1.0.0-local</Version>
-    <Version>$(NuGetVersion)</Version>    
+    <Copyright>Copyright ©  2025</Copyright> 
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <OutputPath>4Series\bin\$(Configuration)\</OutputPath>
     <Authors>PepperDash Technologies</Authors>
