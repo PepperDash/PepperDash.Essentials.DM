@@ -2,13 +2,9 @@
   <PropertyGroup>
     <Version>2.0.0-local</Version>
     <InformationalVersion>$(Version)</InformationalVersion>
-    <Authors>PepperDash Technologies</Authors>
-    <Company>PepperDash Technologies</Company>
-    <Product>PepperDash Essentials DM</Product>
-    <Copyright>Copyright ©  2025</Copyright>
-    <RepositoryUrl>https://github.com/PepperDash/PepperDash.Essentials.DM</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-    <PackageTags>Crestron; 4series</PackageTags>
+    <Authors>PepperDash Technology</Authors>
+    <Company>PepperDash Technology</Company>    
+    <Copyright>Copyright ©  2025</Copyright>   
     <PackageOutputPath>../output</PackageOutputPath>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
