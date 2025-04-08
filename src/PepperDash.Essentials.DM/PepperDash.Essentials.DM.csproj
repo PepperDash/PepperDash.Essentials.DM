@@ -17,7 +17,7 @@
 	<PackageTags>crestron;4series;</PackageTags>
 	<Version>$(Version)</Version>
 	<PackageOutputPath>../../package</PackageOutputPath>
-	<PackAsTool>True</PackAsTool>
+	<PackAsTool>False</PackAsTool>
 	<AssemblyVersion>1.0.0.0</AssemblyVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
