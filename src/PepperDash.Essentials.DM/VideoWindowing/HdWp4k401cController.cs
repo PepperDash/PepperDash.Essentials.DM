@@ -28,6 +28,8 @@ namespace PepperDash.Essentials.DM.VideoWindowing
         public StringFeedback DeviceNameFeedback { get; private set; }
         public Dictionary<uint, ScreenInfo> Screens { get; private set; }
 
+        public FeedbackCollection<StringFeedback> ScreenNamesFeedbacks { get; private set; }
+        public FeedbackCollection<BoolFeedback> ScreenEnablesFeedbacks { get; private set; }
         public FeedbackCollection<StringFeedback> LayoutNamesFeedbacks { get; private set; }
         private Dictionary<uint, string> LayoutNames { get; set; }
 
@@ -58,15 +60,25 @@ namespace PepperDash.Essentials.DM.VideoWindowing
             }
 
             Screens = new Dictionary<uint, ScreenInfo>(props.Screens);
+
             DeviceNameFeedback = new StringFeedback(() => Name);
-            LayoutNames = new Dictionary<uint, string>();
+
+            ScreenNamesFeedbacks = new FeedbackCollection<StringFeedback>();
+            ScreenEnablesFeedbacks = new FeedbackCollection<BoolFeedback>();
             LayoutNamesFeedbacks = new FeedbackCollection<StringFeedback>();
+            LayoutNames = new Dictionary<uint, string>();            
 
             foreach (var item in Screens)
             {
                 var _layouts = new Dictionary<string, ISelectableItem>();
                 var screen = item.Value;
                 var screenKey = item.Key;
+
+                Debug.LogVerbose(this, "Adding A ScreenNameFeedback");
+                ScreenNamesFeedbacks.Add(new StringFeedback("ScreenName-" + screenKey, () => screen.Name));
+
+                Debug.LogVerbose(this, "Adding A ScreenEnableFeedback");
+                ScreenEnablesFeedbacks.Add(new BoolFeedback("ScreenEnable-" + screenKey, () => screen.Enabled));
 
                 Debug.LogVerbose(this, "Adding A LayoutNameFeedback");
                 LayoutNamesFeedbacks.Add(new StringFeedback("LayoutNames-" + screenKey, () => LayoutNames[screenKey]));
@@ -93,6 +105,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
 
         public override bool CustomActivate()
         {
+            CreateMobileControlMessengers();
             return base.CustomActivate();
         }
 
@@ -193,7 +206,8 @@ namespace PepperDash.Essentials.DM.VideoWindowing
         public void AddFeedbackCollections()
         {
             AddFeedbackToList(DeviceNameFeedback);
-            AddCollectionsToList(LayoutNamesFeedbacks);
+            AddCollectionsToList(ScreenNamesFeedbacks, LayoutNamesFeedbacks);
+            AddCollectionsToList(ScreenEnablesFeedbacks);
         }
 
         #endregion
