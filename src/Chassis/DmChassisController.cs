@@ -147,7 +147,13 @@ namespace PepperDash.Essentials.DM
                 var clearInputPort = new RoutingInputPort(NonePortKey, eRoutingSignalType.AudioVideo,
                     eRoutingPortConnectionType.None, null, controller);
 
+                controller.InputNames = properties.InputNames;
+                controller.OutputNames = properties.OutputNames;
+
                 controller.InputPorts.Add(clearInputPort);
+
+                var clearInput = new DmMatrixClearInput();
+                controller.InputSlots.Add(clearInput.Key, clearInput);
 
                 // add the cards and port names
                 foreach (var kvp in properties.InputSlots)
@@ -175,9 +181,6 @@ namespace PepperDash.Essentials.DM
                     // wire up the audio to something here...
                     controller.AddVolumeControl(outNum, audio);
                 }
-
-                controller.InputNames = properties.InputNames;
-                controller.OutputNames = properties.OutputNames;
 
                 if (!string.IsNullOrEmpty(properties.NoRouteText))
                 {
@@ -248,8 +251,6 @@ namespace PepperDash.Essentials.DM
 
             InputSlots = new Dictionary<string, IRoutingInputSlot>();
             OutputSlots = new Dictionary<string, IRoutingOutputSlot>();
-
-            AddPostActivationAction(BuildMatrixRouting);
 
             for (uint x = 1; x <= Chassis.NumberOfOutputs; x++)
             {
@@ -745,7 +746,8 @@ namespace PepperDash.Essentials.DM
             if (inputCard != null)
             {
                 var videoSync = VideoInputSyncFeedbacks[number];
-                var matrixInput = new DmMatrixInput(inputCard, $"matrixInput-{number}", videoSync);
+                var name = InputNames[number];
+                var matrixInput = new DmMatrixInput(inputCard, $"matrixInput-{number}", name, videoSync);
                 InputSlots.Add(matrixInput.Key, matrixInput);
             }
 
@@ -916,13 +918,15 @@ namespace PepperDash.Essentials.DM
 
             if (card1 != null)
             {
-                var matrixOutputCard1 = new DmMatrixOutput(card1, this, $"matrixOutput-{(number*2)-1}");
+                var name = OutputNames[(number * 2) - 1];
+                var matrixOutputCard1 = new DmMatrixOutput(card1, this, $"matrixOutput-{(number*2)-1}", name);
                 OutputSlots.Add(matrixOutputCard1.Key, matrixOutputCard1);
             }
 
             if (card2 != null)
             {
-                var matrixOutputCard2 = new DmMatrixOutput(card2, this, $"matrixOutput-{number*2}");
+                var name = OutputNames[number * 2];
+                var matrixOutputCard2 = new DmMatrixOutput(card2, this, $"matrixOutput-{number*2}", name);
                 OutputSlots.Add(matrixOutputCard2.Key, matrixOutputCard2);
             }
         }
@@ -2144,18 +2148,6 @@ namespace PepperDash.Essentials.DM
                         {
                             port.HdcpReceiveCapability = (eHdcpCapabilityType)u;
                         });
-            }
-        }
-        private void BuildMatrixRouting()
-        {
-            try
-            {
-                var clearInput = new DmMatrixClearInput();
-                InputSlots.Add(clearInput.Key, clearInput);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogMessage(ex, "Exception building MatrixRouting: {message}", this, ex.Message);
             }
         }
 
