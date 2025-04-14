@@ -27,7 +27,7 @@
     <DebugType>portable</DebugType>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="PepperDashEssentials" Version="2.2.1">
+    <PackageReference Include="PepperDashEssentials" Version="2.4.2">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
   </ItemGroup>
