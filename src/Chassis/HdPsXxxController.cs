@@ -83,12 +83,6 @@ namespace PepperDash_Essentials_DM.Chassis
 			SetupOutputs(OutputNames);
 		}
 
-		// get input priorities
-		private byte[] SetInputPriorities(HdPsXxxPropertiesConfig props)
-		{
-			throw new NotImplementedException();
-		}
-
 		// input setup
 		private void SetupInputs(Dictionary<uint, string> dict)
 		{
@@ -516,65 +510,70 @@ Selector: {4}
 		#endregion
 
 
-		#region Factory
-
-
-		public class HdSp401ControllerFactory : EssentialsPluginDeviceFactory<HdPsXxxController>
-		{
-			public HdSp401ControllerFactory()
-			{
-				TypeNames = new List<string>() { "hdps401", "hdps402", "hdps621", "hdps622" };
-			}
-			public override EssentialsDevice BuildDevice(DeviceConfig dc)
-			{
-				var key = dc.Key;
-				var name = dc.Name;
-				var type = dc.Type.ToLower();
-
-				Debug.LogDebug("Factory Attempting to create new {0} device", type);
-
-				var props = JsonConvert.DeserializeObject<HdPsXxxPropertiesConfig>(dc.Properties.ToString());
-				if (props == null)
-				{
-					Debug.LogDebug("Factory failed to create new HD-PSXxx device, properties config was null");
-					return null;
-				}
-
-				var ipid = props.Control.IpIdInt;
-
-				switch (type)
-				{
-					case ("hdps401"):
-						{
-							return new HdPsXxxController(key, name, new HdPs401(ipid, Global.ControlSystem), props);
-						}
-					case ("hdps402"):
-						{
-							return new HdPsXxxController(key, name, new HdPs402(ipid, Global.ControlSystem), props);
-						}
-					case ("hdps621"):
-						{
-							return new HdPsXxxController(key, name, new HdPs621(ipid, Global.ControlSystem), props);
-						}
-					case ("hdps622"):
-						{
-							return new HdPsXxxController(key, name, new HdPs622(ipid, Global.ControlSystem), props);
-						}
-					default:
-						{
-							Debug.LogDebug("Factory failed to create new {0} device", type);
-							return null;
-						}
-				}
-			}
-		}
-
-
-		#endregion		
+		
+		
 	}
 
+    #region Factory
 
-	public class StreamCecWrapper : IKeyed, ICec
+
+    public class HdSp401ControllerFactory : EssentialsPluginDeviceFactory<HdPsXxxController>
+    {
+        public HdSp401ControllerFactory()
+        {
+            MinimumEssentialsFrameworkVersion = "2.4.5";
+            
+            TypeNames = new List<string>() { "hdps401", "hdps402", "hdps621", "hdps622" };
+        }
+        public override EssentialsDevice BuildDevice(DeviceConfig dc)
+        {
+            var key = dc.Key;
+            var name = dc.Name;
+            var type = dc.Type.ToLower();
+
+            Debug.LogDebug("Factory Attempting to create new {type} device", type);
+
+            var props = dc.Properties.ToObject<HdPsXxxPropertiesConfig>();
+
+            if (props == null)
+            {
+                Debug.LogDebug("Factory failed to create new HD-PSXxx device, properties config was null");
+                return null;
+            }
+
+            var ipid = props.Control.IpIdInt;
+
+            switch (type)
+            {
+                case ("hdps401"):
+                    {
+                        return new HdPsXxxController(key, name, new HdPs401(ipid, Global.ControlSystem), props);
+                    }
+                case ("hdps402"):
+                    {
+                        return new HdPsXxxController(key, name, new HdPs402(ipid, Global.ControlSystem), props);
+                    }
+                case ("hdps621"):
+                    {
+                        return new HdPsXxxController(key, name, new HdPs621(ipid, Global.ControlSystem), props);
+                    }
+                case ("hdps622"):
+                    {
+                        return new HdPsXxxController(key, name, new HdPs622(ipid, Global.ControlSystem), props);
+                    }
+                default:
+                    {
+                        Debug.LogDebug("Factory failed to create new {type} device", type);
+                        return null;
+                    }
+            }
+        }
+    }
+
+    #endregion		
+
+
+    public class StreamCecWrapper : IKeyed, ICec
 	{
 		public string Key { get; private set; }
 		public Cec StreamCec { get; private set; }

@@ -371,6 +371,7 @@ namespace PepperDash.Essentials.DM.AirMedia
     {
         public AirMediaControllerFactory()
         {
+            MinimumEssentialsFrameworkVersion = "2.4.5";
             TypeNames = new List<string>() { "am200", "am300", "am3200" };
         }
 

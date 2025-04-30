@@ -2210,6 +2210,7 @@ namespace PepperDash.Essentials.DM
     {
         public DmChassisControllerFactory()
         {
+            MinimumEssentialsFrameworkVersion = "2.4.5";
             TypeNames = new List<string>() { "dmmd8x8", "dmmd8x8rps", "dmmd8x8cpu3", "dmmd8x8cpu3rps", 
                 "dmmd16x16", "dmmd16x16rps", "dmmd16x16cpu3", "dmmd16x16cpu3rps", 
                 "dmmd32x32", "dmmd32x32rps", "dmmd32x32cpu3", "dmmd32x32cpu3rps", 

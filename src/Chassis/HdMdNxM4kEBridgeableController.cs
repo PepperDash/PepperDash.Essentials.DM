@@ -467,7 +467,8 @@ namespace PepperDash.Essentials.DM.Chassis
 		{
 			public HdMdNxM4kEControllerFactory()
 			{
-				TypeNames = new List<string>() { "hdmd4x14ke-bridgeable", "hdmd4x24ke", "hdmd6x24ke" };
+                MinimumEssentialsFrameworkVersion = "2.4.5";
+                TypeNames = new List<string>() { "hdmd4x14ke-bridgeable", "hdmd4x24ke", "hdmd6x24ke" };
 			}
 
 			public override EssentialsDevice BuildDevice(DeviceConfig dc)
