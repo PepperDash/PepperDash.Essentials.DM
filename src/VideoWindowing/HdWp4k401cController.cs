@@ -354,7 +354,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
         {
             public HdWp4k401cControllerFactory()
             {
-                MinimumEssentialsFrameworkVersion = "2.4.1";
+                MinimumEssentialsFrameworkVersion = "2.4.5";
                 TypeNames = new List<string>() { "hdWp4k401c" };
             }
 

@@ -61,7 +61,8 @@ namespace PepperDash.Essentials.DM.Endpoints.DGEs
 	{
 		public DmDge200CControllerFactory()
 		{
-			TypeNames = new List<string>() { "dmdge200c" };
+            MinimumEssentialsFrameworkVersion = "2.4.5";
+            TypeNames = new List<string>() { "dmdge200c" };
 		}
 
 		public override EssentialsDevice BuildDevice(DeviceConfig dc)

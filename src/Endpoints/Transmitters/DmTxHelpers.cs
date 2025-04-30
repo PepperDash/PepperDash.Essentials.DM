@@ -490,6 +490,7 @@ namespace PepperDash.Essentials.DM
     {
         public DmTxControllerFactory()
         {
+            MinimumEssentialsFrameworkVersion = "2.4.5";
             TypeNames = new List<string>
             {
                 "dmtx200c",

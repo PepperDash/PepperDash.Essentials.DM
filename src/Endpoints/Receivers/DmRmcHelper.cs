@@ -608,6 +608,7 @@ namespace PepperDash.Essentials.DM
     {
         public DmRmcControllerFactory()
         {
+            MinimumEssentialsFrameworkVersion = "2.4.5";
             TypeNames = new List<string>
             { "hdbasetrx", "dmrmc4k100c1g", "dmrmc100c", "dmrmc100s", "dmrmc4k100c", "dmrmc150s",
                 "dmrmc200c", "dmrmc200s", "dmrmc200s2", "dmrmcscalerc", "dmrmcscalers", "dmrmcscalers2", "dmrmc4kscalerc", "dmrmc4kscalercdsp",

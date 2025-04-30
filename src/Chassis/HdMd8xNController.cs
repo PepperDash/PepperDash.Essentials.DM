@@ -486,7 +486,8 @@ namespace PepperDash.Essentials.DM.Chassis
 		{
 			public HdMd8xNControllerFactory()
 			{
-				TypeNames = new List<string>() { "hdmd8x2", "hdmd8x1" };
+                MinimumEssentialsFrameworkVersion = "2.4.5";
+                TypeNames = new List<string>() { "hdmd8x2", "hdmd8x1" };
 			}
 
 			public override EssentialsDevice BuildDevice(DeviceConfig dc)
