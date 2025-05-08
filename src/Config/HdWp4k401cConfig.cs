@@ -10,6 +10,41 @@ namespace PepperDash.Essentials.DM.Config
 {
     /// <summary>
     /// Represents the "properties" property of a DM device config
+    /// 
+    /// Example JSON:
+    /// {
+    ///     "key": "windowProc",
+    ///     "uid": 51,
+    ///     "name": "windowingProcessor",
+    ///     "type": "hdwp4k401c",
+    ///     "group": "windowProcessor",
+    ///     "properties": {
+    ///       "control": {
+    ///         "ipId": "0x50"           
+    ///       },
+    ///       "screens": {
+    ///         "1": {
+    ///           "enabled": true,
+    ///           "name": "Main Screen",
+    ///           "screenIndex": 1,
+    ///           "layouts": {
+    ///             "1": {
+    ///               "layoutName": "Fullscreen",
+    ///               "layoutIndex": 1
+    ///             },
+    ///             "2": {
+    ///               "layoutName": "Picture-in-Picture",
+    ///               "layoutIndex": 2
+    ///             },
+    ///             "3": {
+    ///               "layoutName": "Side-by-Side",
+    ///               "layoutIndex": 3
+    ///             }
+    ///           }
+    ///         }
+    ///       }
+    ///     }
+    ///   },
     /// </summary>
     public class HdWp4k401cConfig
     {
