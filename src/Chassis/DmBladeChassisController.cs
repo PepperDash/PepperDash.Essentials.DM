@@ -640,8 +640,8 @@ namespace PepperDash.Essentials.DM
                     }
                 default:
                     {
-                        Debug.LogInformation(this, "DMOutputChange fired for Output {0} with Unhandled EventId: {1}",
-                            args.Number, args.EventId);
+                        //Debug.LogVerbose(this, "DMOutputChange fired for Output {0} with Unhandled EventId: {1}",
+                        //    args.Number, args.EventId);
                         break;
                     }
             }

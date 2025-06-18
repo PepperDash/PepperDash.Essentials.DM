@@ -15,6 +15,7 @@ using Newtonsoft.Json;
 using PepperDash.Core.Logging;
 using PepperDash.Essentials.AppServer.Messengers;
 using static Crestron.SimplSharpPro.DM.Audio;
+using IHasScreensWithLayouts = PepperDash.Essentials.Core.DeviceTypeInterfaces.IHasScreensWithLayouts;
 
 namespace PepperDash.Essentials.DM.VideoWindowing
 {
@@ -24,6 +25,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
         #region Private Members, Felds, and Properties
         private readonly HdWp4k401C _HdWpChassis;           
         public event EventHandler<RoutingNumericEventArgs> NumericSwitchChange;
+        public event SourceInfoChangeHandler CurrentSourceChange;
 
         public StringFeedback DeviceNameFeedback { get; private set; }
         public Dictionary<uint, ScreenInfo> Screens { get; private set; }
@@ -70,7 +72,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
 
             foreach (var item in Screens)
             {
-                var _layouts = new Dictionary<string, ISelectableItem>();
+                var _layouts = new Dictionary<uint, ISelectableItem>();
                 var screen = item.Value;
                 var screenKey = item.Key;
 
@@ -85,7 +87,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
 
                 foreach (var layout in screen.Layouts)
                 {
-                    _layouts.Add($"{layout.Key}", new HdWp4k401cLayouts.HdWp4k401cLayout(layout.Key.ToString(), layout.Value.LayoutName, screen.ScreenIndex, layout.Value.LayoutIndex, this));
+                    _layouts.Add(layout.Key, new HdWp4k401cLayouts.HdWp4k401cLayout($"{layout.Key}", layout.Value.LayoutName, screen.ScreenIndex, (int)layout.Key, this));
                 }
                 
                 _screenLayouts[screenKey] = new HdWp4k401cLayouts($"{Key}-screen-{screenKey}", $"{Key}-screen-{screenKey}", _layouts);
@@ -127,7 +129,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
             foreach (var screen in Screens)
             {
                 var screenKey = screen.Key;
-                var messenger = new ISelectableItemsMessenger<string>($"{Key}-screen-{screenKey}", $"/device/{Key}-screen-{screenKey}", _screenLayouts[screenKey], $"screen-{screenKey}");
+                var messenger = new ISelectableItemsMessenger<uint>($"{Key}-screen-{screenKey}", $"/device/{Key}-screen-{screenKey}", _screenLayouts[screenKey], $"screen-{screenKey}");
                 mc.AddDeviceMessenger(messenger);
             }
         }
@@ -197,6 +199,90 @@ namespace PepperDash.Essentials.DM.VideoWindowing
             //Reset AV Routes when SetWindowLayout is called
             DefaultWindowRoutes();
         }
+
+        /// <summary>
+        /// Set the window layout using the WindowLayout.eLayoutType enum.
+        /// </summary>
+        /// <param name="layout"></param>
+        public void SetWindowLayout(WindowLayout.eLayoutType layout)
+        {
+            _HdWpChassis.HdWpWindowLayout.Layout = layout;
+
+            DefaultWindowRoutes();
+        }
+
+
+        /// <summary>
+        /// Apply a specific layout to a screen by its ID and layout index.
+        /// </summary>
+        /// <param name="screenId"></param>
+        /// <param name="layoutIndex"></param>
+        public void ApplyLayout(uint screenId, uint layoutIndex)
+            {
+            if (!Screens.TryGetValue(screenId, out var screen))
+                {
+                Debug.LogError(this, $"[ApplyLayout] Screen '{screenId}' not found.");
+                return;
+                }
+
+            if (!screen.Layouts.TryGetValue(layoutIndex, out var layout))
+                {
+                Debug.LogError(this, $"[ApplyLayout] Layout '{layoutIndex}' not found for screen '{screenId}'.");
+                return;
+                }
+
+           
+            foreach (var window in layout.Windows)
+                {
+                uint windowId = window.Key;
+                string inputKey = window.Value.Input?.ToLower();
+
+                if (string.IsNullOrEmpty(inputKey))
+                    {
+                    Debug.LogError(this, $"[ApplyLayout] Missing input for window {windowId}.");
+                    continue;
+                    }
+
+                WindowLayout.eVideoSourceType? source = null;
+                switch (inputKey)
+                    {
+                    case "input1":
+                        source = WindowLayout.eVideoSourceType.Input1;
+                        break;
+                    case "input2":
+                        source = WindowLayout.eVideoSourceType.Input2;
+                        break;
+                    case "input3":
+                        source = WindowLayout.eVideoSourceType.Input3;
+                        break;
+                    case "input4":
+                        source = WindowLayout.eVideoSourceType.Input4;
+                        break;
+                    }
+
+                if (source.HasValue)
+                    {
+                    _HdWpChassis.HdWpWindowLayout.SetVideoSource(windowId, source.Value);
+                    Debug.LogInformation(this, $"[ApplyLayout] Set window {windowId} to {inputKey} ({window.Value.Label}).");
+                    }
+                else
+                    {
+                    Debug.LogError(this, $"[ApplyLayout] Invalid input '{inputKey}' for window {windowId}.");
+                    }
+                }
+
+            SetWindowLayout((uint)layout.LayoutIndex);
+
+            // Send layout data via messenger
+            var mc = DeviceManager.AllDevices.OfType<IMobileControl>().FirstOrDefault();
+            if (mc != null)
+                {
+                var messenger = new IHasScreensWithLayoutsMessenger($"{Key}-screens", $"/device/{Key}", this);
+                mc.AddDeviceMessenger(messenger);
+                messenger.SendCurrentLayoutStatus(screenId, layout);
+                }
+            }
+
 
         #endregion
 
@@ -346,6 +432,11 @@ namespace PepperDash.Essentials.DM.VideoWindowing
             Debug.LogDebug(this, "WindowLayoutChange event triggerend. EventId = {0}", args.EventId);
         }
 
+        public void ExecuteSwitch(object inputSelector)
+        {
+            throw new NotImplementedException();
+        }
+
         #endregion
 
         #region Factory
@@ -376,10 +467,10 @@ namespace PepperDash.Essentials.DM.VideoWindowing
 
         #region Layouts
 
-        class HdWp4k401cLayouts : ISelectableItems<string>, IKeyName
+        class HdWp4k401cLayouts : ISelectableItems<uint>, IKeyName
         {
-            private Dictionary<string, ISelectableItem> _items = new Dictionary<string, ISelectableItem>();
-            public Dictionary<string, ISelectableItem> Items
+            private Dictionary<uint, ISelectableItem> _items = new Dictionary<uint, ISelectableItem>();
+            public Dictionary<uint, ISelectableItem> Items
             {
                 get => _items;
                 set
@@ -389,8 +480,8 @@ namespace PepperDash.Essentials.DM.VideoWindowing
                 }
             }
 
-            private string _currentItem;
-            public string CurrentItem
+            private uint _currentItem;
+            public uint CurrentItem
             {
                 get => _currentItem;
                 set
@@ -413,7 +504,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
             /// <param name="key"></param>
             /// <param name="name"></param>
             /// <param name="items"></param>
-            public HdWp4k401cLayouts(string key, string name, Dictionary<string, ISelectableItem> items)
+            public HdWp4k401cLayouts(string key, string name, Dictionary<uint, ISelectableItem> items)
             {
                 Items = items;
                 Key = key;
@@ -467,10 +558,14 @@ namespace PepperDash.Essentials.DM.VideoWindowing
                 public void Select()
                 {
                     //_parent.RecallPreset((ushort)0, (ushort)Id);
-                    _parent.SetWindowLayout((uint)Id);
+                    _parent.ApplyLayout((uint)screenIndex, (uint)Id);
+                    }
                 }
-            }
+
+
         }
+
+
 
         #endregion
     }
