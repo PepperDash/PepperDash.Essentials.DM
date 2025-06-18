@@ -148,11 +148,11 @@ namespace PepperDash.Essentials.DM.AirMedia
             }
             else
             {
-                Debug.LogVerbose(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
+                Debug.LogInformation(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
             }
 
             Debug.LogDebug("Linking to Trilist '{0}'", trilist.ID.ToString("X"));
-            Debug.LogVerbose("Linking to Airmedia: {0}", Name);
+            Debug.LogInformation("Linking to Airmedia: {0}", Name);
 
             trilist.StringInput[joinMap.Name.JoinNumber].StringValue = Name;
 
@@ -346,7 +346,7 @@ namespace PepperDash.Essentials.DM.AirMedia
             if ((signalType & eRoutingSignalType.Video) != eRoutingSignalType.Video) return;
             if (!Enum.IsDefined(typeof (AmX00DisplayControl.eAirMediaX00VideoSource), input))
             {
-                Debug.LogInformation(this, "Invalid Video Source Index : {0}", input);
+                Debug.LogVerbose(this, "Invalid Video Source Index : {0}", input);
                 return;
             }
             AirMedia.DisplayControl.VideoOut = (AmX00DisplayControl.eAirMediaX00VideoSource) input;
@@ -358,7 +358,7 @@ namespace PepperDash.Essentials.DM.AirMedia
 
         public void ExecuteSwitch(object inputSelector, object outputSelector, eRoutingSignalType signalType)
         {
-            Debug.LogInformation(this, "Input Selector = {0}", inputSelector.ToString());
+            Debug.LogVerbose(this, "Input Selector = {0}", inputSelector.ToString());
             var handler = inputSelector as Action;
             if (handler == null) return;
             handler();

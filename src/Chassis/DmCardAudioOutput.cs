@@ -56,7 +56,7 @@ namespace PepperDash.Essentials.DM
         /// </summary>
         public void SetVolume(ushort level)
         {
-            Debug.LogVerbose("Set volume out {0}", level);
+            Debug.LogInformation("Set volume out {0}", level);
             Output.Volume.UShortValue = level;
         }
 

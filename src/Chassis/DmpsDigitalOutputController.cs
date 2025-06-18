@@ -115,7 +115,7 @@ namespace PepperDash.Essentials.DM
 
         public virtual void ExecuteNumericSwitch(ushort input, ushort output, eRoutingSignalType type)
         {
-            Debug.LogInformation(this, "Executing Numeric Switch to input {0}.", input);
+            Debug.LogVerbose(this, "Executing Numeric Switch to input {0}.", input);
 
             switch (input)
             {

@@ -268,7 +268,7 @@ namespace PepperDash.Essentials.DM
 
         public void ExecuteNumericSwitch(ushort input, ushort output, eRoutingSignalType type)
         {
-            Debug.LogInformation(this, "Executing Numeric Switch to input {0}.", input);
+            Debug.LogVerbose(this, "Executing Numeric Switch to input {0}.", input);
 
             switch (input)
             {
@@ -299,7 +299,7 @@ namespace PepperDash.Essentials.DM
                     }
                 default:
                     {
-                        Debug.LogInformation(this, "Unable to execute numeric switch to input {0}", input);
+                        Debug.LogVerbose(this, "Unable to execute numeric switch to input {0}", input);
                         break;
                     }
 
@@ -312,7 +312,7 @@ namespace PepperDash.Essentials.DM
         {
             try
             {
-                Debug.LogInformation(this, "Attempting to switch InputSelector {0}", ((eVst)inputSelector).ToString());
+                Debug.LogVerbose(this, "Attempting to switch InputSelector {0}", ((eVst)inputSelector).ToString());
                 if ((signalType | eRoutingSignalType.Video) == eRoutingSignalType.Video)
                     Tx.VideoSource = (eVst)inputSelector;
 
@@ -320,18 +320,18 @@ namespace PepperDash.Essentials.DM
                 // The SIMPL definition only shows a single analog for AudioVideo Source
                 if ((signalType | eRoutingSignalType.Audio) == eRoutingSignalType.Audio)
                     //it doesn't
-                    Debug.LogInformation(this, "Unable to execute audio-only switch for tx {0}", Key);
+                    Debug.LogVerbose(this, "Unable to execute audio-only switch for tx {0}", Key);
                 //Tx.AudioSource = (eAst)inputSelector;
             }
             catch (Exception e)
             {
-                Debug.LogInformation(this, "Exception in ExecuteSwitch: {0}", e);
+                Debug.LogVerbose(this, "Exception in ExecuteSwitch: {0}", e);
             }
         }
 
         void InputStreamChangeEvent(EndpointInputStream inputStream, EndpointInputStreamEventArgs args)
         {
-            Debug.LogVerbose("{0} event {1} stream {2}", Tx.ToString(), inputStream.ToString(), args.EventId.ToString());
+            Debug.LogInformation("{0} event {1} stream {2}", Tx.ToString(), inputStream.ToString(), args.EventId.ToString());
 
             switch (args.EventId)
             {
@@ -342,7 +342,7 @@ namespace PepperDash.Essentials.DM
                     if (inputStream == Tx.HdmiInputs[2]) HdmiIn2HdcpCapabilityFeedback.FireUpdate();
                     if (inputStream == Tx.DisplayPortInput) DisplayPortInHdcpCapabilityFeedback.FireUpdate();
 
-                    Debug.LogInformation(this, "DisplayPortHDCP Mode Trigger = {0}",
+                    Debug.LogVerbose(this, "DisplayPortHDCP Mode Trigger = {0}",
                         DisplayPortInHdcpCapabilityFeedback.IntValue);
 
                     HdcpStateFeedback.FireUpdate();
@@ -373,20 +373,20 @@ namespace PepperDash.Essentials.DM
         void Tx_BaseEvent(GenericBase device, BaseEventArgs args)
         {
             var id = args.EventId;
-            Debug.LogInformation(this, "EventId {0}", args.EventId);
+            Debug.LogVerbose(this, "EventId {0}", args.EventId);
 
             switch (id)
             {
                 case EndpointTransmitterBase.VideoSourceFeedbackEventId:
                     var localVideoInputPort = InputPorts.FirstOrDefault(p => (eVst)p.Selector == Tx.VideoSourceFeedback);
-                    Debug.LogInformation(this, "  Video Source: {0}", Tx.VideoSourceFeedback);
+                    Debug.LogVerbose(this, "  Video Source: {0}", Tx.VideoSourceFeedback);
                     VideoSourceNumericFeedback.FireUpdate();
                     ActiveVideoInputFeedback.FireUpdate();
                     OnSwitchChange(new RoutingNumericEventArgs(1, VideoSourceNumericFeedback.UShortValue, OutputPorts.First(), localVideoInputPort, eRoutingSignalType.Video));
                     break;
                 case EndpointTransmitterBase.AudioSourceFeedbackEventId:
                     var localInputAudioPort = InputPorts.FirstOrDefault(p => (eVst)p.Selector == Tx.VideoSourceFeedback);
-                    Debug.LogInformation(this, "  Audio Source: {0}", Tx.VideoSourceFeedback);
+                    Debug.LogVerbose(this, "  Audio Source: {0}", Tx.VideoSourceFeedback);
                     AudioSourceNumericFeedback.FireUpdate();
                     OnSwitchChange(new RoutingNumericEventArgs(1, AudioSourceNumericFeedback.UShortValue, OutputPorts.First(), localInputAudioPort, eRoutingSignalType.Audio));
                     break;
@@ -409,7 +409,7 @@ namespace PepperDash.Essentials.DM
         void ForwardVideoAttributeChange(RoutingInputPortWithVideoStatuses inputPort, int eventId)
         {
             //// LOCATION: Crestron.SimplSharpPro.DM.VideoAttributeEventIds
-            //Debug.LogInformation(this, "VideoAttributes_AttributeChange event id={0} from {1}",
+            //Debug.LogVerbose(this, "VideoAttributes_AttributeChange event id={0} from {1}",
             //    args.EventId, (sender as VideoAttributesEnhanced).Owner.GetType());
             switch (eventId)
             {
