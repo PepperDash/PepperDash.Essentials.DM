@@ -4,6 +4,8 @@ using PepperDash.Essentials.AppServer.Messengers;
 using System.Collections.Generic;
 using PepperDash.Essentials.DM.Config;
 using System.Linq;
+using PepperDash.Essentials.Core.DeviceTypeInterfaces;
+using IHasScreensWithLayouts = PepperDash.Essentials.Core.DeviceTypeInterfaces.IHasScreensWithLayouts;
 
 namespace PepperDash.Essentials.DM.VideoWindowing
     {
@@ -18,10 +20,11 @@ namespace PepperDash.Essentials.DM.VideoWindowing
             }
 
         protected override void RegisterActions()
-            {
+        {
             base.RegisterActions();
+
             AddAction("/fullStatus", (id, context) => SendFullStatus());
-            }
+        }
 
         private void SendFullStatus()
             {

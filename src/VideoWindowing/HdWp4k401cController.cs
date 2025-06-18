@@ -15,6 +15,7 @@ using Newtonsoft.Json;
 using PepperDash.Core.Logging;
 using PepperDash.Essentials.AppServer.Messengers;
 using static Crestron.SimplSharpPro.DM.Audio;
+using IHasScreensWithLayouts = PepperDash.Essentials.Core.DeviceTypeInterfaces.IHasScreensWithLayouts;
 
 namespace PepperDash.Essentials.DM.VideoWindowing
 {
@@ -24,6 +25,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
         #region Private Members, Felds, and Properties
         private readonly HdWp4k401C _HdWpChassis;           
         public event EventHandler<RoutingNumericEventArgs> NumericSwitchChange;
+        public event SourceInfoChangeHandler CurrentSourceChange;
 
         public StringFeedback DeviceNameFeedback { get; private set; }
         public Dictionary<uint, ScreenInfo> Screens { get; private set; }
@@ -198,18 +200,34 @@ namespace PepperDash.Essentials.DM.VideoWindowing
             DefaultWindowRoutes();
         }
 
+        /// <summary>
+        /// Set the window layout using the WindowLayout.eLayoutType enum.
+        /// </summary>
+        /// <param name="layout"></param>
+        public void SetWindowLayout(WindowLayout.eLayoutType layout)
+        {
+            _HdWpChassis.HdWpWindowLayout.Layout = layout;
 
+            DefaultWindowRoutes();
+        }
+
+
+        /// <summary>
+        /// Apply a specific layout to a screen by its ID and layout index.
+        /// </summary>
+        /// <param name="screenId"></param>
+        /// <param name="layoutIndex"></param>
         public void ApplyLayout(uint screenId, uint layoutIndex)
             {
             if (!Screens.TryGetValue(screenId, out var screen))
                 {
-                Debug.Console(1, this, $"[ApplyLayout] Screen '{screenId}' not found.");
+                Debug.LogError(this, $"[ApplyLayout] Screen '{screenId}' not found.");
                 return;
                 }
 
             if (!screen.Layouts.TryGetValue(layoutIndex, out var layout))
                 {
-                Debug.Console(1, this, $"[ApplyLayout] Layout '{layoutIndex}' not found for screen '{screenId}'.");
+                Debug.LogError(this, $"[ApplyLayout] Layout '{layoutIndex}' not found for screen '{screenId}'.");
                 return;
                 }
 
@@ -221,7 +239,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
 
                 if (string.IsNullOrEmpty(inputKey))
                     {
-                    Debug.Console(1, this, $"[ApplyLayout] Missing input for window {windowId}.");
+                    Debug.LogError(this, $"[ApplyLayout] Missing input for window {windowId}.");
                     continue;
                     }
 
@@ -245,11 +263,11 @@ namespace PepperDash.Essentials.DM.VideoWindowing
                 if (source.HasValue)
                     {
                     _HdWpChassis.HdWpWindowLayout.SetVideoSource(windowId, source.Value);
-                    Debug.Console(1, this, $"[ApplyLayout] Set window {windowId} to {inputKey} ({window.Value.Label}).");
+                    Debug.LogInformation(this, $"[ApplyLayout] Set window {windowId} to {inputKey} ({window.Value.Label}).");
                     }
                 else
                     {
-                    Debug.Console(1, this, $"[ApplyLayout] Invalid input '{inputKey}' for window {windowId}.");
+                    Debug.LogError(this, $"[ApplyLayout] Invalid input '{inputKey}' for window {windowId}.");
                     }
                 }
 
@@ -412,6 +430,11 @@ namespace PepperDash.Essentials.DM.VideoWindowing
         void HdWpWindowLayout_WindowLayoutChange(object sender, GenericEventArgs args)
         {           
             Debug.LogDebug(this, "WindowLayoutChange event triggerend. EventId = {0}", args.EventId);
+        }
+
+        public void ExecuteSwitch(object inputSelector)
+        {
+            throw new NotImplementedException();
         }
 
         #endregion
