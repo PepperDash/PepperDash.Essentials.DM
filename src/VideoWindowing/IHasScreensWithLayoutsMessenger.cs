@@ -16,7 +16,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
         public IHasScreensWithLayoutsMessenger(string key, string messagePath, IHasScreensWithLayouts hasScreensWithLayouts)
             : base(key, messagePath, hasScreensWithLayouts as IKeyName)
             {
-            _hasScreensWithLayouts = hasScreensWithLayouts;
+                _hasScreensWithLayouts = hasScreensWithLayouts;
             }
 
         protected override void RegisterActions()
