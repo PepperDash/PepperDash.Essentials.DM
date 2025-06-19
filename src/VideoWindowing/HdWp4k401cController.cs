@@ -57,7 +57,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
 
             if (props == null)
             {                
-                Debug.LogInformation(this, "HD-WP-4K-401-C Controller properties are null, failed to build the device");
+                Debug.LogVerbose(this, "HD-WP-4K-401-C Controller properties are null, failed to build the device");
                 return;
             }
 
@@ -76,13 +76,13 @@ namespace PepperDash.Essentials.DM.VideoWindowing
                 var screen = item.Value;
                 var screenKey = item.Key;
 
-                Debug.LogInformation(this, "Adding A ScreenNameFeedback");
+                Debug.LogVerbose(this, "Adding A ScreenNameFeedback");
                 ScreenNamesFeedbacks.Add(new StringFeedback("ScreenName-" + screenKey, () => screen.Name));
 
-                Debug.LogInformation(this, "Adding A ScreenEnableFeedback");
+                Debug.LogVerbose(this, "Adding A ScreenEnableFeedback");
                 ScreenEnablesFeedbacks.Add(new BoolFeedback("ScreenEnable-" + screenKey, () => screen.Enabled));
 
-                Debug.LogInformation(this, "Adding A LayoutNameFeedback");
+                Debug.LogVerbose(this, "Adding A LayoutNameFeedback");
                 LayoutNamesFeedbacks.Add(new StringFeedback("LayoutNames-" + screenKey, () => LayoutNames[screenKey]));
 
                 foreach (var layout in screen.Layouts)

@@ -770,7 +770,7 @@ namespace PepperDash.Essentials.DM
 
                 if (TxDictionary.ContainsKey(ioSlot))
                 {
-                    Debug.LogInformation("Creating Tx Feedbacks {0}", ioSlot);
+                    Debug.LogVerbose("Creating Tx Feedbacks {0}", ioSlot);
                     var txKey = TxDictionary[ioSlot];
                     var basicTxDevice = DeviceManager.GetDeviceForKey(txKey) as BasicDmTxControllerBase;
 
@@ -785,11 +785,11 @@ namespace PepperDash.Essentials.DM
                         if (advancedTxDevice != null)
                         {
                             advancedTxDevice.IsOnline.LinkInputSig(trilist.BooleanInput[joinMap.InputEndpointOnline.JoinNumber + ioSlotJoin]);
-                            Debug.LogInformation("Linking Tx Online Feedback from Advanced Transmitter at input {0}", ioSlot);
+                            Debug.LogVerbose("Linking Tx Online Feedback from Advanced Transmitter at input {0}", ioSlot);
                         }
                         else if (InputEndpointOnlineFeedbacks[ioSlot] != null)
                         {
-                            Debug.LogInformation("Linking Tx Online Feedback from Input Card {0}", ioSlot);
+                            Debug.LogVerbose("Linking Tx Online Feedback from Input Card {0}", ioSlot);
                             InputEndpointOnlineFeedbacks[ioSlot].LinkInputSig(trilist.BooleanInput[joinMap.InputEndpointOnline.JoinNumber + ioSlotJoin]);
                         }
                     }

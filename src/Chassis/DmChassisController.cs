@@ -340,7 +340,7 @@ namespace PepperDash.Essentials.DM
 
                             if (outputCard.Card is DmcStroAV)
                             {
-                                Debug.LogInformation("Found output stream card in slot: {0}.", tempX);
+                                Debug.LogVerbose("Found output stream card in slot: {0}.", tempX);
                                 var streamCard = outputCard.Card as DmcStroAV;
                                 if (streamCard.Control.StartFeedback.BoolValue == true)
                                     return 1;
@@ -466,7 +466,7 @@ namespace PepperDash.Essentials.DM
 
                             if (inputCard.Card is DmcStr)
                             {
-                                Debug.LogInformation("Found input stream card in slot: {0}.", tempX);
+                                Debug.LogVerbose("Found input stream card in slot: {0}.", tempX);
                                 var streamCard = inputCard.Card as DmcStr;
                                 if (streamCard.Control.StartFeedback.BoolValue == true)
                                     return 1;
@@ -1190,7 +1190,7 @@ namespace PepperDash.Essentials.DM
             }
             catch (Exception ex)
             {
-                Debug.LogInformation(this, "Error in Chassis_DMInputChange: {0}", ex);
+                Debug.LogVerbose(this, "Error in Chassis_DMInputChange: {0}", ex);
             }
         }
 
@@ -1739,7 +1739,7 @@ namespace PepperDash.Essentials.DM
 
         private void LinkRxToApi(BasicTriList trilist, uint ioSlot, DmChassisControllerJoinMap joinMap, uint ioSlotJoin)
         {
-            Debug.LogInformation("Creating Rx Feedbacks {0}", ioSlot);
+            Debug.LogVerbose("Creating Rx Feedbacks {0}", ioSlot);
             var rxKey = RxDictionary[ioSlot];
             var rxDevice = DeviceManager.GetDeviceForKey(rxKey) as DmRmcControllerBase;
             var hdBaseTDevice = DeviceManager.GetDeviceForKey(rxKey) as DmHdBaseTControllerBase;
@@ -1762,7 +1762,7 @@ namespace PepperDash.Essentials.DM
             VideoInputSyncFeedbacks[ioSlot].LinkInputSig(
                 trilist.BooleanInput[joinMap.VideoSyncStatus.JoinNumber + ioSlotJoin]);
 
-            Debug.LogInformation("Creating Tx Feedbacks {0}", ioSlot);
+            Debug.LogVerbose("Creating Tx Feedbacks {0}", ioSlot);
             var txKey = TxDictionary[ioSlot];
             var txDevice = DeviceManager.GetDeviceForKey(txKey) as BasicDmTxControllerBase;
 
@@ -1915,13 +1915,13 @@ namespace PepperDash.Essentials.DM
                  || Chassis is DmMd32x32Cpu3 || Chassis is DmMd32x32Cpu3rps) ||
                 advancedTxDevice == null)
             {
-                Debug.LogInformation("Linking Tx Online Feedback from Input Card {0}", ioSlot);
+                Debug.LogVerbose("Linking Tx Online Feedback from Input Card {0}", ioSlot);
                 InputEndpointOnlineFeedbacks[ioSlot].LinkInputSig(
                     trilist.BooleanInput[joinMap.InputEndpointOnline.JoinNumber + ioSlotJoin]);
                 return;
             }
 
-            Debug.LogInformation("Linking Tx Online Feedback from Advanced Transmitter at input {0}", ioSlot);
+            Debug.LogVerbose("Linking Tx Online Feedback from Advanced Transmitter at input {0}", ioSlot);
 
             advancedTxDevice.IsOnline.LinkInputSig(
                 trilist.BooleanInput[joinMap.InputEndpointOnline.JoinNumber + ioSlotJoin]);

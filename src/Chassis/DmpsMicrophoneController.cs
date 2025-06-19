@@ -21,7 +21,7 @@ namespace PepperDash.Essentials.DM
 
         public DmpsMicrophoneController(CrestronControlSystem dmps)
         {
-            Debug.LogInformation("Creating Dmps Microphone Controller");
+            Debug.LogVerbose("Creating Dmps Microphone Controller");
             Mics = new Dictionary<uint,DmpsMicrophone>();
 
             foreach (var mic in dmps.Microphones)
@@ -41,7 +41,7 @@ namespace PepperDash.Essentials.DM
             if (args.EventId == MicrophoneEventIds.VuFeedBackEventId)
                 return;
 
-            Debug.LogInformation("Dmps Microphone Controller Index: {0} EventId: {1}", mic.ID, args.EventId.ToString());
+            Debug.LogVerbose("Dmps Microphone Controller Index: {0} EventId: {1}", mic.ID, args.EventId.ToString());
 
             if(Mics.ContainsKey(mic.ID))
             {

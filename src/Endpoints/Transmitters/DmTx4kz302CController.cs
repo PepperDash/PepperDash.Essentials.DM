@@ -331,7 +331,7 @@ namespace PepperDash.Essentials.DM
 
         void InputStreamChangeEvent(EndpointInputStream inputStream, EndpointInputStreamEventArgs args)
         {
-            Debug.LogInformation("{0} event {1} stream {2}", Tx.ToString(), inputStream.ToString(), args.EventId.ToString());
+            Debug.LogVerbose("{0} event {1} stream {2}", Tx.ToString(), inputStream.ToString(), args.EventId.ToString());
 
             switch (args.EventId)
             {
