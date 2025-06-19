@@ -197,7 +197,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
             _HdWpChassis.HdWpWindowLayout.Layout = _layoutType;
 
             //Reset AV Routes when SetWindowLayout is called
-            DefaultWindowRoutes();
+            //DefaultWindowRoutes();
         }
 
         /// <summary>
