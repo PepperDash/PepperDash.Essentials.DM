@@ -58,7 +58,7 @@ namespace PepperDash.Essentials.DM
             }
             else
             {
-                Debug.LogVerbose(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
+                Debug.LogInformation(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
             }
 
             LinkDmRmcToApi(rmc, trilist, joinMap);
@@ -188,7 +188,7 @@ namespace PepperDash.Essentials.DM
 
             foreach (var ip in _rmc.ConnectedIpList)
             {
-                Debug.LogVerbose(this, "Connected IP Address: {0}", ip.DeviceIpAddress);
+                Debug.LogInformation(this, "Connected IP Address: {0}", ip.DeviceIpAddress);
             }
 
             GetFirmwareAndSerialInfo();
@@ -421,7 +421,7 @@ namespace PepperDash.Essentials.DM
                 Debug.LogDebug("Creating DMPS device '{0}'. Output number '{1}'.", key, num);
                 if (num <= 0 || num > dmps.Dmps.SwitcherOutputs.Count)
                 {
-                    Debug.LogVerbose("Cannot create DMPS device '{0}'. Output number '{1}' is out of range",
+                    Debug.LogInformation("Cannot create DMPS device '{0}'. Output number '{1}' is out of range",
                         key, num);
                     return null;
                 }
@@ -441,7 +441,7 @@ namespace PepperDash.Essentials.DM
                 }
                 if (useChassisForOfflineFeedback)
                 {
-                    Debug.LogVerbose("DM endpoint output {0} does not have direct online feedback, changing online feedback to chassis", num);
+                    Debug.LogInformation("DM endpoint output {0} does not have direct online feedback, changing online feedback to chassis", num);
                     rx.IsOnline.SetValueFunc(() => dmps.OutputEndpointOnlineFeedbacks[num].BoolValue);
                     dmps.OutputEndpointOnlineFeedbacks[num].OutputChange += (o, a) =>
                     {
@@ -463,7 +463,7 @@ namespace PepperDash.Essentials.DM
 
                 if (num <= 0 || num > chassis.NumberOfOutputs)
                 {
-                    Debug.LogVerbose("Cannot create DM device '{0}'. Output number '{1}' is out of range",
+                    Debug.LogInformation("Cannot create DM device '{0}'. Output number '{1}' is out of range",
                         key, num);
                     return null;
                 }
@@ -490,7 +490,7 @@ namespace PepperDash.Essentials.DM
                     }
                     if (useChassisForOfflineFeedback)
                     {
-                        Debug.LogVerbose("DM endpoint output {0} does not have direct online feedback, changing online feedback to chassis", num);
+                        Debug.LogInformation("DM endpoint output {0} does not have direct online feedback, changing online feedback to chassis", num);
                         rx.IsOnline.SetValueFunc(() => controller.OutputEndpointOnlineFeedbacks[num].BoolValue);
                         controller.OutputEndpointOnlineFeedbacks[num].OutputChange += (o, a) =>
                         {
@@ -505,13 +505,13 @@ namespace PepperDash.Essentials.DM
                 }
                 catch (Exception e)
                 {
-                    Debug.LogVerbose("[{0}] WARNING: Cannot create DM-RMC device: {1}", key, e.Message);
+                    Debug.LogInformation("[{0}] WARNING: Cannot create DM-RMC device: {1}", key, e.Message);
                     return null;
                 }
             }
             else
             {
-                Debug.LogVerbose("Cannot create DM device '{0}'. '{1}' is not a DM Chassis or DMPS.",
+                Debug.LogInformation("Cannot create DM device '{0}'. '{1}' is not a DM Chassis or DMPS.",
                     key, pKey);
                 return null;
             }
@@ -525,7 +525,7 @@ namespace PepperDash.Essentials.DM
             {
                 return handler(key, name, ipid, chassis.Outputs[num]);
             }
-            Debug.LogVerbose("Cannot create DM-RMC of type '{0}' with parent device {1}", typeName, parentDev.Key);
+            Debug.LogInformation("Cannot create DM-RMC of type '{0}' with parent device {1}", typeName, parentDev.Key);
             return null;
         }
 
@@ -537,7 +537,7 @@ namespace PepperDash.Essentials.DM
             {
                 return cpu3Handler(key, name, chassis.Outputs[num]);
             }
-            Debug.LogVerbose("Cannot create DM-RMC of type '{0}' with parent device {1}", typeName, parentDev.Key);
+            Debug.LogInformation("Cannot create DM-RMC of type '{0}' with parent device {1}", typeName, parentDev.Key);
             return null;
         }
 
@@ -553,12 +553,12 @@ namespace PepperDash.Essentials.DM
                 {
                     return dmpsHandler(key, name, ipid, output);
                 }
-                Debug.LogVerbose("Cannot attach DM-RMC of type '{0}' to output {1} on DMPS chassis. Output is not a DM Output.",
+                Debug.LogInformation("Cannot attach DM-RMC of type '{0}' to output {1} on DMPS chassis. Output is not a DM Output.",
                     typeName, num);
                 return null;
             }
 
-            Debug.LogVerbose("Cannot create DM-RMC of type '{0}' to output {1} on DMPS chassis", typeName, num);
+            Debug.LogInformation("Cannot create DM-RMC of type '{0}' to output {1} on DMPS chassis", typeName, num);
             return null;
         }
 
@@ -574,11 +574,11 @@ namespace PepperDash.Essentials.DM
                 {
                     return dmps4kHandler(key, name, output);
                 }
-                Debug.LogVerbose("Cannot attach DM-RMC of type '{0}' to output {1} on DMPS-4K chassis. Output is not a DM Output.", typeName, num);
+                Debug.LogInformation("Cannot attach DM-RMC of type '{0}' to output {1} on DMPS-4K chassis. Output is not a DM Output.", typeName, num);
                 return null;
             }
 
-            Debug.LogVerbose("Cannot create DM-RMC of type '{0}' to output {1} on DMPS-4K chassis", typeName, num);
+            Debug.LogInformation("Cannot create DM-RMC of type '{0}' to output {1} on DMPS-4K chassis", typeName, num);
             return null;
         }
 
@@ -592,13 +592,13 @@ namespace PepperDash.Essentials.DM
                 {
                     return handler(key, name, ipid);
                 }
-                Debug.LogVerbose("Cannot create DM-RMC of type: '{0}'", typeName);
+                Debug.LogInformation("Cannot create DM-RMC of type: '{0}'", typeName);
 
                 return null;
             }
             catch (Exception e)
             {
-                Debug.LogVerbose("[{0}] WARNING: Cannot create DM-RMC device: {1}", key, e.Message);
+                Debug.LogInformation("[{0}] WARNING: Cannot create DM-RMC device: {1}", key, e.Message);
                 return null;
             }
         }

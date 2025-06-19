@@ -264,7 +264,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
                 if (source.HasValue)
                     {
                     _HdWpChassis.HdWpWindowLayout.SetVideoSource(windowId, source.Value);
-                    Debug.LogInformation(this, $"[ApplyLayout] Set window {windowId} to {inputKey} ({window.Value.Label}).");
+                    Debug.LogVerbose(this, $"[ApplyLayout] Set window {windowId} to {inputKey} ({window.Value.Label}).");
                     }
                 else
                     {

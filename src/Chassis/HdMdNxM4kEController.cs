@@ -32,7 +32,7 @@ namespace PepperDash.Essentials.DM.Chassis
             HdMdNxM4kEPropertiesConfig props)
             : base(key, name, chassis)
         {
-            Debug.LogVerbose(this, "Type hdmd4x14ke is obsolete. Please use hdmd4x14ke-bridgeable");
+            Debug.LogInformation(this, "Type hdmd4x14ke is obsolete. Please use hdmd4x14ke-bridgeable");
             Chassis = chassis;
 
             // logical ports
@@ -63,7 +63,7 @@ namespace PepperDash.Essentials.DM.Chassis
                     // set hdcp disables
                     if (kvp.Value.DisableHdcp)
                     {
-                        Debug.LogVerbose(this, "Configuration disables HDCP support on {0}", kvp.Key);
+                        Debug.LogInformation(this, "Configuration disables HDCP support on {0}", kvp.Key);
                         port.HdcpSupportOff();
                     }
                     else
@@ -77,7 +77,7 @@ namespace PepperDash.Essentials.DM.Chassis
             var result = Chassis.Register();
             if (result != Crestron.SimplSharpPro.eDeviceRegistrationUnRegistrationResponse.Success)
             {
-                Debug.LogVerbose(this, "Device registration failed: {0}", result);
+                Debug.LogInformation(this, "Device registration failed: {0}", result);
                 return false;
             }
 
@@ -131,7 +131,7 @@ namespace PepperDash.Essentials.DM.Chassis
             }
             catch (Exception e)
             {
-                Debug.LogVerbose("ERROR Creating device key {0}: \r{1}", key, e);
+                Debug.LogInformation("ERROR Creating device key {0}: \r{1}", key, e);
                 return null;
             }
         }*/

@@ -93,7 +93,7 @@ namespace PepperDash.Essentials.DM
             }
             else
             {
-                Debug.LogVerbose(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
+                Debug.LogInformation(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
             }
 
             Debug.LogDebug(this, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));

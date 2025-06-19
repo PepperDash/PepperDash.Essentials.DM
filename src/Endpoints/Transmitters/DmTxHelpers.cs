@@ -114,11 +114,11 @@ namespace PepperDash.Essentials.DM
                         return new DmTx4kz302CController(key, name, new DmTx4kz302C(ipid, Global.ControlSystem), false);
                     if (typeName.StartsWith("dmtx401"))
                         return new DmTx401CController(key, name, new DmTx401C(ipid, Global.ControlSystem), false);
-                    Debug.LogVerbose("{1} WARNING: Cannot create DM-TX of type: '{0}'", typeName, key);
+                    Debug.LogInformation("{1} WARNING: Cannot create DM-TX of type: '{0}'", typeName, key);
                 }
                 catch (Exception e)
                 {
-                    Debug.LogVerbose("[{0}] WARNING: Cannot create DM-TX device: {1}", key, e);
+                    Debug.LogInformation("[{0}] WARNING: Cannot create DM-TX device: {1}", key, e);
                 }
                 return null;
             }
@@ -138,7 +138,7 @@ namespace PepperDash.Essentials.DM
                 var num = props.ParentInputNumber;
                 if (num <= 0 || num > chassis.NumberOfInputs)
                 {
-                    Debug.LogVerbose("Cannot create DM device '{0}'. Input number '{1}' is out of range",
+                    Debug.LogInformation("Cannot create DM device '{0}'. Input number '{1}' is out of range",
                         key, num);
                     return null;
                 }
@@ -168,7 +168,7 @@ namespace PepperDash.Essentials.DM
                     }
                     if (useChassisForOfflineFeedback)
                     {
-                        Debug.LogVerbose("DM endpoint output {0} does not have direct online feedback, changing online feedback to chassis", num);
+                        Debug.LogInformation("DM endpoint output {0} does not have direct online feedback, changing online feedback to chassis", num);
                         tx.IsOnline.SetValueFunc(() => switchDev.InputEndpointOnlineFeedbacks[num].BoolValue);
                         switchDev.InputEndpointOnlineFeedbacks[num].OutputChange += (o, a) => tx.IsOnline.FireUpdate();
                     }
@@ -176,7 +176,7 @@ namespace PepperDash.Essentials.DM
                 }
                 catch (Exception e)
                 {
-                    Debug.LogVerbose("[{0}] WARNING: Cannot create DM-TX device for chassis: {1}", key, e);
+                    Debug.LogInformation("[{0}] WARNING: Cannot create DM-TX device for chassis: {1}", key, e);
                     return null;
                 }
             }
@@ -191,7 +191,7 @@ namespace PepperDash.Essentials.DM
                 var num = props.ParentInputNumber;
                 if (num <= 0 || num > chassis.SwitcherInputs.Count)
                 {
-                    Debug.LogVerbose("Cannot create DMPS device '{0}'. Input number '{1}' is out of range",
+                    Debug.LogInformation("Cannot create DMPS device '{0}'. Input number '{1}' is out of range",
                         key, num);
                     return null;
                 }
@@ -204,7 +204,7 @@ namespace PepperDash.Essentials.DM
                 }
                 catch
                 {
-                    Debug.LogVerbose("Cannot create DMPS device '{0}'. Input number '{1}' is not a DM input", key, num);
+                    Debug.LogInformation("Cannot create DMPS device '{0}'. Input number '{1}' is not a DM input", key, num);
                     return null;
                 }
 
@@ -225,7 +225,7 @@ namespace PepperDash.Essentials.DM
                     }
                     if (useChassisForOfflineFeedback)
                     {
-                        Debug.LogVerbose("DM endpoint output {0} does not have direct online feedback, changing online feedback to chassis", num);
+                        Debug.LogInformation("DM endpoint output {0} does not have direct online feedback, changing online feedback to chassis", num);
                         tx.IsOnline.SetValueFunc(() => dmpsDev.InputEndpointOnlineFeedbacks[num].BoolValue);
                         dmpsDev.InputEndpointOnlineFeedbacks[num].OutputChange += (o, a) => tx.IsOnline.FireUpdate();
                     }
@@ -233,12 +233,12 @@ namespace PepperDash.Essentials.DM
                 }
                 catch (Exception e)
                 {
-                    Debug.LogVerbose("[{0}] WARNING: Cannot create DM-TX device for dmps: {1}", key, e);
+                    Debug.LogInformation("[{0}] WARNING: Cannot create DM-TX device for dmps: {1}", key, e);
                     return null;
                 }
             }
 
-            Debug.LogVerbose("Cannot create DM device '{0}'. '{1}' is not a processor, DM Chassis or DMPS.", key, pKey);
+            Debug.LogInformation("Cannot create DM device '{0}'. '{1}' is not a processor, DM Chassis or DMPS.", key, pKey);
             return null;
         }
     }
@@ -304,7 +304,7 @@ namespace PepperDash.Essentials.DM
             }
             else
             {
-                Debug.LogVerbose(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
+                Debug.LogInformation(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
             }
 
             Debug.LogDebug(tx, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
@@ -479,7 +479,7 @@ namespace PepperDash.Essentials.DM
             trilist.SetUShortSigAction(join,
                 s =>
                 {
-                    Debug.LogVerbose(this, "Trying to set HDCP to {0} on port {1}", s, port.ToString());
+                    Debug.LogInformation(this, "Trying to set HDCP to {0} on port {1}", s, port.ToString());
                     port.HdcpCapability = (eHdcpCapabilityType) s;
                 });
         }

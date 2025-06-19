@@ -26,7 +26,7 @@ namespace PepperDash.Essentials.DM
 
             foreach (var mic in dmps.Microphones)
             {
-                Debug.LogVerbose("Dmps Microphone Controller Adding Mic: {0} Name: {1}", mic.ID, mic.Name);
+                Debug.LogInformation("Dmps Microphone Controller Adding Mic: {0} Name: {1}", mic.ID, mic.Name);
                 var dmpsMic = new DmpsMicrophone("processor-microphone" + mic.ID, mic.Name, mic);
 
                 DeviceManager.AddDevice(dmpsMic);
@@ -98,7 +98,7 @@ namespace PepperDash.Essentials.DM
             }
             else
             {
-                Debug.LogVerbose(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
+                Debug.LogInformation(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
             }
 
             Debug.LogDebug(this, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));

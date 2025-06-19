@@ -104,7 +104,7 @@ namespace PepperDash.Essentials.DM
 
         void BaseDevice_DMOutputChange(Switch device, DMOutputEventArgs args)
         {
-            Debug.LogInformation(this, "Dmps Audio Controller Event Output: {0} EventId: {1}", args.Number, args.EventId.ToString());
+            Debug.LogVerbose(this, "Dmps Audio Controller Event Output: {0} EventId: {1}", args.Number, args.EventId.ToString());
             switch (args.EventId)
             {
                 case DMOutputEventIds.OutputVuFeedBackEventId:
@@ -177,7 +177,7 @@ namespace PepperDash.Essentials.DM
                     }
                 case DMOutputEventIds.MinVolumeFeedBackEventId:
                     {
-                        Debug.LogInformation(this, "MinVolumeFeedBackEventId: {0}", args.Index);
+                        Debug.LogVerbose(this, "MinVolumeFeedBackEventId: {0}", args.Index);
                         var level = MasterVolumeLevel as DmpsAudioOutputWithMixer;
                         if (level != null)
                         {
@@ -187,7 +187,7 @@ namespace PepperDash.Essentials.DM
                     }
                 case DMOutputEventIds.MaxVolumeFeedBackEventId:
                     {
-                        Debug.LogInformation(this, "MaxVolumeFeedBackEventId: {0}", args.Index);
+                        Debug.LogVerbose(this, "MaxVolumeFeedBackEventId: {0}", args.Index);
                         var level = MasterVolumeLevel as DmpsAudioOutputWithMixer;
                         if (level != null)
                         {
@@ -208,7 +208,7 @@ namespace PepperDash.Essentials.DM
             }
             else
             {
-                Debug.LogVerbose(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
+                Debug.LogInformation(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
             }
 
             Debug.LogDebug(this, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));

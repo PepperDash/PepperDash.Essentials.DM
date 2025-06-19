@@ -182,8 +182,8 @@ namespace PepperDash.Essentials.DM.Endpoints.DGEs
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogVerbose(this, "Exception getting data: {0}", ex.Message);
-                    Debug.LogVerbose(this, "response: {0}", args.Text);
+                    Debug.LogInformation(this, "Exception getting data: {0}", ex.Message);
+                    Debug.LogInformation(this, "response: {0}", args.Text);
                 }
             };
 
@@ -218,7 +218,7 @@ namespace PepperDash.Essentials.DM.Endpoints.DGEs
             }
             else
             {
-                Debug.LogVerbose(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
+                Debug.LogInformation(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
             }
 
             Debug.LogDebug(this, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));

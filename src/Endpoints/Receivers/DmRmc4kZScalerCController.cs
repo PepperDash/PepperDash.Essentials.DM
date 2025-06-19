@@ -187,7 +187,7 @@ namespace PepperDash.Essentials.DM
         #region IRmcRouting Members
         public void ExecuteSwitch(object inputSelector, object outputSelector, eRoutingSignalType signalType)
         {
-            Debug.LogInformation(this, "Attempting a route from input {0} to HDMI Output", inputSelector);
+            Debug.LogVerbose(this, "Attempting a route from input {0} to HDMI Output", inputSelector);
 
             var number = Convert.ToUInt16(inputSelector);
 
@@ -196,7 +196,7 @@ namespace PepperDash.Essentials.DM
 
         public void ExecuteNumericSwitch(ushort inputSelector, ushort outputSelector, eRoutingSignalType signalType)
         {
-            Debug.LogInformation(this, "Attempting a route from input {0} to HDMI Output", inputSelector);
+            Debug.LogVerbose(this, "Attempting a route from input {0} to HDMI Output", inputSelector);
 
             _rmc.AudioVideoSource = (DmRmc4kzScalerC.eAudioVideoSource)inputSelector;
         }

@@ -278,11 +278,11 @@ namespace PepperDash.Essentials.DM.Chassis
 		{		    
             var input = inputSelector as HdMdNxMHdmiInput; //changed from HdMdNxM4kzEHdmiInput;
 		    var output = outputSelector as HdMdNxMHdmiOutput;
-            Debug.LogInformation(this, "ExecuteSwitch: input={0} output={1}", input, output);
+            Debug.LogVerbose(this, "ExecuteSwitch: input={0} output={1}", input, output);
 
 		    if (output == null)
 		    {
-		        Debug.LogVerbose(this, "Unable to make switch. output selector is not HdMdNxMHdmiOutput");
+		        Debug.LogInformation(this, "Unable to make switch. output selector is not HdMdNxMHdmiOutput");
 		        return;
 		    }
 
@@ -301,7 +301,7 @@ namespace PepperDash.Essentials.DM.Chassis
             var input = inputSelector == 0 ? null : _Chassis.HdmiInputs[inputSelector];
 		    var output = _Chassis.HdmiOutputs[outputSelector];
 
-            Debug.LogInformation(this, "ExecuteNumericSwitch: input={0} output={1}", input, output);
+            Debug.LogVerbose(this, "ExecuteNumericSwitch: input={0} output={1}", input, output);
 
 			ExecuteSwitch(input, output, signalType);
 		}
@@ -327,7 +327,7 @@ namespace PepperDash.Essentials.DM.Chassis
 			}
 			else
 			{
-				Debug.LogVerbose(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
+				Debug.LogInformation(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
 			}
 
 			IsOnline.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);

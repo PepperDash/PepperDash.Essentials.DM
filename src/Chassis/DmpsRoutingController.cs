@@ -107,7 +107,7 @@ namespace PepperDash.Essentials.DM
             }
             catch (Exception e)
             {
-                Debug.LogVerbose("Error getting DMPS Controller:\r\n{0}", e);
+                Debug.LogInformation("Error getting DMPS Controller:\r\n{0}", e);
             }
             return null;
         }
@@ -301,7 +301,7 @@ namespace PepperDash.Essentials.DM
             }
             else
             {
-                Debug.LogVerbose(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
+                Debug.LogInformation(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
             }
 
             Debug.LogDebug(this, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
@@ -333,7 +333,7 @@ namespace PepperDash.Essentials.DM
         {
             for (uint i = 1; i <= Dmps.SwitcherOutputs.Count; i++)
             {
-                Debug.LogInformation(this, "Linking Output Card {0}", i);
+                Debug.LogVerbose(this, "Linking Output Card {0}", i);
 
                 var ioSlot = i;
                 var ioSlotJoin = ioSlot - 1;
@@ -427,7 +427,7 @@ namespace PepperDash.Essentials.DM
             }
             for (uint i = 1; i <= Dmps.SwitcherInputs.Count; i++)
             {
-                Debug.LogInformation(this, "Linking Input Card {0}", i);
+                Debug.LogVerbose(this, "Linking Input Card {0}", i);
 
                 var ioSlot = i;
                 var ioSlotJoin = ioSlot - 1;
@@ -575,7 +575,7 @@ namespace PepperDash.Essentials.DM
                         }
                         else if (outputCard.NameFeedback != null && outputCard.NameFeedback != CrestronControlSystem.NullStringOutputSig && !string.IsNullOrEmpty(outputCard.NameFeedback.StringValue))
                         {
-                            Debug.LogInformation(this, "Output Card {0} Name: {1}", outputCard.Number, outputCard.NameFeedback.StringValue);
+                            Debug.LogVerbose(this, "Output Card {0} Name: {1}", outputCard.Number, outputCard.NameFeedback.StringValue);
                             return outputCard.NameFeedback.StringValue;
                         }
                         return "";
@@ -661,7 +661,7 @@ namespace PepperDash.Essentials.DM
                         }
                         else if (inputCard.NameFeedback != null && inputCard.NameFeedback != CrestronControlSystem.NullStringOutputSig && !string.IsNullOrEmpty(inputCard.NameFeedback.StringValue))
                         {
-                            Debug.LogInformation(this, "Input Card {0} Name: {1}", inputCard.Number, inputCard.NameFeedback.StringValue);
+                            Debug.LogVerbose(this, "Input Card {0} Name: {1}", inputCard.Number, inputCard.NameFeedback.StringValue);
                             return inputCard.NameFeedback.StringValue;
                         }
                         return "";
@@ -671,7 +671,7 @@ namespace PepperDash.Essentials.DM
                 }
                 else
                 {
-                    Debug.LogInformation(this, "***********Input Card of type {0} is cannot be cast as DMInput*************", card.CardInputOutputType);
+                    Debug.LogVerbose(this, "***********Input Card of type {0} is cannot be cast as DMInput*************", card.CardInputOutputType);
                 }
             }
 
@@ -777,7 +777,7 @@ namespace PepperDash.Essentials.DM
         void AddInputPortWithDebug(uint cardNum, string portName, eRoutingSignalType sigType, eRoutingPortConnectionType portType, ICec cecPort)
         {
             var portKey = string.Format("inputCard{0}--{1}", cardNum, portName);
-            Debug.LogInformation(this, "Adding input port '{0}'", portKey);
+            Debug.LogVerbose(this, "Adding input port '{0}'", portKey);
             var inputPort = new RoutingInputPort(portKey, sigType, portType, Dmps.SwitcherInputs[cardNum], this)
             {
                 FeedbackMatchObject = Dmps.SwitcherInputs[cardNum]
@@ -961,7 +961,7 @@ namespace PepperDash.Essentials.DM
         void AddOutputPortWithDebug(uint cardNum, string portName, eRoutingSignalType sigType, eRoutingPortConnectionType portType, object selector, ICec cecPort)
         {
             var portKey = string.Format("outputCard{0}--{1}", cardNum, portName);
-            Debug.LogInformation(this, "Adding output port '{0}'", portKey);
+            Debug.LogVerbose(this, "Adding output port '{0}'", portKey);
             var outputPort = new RoutingOutputPort(portKey, sigType, portType, selector, this)
             {
                 FeedbackMatchObject = Dmps.SwitcherOutputs[cardNum]
@@ -983,32 +983,32 @@ namespace PepperDash.Essentials.DM
 
         void Dmps_DMInputChange(Switch device, DMInputEventArgs args)
         {
-            Debug.LogInformation(this, "DMInputChange Input: {0} EventId: {1}", args.Number, args.EventId.ToString());
+            Debug.LogVerbose(this, "DMInputChange Input: {0} EventId: {1}", args.Number, args.EventId.ToString());
             try
             {
                 switch (args.EventId)
                 {
                     case (DMInputEventIds.OnlineFeedbackEventId):
                         {
-                            Debug.LogInformation(this, "DM Input OnlineFeedbackEventId for input: {0}. State: {1}", args.Number, device.Inputs[args.Number].EndpointOnlineFeedback);
+                            Debug.LogVerbose(this, "DM Input OnlineFeedbackEventId for input: {0}. State: {1}", args.Number, device.Inputs[args.Number].EndpointOnlineFeedback);
                             InputEndpointOnlineFeedbacks[args.Number].FireUpdate();
                             break;
                         }
                     case (DMInputEventIds.EndpointOnlineEventId):
                         {
-                            Debug.LogInformation(this, "DM Input EndpointOnlineEventId for input: {0}. State: {1}", args.Number, device.Inputs[args.Number].EndpointOnlineFeedback);
+                            Debug.LogVerbose(this, "DM Input EndpointOnlineEventId for input: {0}. State: {1}", args.Number, device.Inputs[args.Number].EndpointOnlineFeedback);
                             InputEndpointOnlineFeedbacks[args.Number].FireUpdate();
                             break;
                         }
                     case (DMInputEventIds.VideoDetectedEventId):
                         {
-                            Debug.LogInformation(this, "DM Input {0} VideoDetectedEventId", args.Number);
+                            Debug.LogVerbose(this, "DM Input {0} VideoDetectedEventId", args.Number);
                             VideoInputSyncFeedbacks[args.Number].FireUpdate();
                             break;
                         }
                     case (DMInputEventIds.InputNameEventId):
                         {
-                            Debug.LogInformation(this, "DM Input {0} NameFeedbackEventId", args.Number);
+                            Debug.LogVerbose(this, "DM Input {0} NameFeedbackEventId", args.Number);
                             if(InputNameFeedbacks.ContainsKey(args.Number))
                             {
                                 InputNameFeedbacks[args.Number].FireUpdate();
@@ -1019,7 +1019,7 @@ namespace PepperDash.Essentials.DM
             }
             catch (Exception e)
             {
-                Debug.LogVerbose("DMSwitch Input Change:{0} Input:{1} Event:{2}\rException: {3}", this.Name, args.Number, args.EventId.ToString(), e.ToString());
+                Debug.LogInformation("DMSwitch Input Change:{0} Input:{1} Event:{2}\rException: {3}", this.Name, args.Number, args.EventId.ToString(), e.ToString());
             }
         }
         void Dmps_DMOutputChange(Switch device, DMOutputEventArgs args)
@@ -1030,7 +1030,7 @@ namespace PepperDash.Essentials.DM
                 return;
             }
 
-            Debug.LogInformation(this, "DMOutputChange Output: {0} EventId: {1}", args.Number, args.EventId.ToString());
+            Debug.LogVerbose(this, "DMOutputChange Output: {0} EventId: {1}", args.Number, args.EventId.ToString());
             var output = args.Number;
 
             DMOutput outputCard = Dmps.SwitcherOutputs[output] as DMOutput;
@@ -1053,7 +1053,7 @@ namespace PepperDash.Essentials.DM
             {
                 if (outputCard != null && outputCard.VideoOutFeedback != null)
                 {
-                    Debug.LogInformation(this, "DMSwitchVideo:{0} Routed Input:{1} Output:{2}'", this.Name, outputCard.VideoOutFeedback.Number, output);
+                    Debug.LogVerbose(this, "DMSwitchVideo:{0} Routed Input:{1} Output:{2}'", this.Name, outputCard.VideoOutFeedback.Number, output);
                 }
                 if (VideoOutputFeedbacks.ContainsKey(output))
                 {
@@ -1081,7 +1081,7 @@ namespace PepperDash.Essentials.DM
                 {
                     if (outputCard != null && outputCard.AudioOutFeedback != null)
                     {
-                        Debug.LogInformation(this, "DMSwitchAudio:{0} Routed Input:{1} Output:{2}'", this.Name,
+                        Debug.LogVerbose(this, "DMSwitchAudio:{0} Routed Input:{1} Output:{2}'", this.Name,
                             outputCard.AudioOutFeedback.Number, output);
                     }
                 }
@@ -1095,7 +1095,7 @@ namespace PepperDash.Essentials.DM
                         }
                         else
                         {
-                            Debug.LogInformation(this, "DMSwitchAudio:{0} Routed Input:{1} Output:{2}'", Name,
+                            Debug.LogVerbose(this, "DMSwitchAudio:{0} Routed Input:{1} Output:{2}'", Name,
                                 outputCard.AudioOutSourceFeedback, output);
                         }
                     }
@@ -1170,14 +1170,14 @@ namespace PepperDash.Essentials.DM
                     return;
                 }
 
-                Debug.LogInformation(this, "Attempting a DM route from input {0} to output {1} {2}", inputSelector, outputSelector, sigType);
+                Debug.LogVerbose(this, "Attempting a DM route from input {0} to output {1} {2}", inputSelector, outputSelector, sigType);
 
                 var input = inputSelector as DMInput;
                 var output = outputSelector as DMOutput;
 
                 if (output == null)
                 {
-                    Debug.LogVerbose(this, "Unable to execute switch for inputSelector {0} to outputSelector {1}", inputSelector,
+                    Debug.LogInformation(this, "Unable to execute switch for inputSelector {0} to outputSelector {1}", inputSelector,
                         outputSelector);
                     return;
                 }
@@ -1201,7 +1201,7 @@ namespace PepperDash.Essentials.DM
                     {
                         if (RouteOffTimers.ContainsKey(key))
                         {
-                            Debug.LogInformation(this, "{0} cancelling route off due to new source", output);
+                            Debug.LogVerbose(this, "{0} cancelling route off due to new source", output);
                             RouteOffTimers[key].Stop();
                             RouteOffTimers.Remove(key);
                         }

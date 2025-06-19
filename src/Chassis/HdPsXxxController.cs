@@ -140,7 +140,7 @@ namespace PepperDash_Essentials_DM.Chassis
 				{
 					FeedbackMatchObject = input
 				};
-				Debug.LogVerbose(this, "Adding Input port: {0} - {1}", port.Key, name);
+				Debug.LogInformation(this, "Adding Input port: {0} - {1}", port.Key, name);
 				InputPorts.Add(port);
 
 				InputHdcpEnableFeedback.Add(new BoolFeedback(index.ToString(CultureInfo.InvariantCulture), 
@@ -207,7 +207,7 @@ namespace PepperDash_Essentials_DM.Chassis
 			{
 				foreach (var port in InputPorts)
 				{
-					Debug.LogVerbose(this, @"Input Port Key: {0}
+					Debug.LogInformation(this, @"Input Port Key: {0}
 Port: {1}
 Type: {2}
 ConnectionType: {3}
@@ -217,7 +217,7 @@ Selector: {4}
 
 				foreach (var port in OutputPorts)
 				{
-					Debug.LogVerbose(this, @"Output Port Key: {0}
+					Debug.LogInformation(this, @"Output Port Key: {0}
 Port: {1}
 Type: {2}
 ConnectionType: {3}
@@ -227,9 +227,9 @@ Selector: {4}
 			}
 			catch (Exception ex)
 			{
-				Debug.LogVerbose(this, "ListRoutingPorts Exception Message: {0}", ex.Message);
-				Debug.LogVerbose(this, "ListRoutingPorts Exception StackTrace: {0}", ex.StackTrace);
-				if (ex.InnerException != null) Debug.LogVerbose(this, "ListRoutingPorts InnerException: {0}", ex.InnerException);
+				Debug.LogInformation(this, "ListRoutingPorts Exception Message: {0}", ex.Message);
+				Debug.LogInformation(this, "ListRoutingPorts Exception StackTrace: {0}", ex.StackTrace);
+				if (ex.InnerException != null) Debug.LogInformation(this, "ListRoutingPorts InnerException: {0}", ex.InnerException);
 			}
 		}
 
@@ -252,7 +252,7 @@ Selector: {4}
 			}
 			else
 			{
-				Debug.LogVerbose(this, "Please update config to use 'eiscApiAdvanced' to get all join map features for this device");
+				Debug.LogInformation(this, "Please update config to use 'eiscApiAdvanced' to get all join map features for this device");
 			}
 
 			IsOnline.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
@@ -327,11 +327,11 @@ Selector: {4}
 			var input = inputSelector as HdPsXxxInput;
 			var output = outputSelector as HdPsXxxOutput;			
 			
-			Debug.LogInformation(this, "ExecuteSwitch: input={0}, output={1}", input, output);
+			Debug.LogVerbose(this, "ExecuteSwitch: input={0}, output={1}", input, output);
 
 			if (output == null)
 			{
-				Debug.LogVerbose(this, "Unable to make switch, output selector is not HdPsXxxHdmiOutput");
+				Debug.LogInformation(this, "Unable to make switch, output selector is not HdPsXxxHdmiOutput");
 				return;
 			}
 
@@ -353,7 +353,7 @@ Selector: {4}
 			var input = inputSelector == 0 ? null : _chassis.Inputs[inputSelector];
 			var output = _chassis.Outputs[outputSelector];
 
-			Debug.LogInformation(this, "ExecuteNumericSwitch: input={0}, output={1}", input, output);
+			Debug.LogVerbose(this, "ExecuteNumericSwitch: input={0}, output={1}", input, output);
 
 			ExecuteSwitch(input, output, signalType);
 		}
