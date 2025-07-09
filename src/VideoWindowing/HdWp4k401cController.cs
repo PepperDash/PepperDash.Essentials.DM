@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Crestron.SimplSharp;
 using Crestron.SimplSharpPro.DeviceSupport;
 using Crestron.SimplSharpPro.DM;
 using PepperDash.Core;
@@ -14,18 +13,14 @@ using PepperDash.Essentials.Core.DeviceTypeInterfaces;
 using Newtonsoft.Json;
 using PepperDash.Core.Logging;
 using PepperDash.Essentials.AppServer.Messengers;
-using static Crestron.SimplSharpPro.DM.Audio;
-using IHasScreensWithLayouts = PepperDash.Essentials.Core.DeviceTypeInterfaces.IHasScreensWithLayouts;
 
 namespace PepperDash.Essentials.DM.VideoWindowing
 {
     [Description("Wrapper class for hdWp4k401c video wall processor")]
-    public class HdWp4k401cController: CrestronGenericBridgeableBaseDevice, IHasFeedback, IOnline, IHasScreensWithLayouts
+    public class HdWp4k401cController: CrestronGenericBridgeableBaseDevice, IHasScreensWithLayouts
     {
         #region Private Members, Felds, and Properties
         private readonly HdWp4k401C _HdWpChassis;           
-        public event EventHandler<RoutingNumericEventArgs> NumericSwitchChange;
-        public event SourceInfoChangeHandler CurrentSourceChange;
 
         public StringFeedback DeviceNameFeedback { get; private set; }
         public Dictionary<uint, ScreenInfo> Screens { get; private set; }
@@ -35,7 +30,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
         public FeedbackCollection<StringFeedback> LayoutNamesFeedbacks { get; private set; }
         private Dictionary<uint, string> LayoutNames { get; set; }
 
-        private Dictionary<uint, HdWp4k401cLayouts> _screenLayouts = new Dictionary<uint, HdWp4k401cLayouts>();
+        private readonly Dictionary<uint, HdWp4k401cLayouts> _screenLayouts = new Dictionary<uint, HdWp4k401cLayouts>();
 
         #endregion
 
@@ -76,13 +71,8 @@ namespace PepperDash.Essentials.DM.VideoWindowing
                 var screen = item.Value;
                 var screenKey = item.Key;
 
-                Debug.LogVerbose(this, "Adding A ScreenNameFeedback");
                 ScreenNamesFeedbacks.Add(new StringFeedback("ScreenName-" + screenKey, () => screen.Name));
-
-                Debug.LogVerbose(this, "Adding A ScreenEnableFeedback");
                 ScreenEnablesFeedbacks.Add(new BoolFeedback("ScreenEnable-" + screenKey, () => screen.Enabled));
-
-                Debug.LogVerbose(this, "Adding A LayoutNameFeedback");
                 LayoutNamesFeedbacks.Add(new StringFeedback("LayoutNames-" + screenKey, () => LayoutNames[screenKey]));
 
                 foreach (var layout in screen.Layouts)
@@ -103,12 +93,6 @@ namespace PepperDash.Essentials.DM.VideoWindowing
 
         #endregion
 
-        #region CustomActivate
-
-        public override bool CustomActivate()
-        {           
-            return base.CustomActivate();
-        }
 
         protected override void CreateMobileControlMessengers()
         {
@@ -134,19 +118,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
             }
         }
 
-        #endregion
-
         #region Methods
-
-        /// <summary>
-        /// Raise an event when the status of a switch object changes.
-        /// </summary>
-        /// <param name="e">Arguments defined as IKeyName sender, output, input, and eRoutingSignalType</param>
-        private void OnSwitchChange(RoutingNumericEventArgs e)
-        {
-            var newEvent = NumericSwitchChange;
-            if (newEvent != null) newEvent(this, e);
-        }
 
         /// <summary>
         /// Set the default window routes for the HD-WP-4K-401-C.
@@ -157,7 +129,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
             _HdWpChassis.HdWpWindowLayout.SetVideoSource(2, WindowLayout.eVideoSourceType.Input2);
             _HdWpChassis.HdWpWindowLayout.SetVideoSource(3, WindowLayout.eVideoSourceType.Input3);
             _HdWpChassis.HdWpWindowLayout.SetVideoSource(4, WindowLayout.eVideoSourceType.Input4);
-            _HdWpChassis.HdWpWindowLayout.AudioSource = (WindowLayout.eAudioSourceType.Auto);
+            _HdWpChassis.HdWpWindowLayout.AudioSource = WindowLayout.eAudioSourceType.Auto;
         }
 
         /// <summary>
@@ -415,8 +387,6 @@ namespace PepperDash.Essentials.DM.VideoWindowing
 
         void Chassis_OnlineStatusChange(Crestron.SimplSharpPro.GenericBase currentDevice, Crestron.SimplSharpPro.OnlineOfflineEventArgs args)
         {
-            IsOnline.FireUpdate();
-
             // return if device is offline, otherwise continue with actions below
             if (!args.DeviceOnLine) return;
 
