@@ -20,7 +20,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
     public class HdWp4k401cController: CrestronGenericBridgeableBaseDevice, IHasScreensWithLayouts
     {
         #region Private Members, Felds, and Properties
-        private readonly HdWp4k401C _HdWpChassis;           
+        private readonly HdWp4k401C _HdWpChassis;
 
         public StringFeedback DeviceNameFeedback { get; private set; }
         public Dictionary<uint, ScreenInfo> Screens { get; private set; }
@@ -70,13 +70,14 @@ namespace PepperDash.Essentials.DM.VideoWindowing
                 var _layouts = new Dictionary<uint, ISelectableItem>();
                 var screen = item.Value;
                 var screenKey = item.Key;
-
-                ScreenNamesFeedbacks.Add(new StringFeedback("ScreenName-" + screenKey, () => screen.Name));
-                ScreenEnablesFeedbacks.Add(new BoolFeedback("ScreenEnable-" + screenKey, () => screen.Enabled));
+                
+                ScreenNamesFeedbacks.Add(new StringFeedback("ScreenName-" + screenKey, () => screen.Name));                
+                ScreenEnablesFeedbacks.Add(new BoolFeedback("ScreenEnable-" + screenKey, () => screen.Enabled));                
                 LayoutNamesFeedbacks.Add(new StringFeedback("LayoutNames-" + screenKey, () => LayoutNames[screenKey]));
 
                 foreach (var layout in screen.Layouts)
                 {
+                    LayoutNames[screenKey] = layout.Value.LayoutName;
                     _layouts.Add(layout.Key, new HdWp4k401cLayouts.HdWp4k401cLayout($"{layout.Key}", layout.Value.LayoutName, screen.ScreenIndex, (int)layout.Key, this));
                 }
                 
@@ -92,7 +93,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
         }
 
         #endregion
-
+        
 
         protected override void CreateMobileControlMessengers()
         {
@@ -116,9 +117,9 @@ namespace PepperDash.Essentials.DM.VideoWindowing
                 var messenger = new ISelectableItemsMessenger<uint>($"{Key}-screen-{screenKey}", $"/device/{Key}-screen-{screenKey}", _screenLayouts[screenKey], $"screen-{screenKey}");
                 mc.AddDeviceMessenger(messenger);
             }
-        }
+        }        
 
-        #region Methods
+        #region Methods        
 
         /// <summary>
         /// Set the default window routes for the HD-WP-4K-401-C.
@@ -386,7 +387,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
         #region Events
 
         void Chassis_OnlineStatusChange(Crestron.SimplSharpPro.GenericBase currentDevice, Crestron.SimplSharpPro.OnlineOfflineEventArgs args)
-        {
+        {            
             // return if device is offline, otherwise continue with actions below
             if (!args.DeviceOnLine) return;
 
