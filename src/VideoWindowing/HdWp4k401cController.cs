@@ -391,12 +391,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
             // return if device is offline, otherwise continue with actions below
             if (!args.DeviceOnLine) return;
 
-            DefaultWindowRoutes();
-
-            foreach (var feedback in Feedbacks)
-            {
-                feedback.FireUpdate();
-            }
+            DefaultWindowRoutes();            
         }
 
         void HdWpWindowLayout_WindowLayoutChange(object sender, GenericEventArgs args)
