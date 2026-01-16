@@ -19,8 +19,7 @@ namespace PepperDash.Essentials.DM.Chassis
 	public class HdMdNxM4kEBridgeableController : CrestronGenericBridgeableBaseDevice, IRoutingNumericWithFeedback, IHasFeedback
 	{
 		private HdMdNxM _Chassis;
-		private HdMd4x14kE _Chassis4x1;
-
+		
 		//IroutingNumericEvent
 		public event EventHandler<RoutingNumericEventArgs> NumericSwitchChange;
 
@@ -84,10 +83,9 @@ namespace PepperDash.Essentials.DM.Chassis
 			InputPorts = new RoutingPortCollection<RoutingInputPort>();
 			OutputPorts = new RoutingPortCollection<RoutingOutputPort>();
 
-			if (_Chassis.NumberOfInputs == 1)
+			if(_Chassis is HdMd4x14kE _chssis)
 			{
-				_Chassis4x1 = _Chassis as HdMd4x14kE;
-                AutoRouteFeedback = new BoolFeedback(() => _Chassis4x1.AutoModeOnFeedback.BoolValue);			    
+				AutoRouteFeedback = new BoolFeedback("autoRouteFeedback", () => _chssis.AutoModeOnFeedback.BoolValue);
 			}
 
 			for (uint i = 1; i <= _Chassis.NumberOfInputs; i++)
@@ -102,6 +100,7 @@ namespace PepperDash.Essentials.DM.Chassis
 				{
 					FeedbackMatchObject = _Chassis.HdmiInputs[index]
 				});
+
 				VideoInputSyncFeedbacks.Add(new BoolFeedback(inputName, () => _Chassis.Inputs[index].VideoDetectedFeedback.BoolValue));
                 //InputNameFeedbacks.Add(new StringFeedback(inputName, () => _Chassis.Inputs[index].NameFeedback.StringValue));
                 InputNameFeedbacks.Add(new StringFeedback(inputName, () => InputNames[index]));
@@ -165,20 +164,20 @@ namespace PepperDash.Essentials.DM.Chassis
 
 		public void EnableAutoRoute()
 		{
-			if (_Chassis.NumberOfInputs != 1) return;
+			if (_Chassis.NumberOfOutputs > 1) return;
 
-			if (_Chassis4x1 == null) return;
+			if(!(_Chassis is HdMd4x14kE _chassis)) return;
 
-			_Chassis4x1.AutoModeOn();
+			_chassis.AutoModeOn();
 		}
 
 		public void DisableAutoRoute()
 		{
-			if (_Chassis.NumberOfInputs != 1) return;
+			if (_Chassis.NumberOfOutputs > 1) return;
 
-			if (_Chassis4x1 == null) return;
+			if (!(_Chassis is HdMd4x14kE _chassis)) return;
 
-			_Chassis4x1.AutoModeOff();
+			_chassis.AutoModeOff();
 		}
 
 		#region PostActivate
@@ -333,10 +332,10 @@ namespace PepperDash.Essentials.DM.Chassis
 			IsOnline.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
 			DeviceNameFeedback.LinkInputSig(trilist.StringInput[joinMap.Name.JoinNumber]);
 
-			if (_Chassis4x1 != null)
+			if (_Chassis != null && _Chassis is HdMd4x14kE _chassis)
 			{
-				trilist.SetSigTrueAction(joinMap.EnableAutoRoute.JoinNumber, () => _Chassis4x1.AutoModeOn());
-				trilist.SetSigFalseAction(joinMap.EnableAutoRoute.JoinNumber, () => _Chassis4x1.AutoModeOff());
+				trilist.SetSigTrueAction(joinMap.EnableAutoRoute.JoinNumber, () => _chassis.AutoModeOn());
+				trilist.SetSigFalseAction(joinMap.EnableAutoRoute.JoinNumber, () => _chassis.AutoModeOff());
 				AutoRouteFeedback.LinkInputSig(trilist.BooleanInput[joinMap.EnableAutoRoute.JoinNumber]);
 			}
 
@@ -389,14 +388,16 @@ namespace PepperDash.Essentials.DM.Chassis
             IsOnline.FireUpdate();
 
 		    if (!args.DeviceOnLine) return;
-	        
-            foreach (var feedback in Feedbacks)
-	        {
-	            feedback.FireUpdate();
-	        }
 
-            if (_Chassis4x1 != null)
-                AutoRouteFeedback.FireUpdate();
+			foreach (var feedback in Feedbacks)
+			{
+				feedback.FireUpdate();
+			}
+			
+			if(_Chassis == null && _Chassis is HdMd4x14kE _chassis)
+			{
+				AutoRouteFeedback.FireUpdate();	
+			}            
 		}
 
 		void Chassis_DMOutputChange(Switch device, DMOutputEventArgs args)
