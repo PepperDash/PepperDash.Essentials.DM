@@ -85,14 +85,14 @@ namespace PepperDash.Essentials.DM.Chassis
 
             if (_Chassis is HdMd4x14kzE _chassis)
             {
-                AutoRouteFeedback = new BoolFeedback(() => _chassis.AutoRouteOnFeedback.BoolValue);
+                AutoRouteFeedback = new BoolFeedback("autoRouteFeedback", () => _chassis.AutoRouteOnFeedback.BoolValue);
             }
 			
             for (uint i = 1; i <= _Chassis.NumberOfInputs; i++)
 			{
 				var index = i;
                 var inputName = InputNames[index];
-                _Chassis.Inputs[index].Name.StringValue = inputName;			    
+                // _Chassis.Inputs[index].Name.StringValue = inputName;			    
 			    _Chassis.HdmiInputs[index].Name.StringValue = inputName;
 
                 InputPorts.Add(new RoutingInputPort(inputName, eRoutingSignalType.AudioVideo,
@@ -102,7 +102,7 @@ namespace PepperDash.Essentials.DM.Chassis
                 });
 				
                 VideoInputSyncFeedbacks.Add(new BoolFeedback(inputName, () => _Chassis.Inputs[index].VideoDetectedFeedback.BoolValue));
-                InputNameFeedbacks.Add(new StringFeedback(inputName, () => _Chassis.Inputs[index].NameFeedback.StringValue));
+                //InputNameFeedbacks.Add(new StringFeedback(inputName, () => _Chassis.Inputs[index].NameFeedback.StringValue));
                 InputNameFeedbacks.Add(new StringFeedback(inputName, () => InputNames[index]));
 				InputHdcpEnableFeedback.Add(new BoolFeedback(inputName, () => _Chassis.HdmiInputs[index].HdmiInputPort.HdcpSupportOnFeedback.BoolValue));
 			}
