@@ -87,11 +87,28 @@ namespace PepperDash.Essentials.DM.Chassis
             {
                 AutoRouteFeedback = new BoolFeedback("autoRouteFeedback", () => _chassis.AutoRouteOnFeedback.BoolValue);
             }
+
+			if (InputNames == null)
+			{
+				Debug.LogMessage(Serilog.Events.LogEventLevel.Error, "InputNames is null. Ensure 'inputs' is defined in the device configuration.", this);
+				return;
+			}
+
+			if (OutputNames == null)
+			{
+				Debug.LogMessage(Serilog.Events.LogEventLevel.Error, "OutputNames is null. Ensure 'outputs' is defined in the device configuration.", this);
+				return;
+			}
 			
             for (uint i = 1; i <= _Chassis.NumberOfInputs; i++)
 			{
 				var index = i;
-                var inputName = InputNames[index];
+                if (!InputNames.TryGetValue(index, out var inputName))
+				{
+					Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "No input name defined for input {index}. Using default name.", this, index);
+					inputName = $"Input {index}";
+					InputNames[index] = inputName;
+				}
                 // _Chassis.Inputs[index].Name.StringValue = inputName;			    
 			    _Chassis.HdmiInputs[index].Name.StringValue = inputName;
 
@@ -110,7 +127,12 @@ namespace PepperDash.Essentials.DM.Chassis
 			for (uint i = 1; i <= _Chassis.NumberOfOutputs; i++)
 			{
 				var index = i;
-				var outputName = OutputNames[index];
+				if (!OutputNames.TryGetValue(index, out var outputName))
+				{
+					Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "No output name defined for output {index}. Using default name.", this, index);
+					outputName = $"Output {index}";
+					OutputNames[index] = outputName;
+				}
 				//_Chassis.Outputs[index].Name.StringValue = outputName;
                 //_Chassis.HdmiOutputs[index].Name.StringValue = outputName;
 
@@ -338,11 +360,11 @@ namespace PepperDash.Essentials.DM.Chassis
 			IsOnline.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
 			DeviceNameFeedback.LinkInputSig(trilist.StringInput[joinMap.Name.JoinNumber]);
 
-			if (_Chassis != null)
+			if (_Chassis != null && _Chassis is HdMd4x14kzE _chassis)
 			{
-				trilist.SetSigTrueAction(joinMap.EnableAutoRoute.JoinNumber, () => _Chassis.AutoRouteOn());
-				trilist.SetSigFalseAction(joinMap.EnableAutoRoute.JoinNumber, () => _Chassis.AutoRouteOff());
-				AutoRouteFeedback.LinkInputSig(trilist.BooleanInput[joinMap.EnableAutoRoute.JoinNumber]);
+				trilist.SetSigTrueAction(joinMap.EnableAutoRoute.JoinNumber, () => _chassis.AutoRouteOn());
+				trilist.SetSigFalseAction(joinMap.EnableAutoRoute.JoinNumber, () => _chassis.AutoRouteOff());
+				AutoRouteFeedback?.LinkInputSig(trilist.BooleanInput[joinMap.EnableAutoRoute.JoinNumber]);
 			}
 
 			for (uint i = 1; i <= _Chassis.NumberOfInputs; i++)
