@@ -20,9 +20,7 @@ namespace PepperDash.Essentials.DM.Chassis
     {
         private HdMdNxM4kzE _Chassis;
         
-        //private HdMd4x14kzE _Chassis4x1;
-
-		//IroutingNumericEvent
+        //IroutingNumericEvent
 		public event EventHandler<RoutingNumericEventArgs> NumericSwitchChange;
 
 		public Dictionary<uint, string> InputNames { get; set; }
