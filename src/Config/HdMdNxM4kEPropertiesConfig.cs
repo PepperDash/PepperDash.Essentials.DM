@@ -17,6 +17,9 @@ namespace PepperDash.Essentials.DM.Config
         [JsonProperty("control")]
         public ControlPropertiesConfig Control { get; set; }
 
+        [JsonProperty("noRouteText")]
+        public string NoRouteText { get; set; }
+
         [JsonProperty("inputs")]
         public Dictionary<uint, string> Inputs { get; set; }
 

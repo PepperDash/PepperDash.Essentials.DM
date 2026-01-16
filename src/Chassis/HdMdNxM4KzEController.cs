@@ -37,6 +37,7 @@ namespace PepperDash.Essentials.DM.Chassis
 		public FeedbackCollection<BoolFeedback> InputHdcpEnableFeedback { get; private set; }
 		public StringFeedback DeviceNameFeedback { get; private set; }
         public BoolFeedback AutoRouteFeedback { get; private set; }
+		public string NoRouteText { get; private set; }
 
 		#region Constructor
 
@@ -52,6 +53,8 @@ namespace PepperDash.Essentials.DM.Chassis
 				Debug.LogDebug(this, "HdMdNxM4kZEController properties are null, failed to build the device");
 				return;
 			}
+
+			NoRouteText = props.NoRouteText ?? "None";
 
 
 			if (props.Inputs != null)
@@ -143,7 +146,7 @@ namespace PepperDash.Essentials.DM.Chassis
 				});
 				VideoOutputRouteFeedbacks.Add(new IntFeedback(outputName, () => _Chassis.Outputs[index].VideoOutFeedback == null ? 0 : (int)_Chassis.Outputs[index].VideoOutFeedback.Number));
 				OutputNameFeedbacks.Add(new StringFeedback(outputName, () => OutputNames[index]));
-				OutputRouteNameFeedbacks.Add(new StringFeedback(outputName, () => _Chassis.Outputs[index].VideoOutFeedback.NameFeedback.StringValue));
+				OutputRouteNameFeedbacks.Add(new StringFeedback(outputName, () => _Chassis.Outputs[index].VideoOutFeedback == null ? NoRouteText : _Chassis.Outputs[index].VideoOutFeedback.NameFeedback.StringValue));
 			}
 
 			_Chassis.DMInputChange += Chassis_DMInputChange;
