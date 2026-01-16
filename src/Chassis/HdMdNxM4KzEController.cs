@@ -41,7 +41,7 @@ namespace PepperDash.Essentials.DM.Chassis
 		#region Constructor
 
 		public HdMdNxM4kZEController(string key, string name, HdMdNxM4kzE chassis,
-			HdMdNxM4kEBridgeablePropertiesConfig props)
+			HdMdNxM4kEPropertiesConfig props)
 			: base(key, name, chassis)
 		{
 			_Chassis = chassis;
@@ -479,7 +479,7 @@ namespace PepperDash.Essentials.DM.Chassis
 			{
 				Debug.LogDebug("Factory Attempting to create new HD-MD-NxM-4KZ-E Device");
 
-				var props = JsonConvert.DeserializeObject<HdMdNxM4kEBridgeablePropertiesConfig>(dc.Properties.ToString());
+				var props = JsonConvert.DeserializeObject<HdMdNxM4kEPropertiesConfig>(dc.Properties.ToString());
 
 				var type = dc.Type.ToLower();
 				var control = props.Control;

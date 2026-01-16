@@ -18,15 +18,6 @@ namespace PepperDash.Essentials.DM.Config
         public ControlPropertiesConfig Control { get; set; }
 
         [JsonProperty("inputs")]
-        public Dictionary<string, InputPropertiesConfig> Inputs { get; set; }
-    }
-
-    public class HdMdNxM4kEBridgeablePropertiesConfig
-    {
-        [JsonProperty("control")]
-        public ControlPropertiesConfig Control { get; set; }
-
-        [JsonProperty("inputs")]
         public Dictionary<uint, string> Inputs { get; set; }
 
         [JsonProperty("outputs")]

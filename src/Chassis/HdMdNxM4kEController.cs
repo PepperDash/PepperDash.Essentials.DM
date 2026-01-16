@@ -3,166 +3,504 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Crestron.SimplSharp;
-using Crestron.SimplSharpPro.DM;
 using Newtonsoft.Json;
+using Crestron.SimplSharp;
+using Crestron.SimplSharpPro.DeviceSupport;
+using Crestron.SimplSharpPro.DM;
 using PepperDash.Core;
 using PepperDash.Essentials.Core;
-using PepperDash.Essentials.Core.Config;
 using PepperDash.Essentials.DM.Config;
+using PepperDash.Essentials.Core.Bridges;
+using PepperDash.Essentials.Core.Config;
 
 namespace PepperDash.Essentials.DM.Chassis
 {
-    [Obsolete("Please use HdMdNxM4kEBridgeable Controller")]
-    public class HdMdNxM4kEController : CrestronGenericBaseDevice, IRoutingInputsOutputs, IRouting
-    {
-        public HdMdNxM Chassis { get; private set; }
+	[Description("Wrapper class for all HdMdNxM4E switchers")]
+	public class HdMdNxM4kEBridgeableController : CrestronGenericBridgeableBaseDevice, IRoutingNumericWithFeedback, IHasFeedback
+	{
+		private HdMdNxM _Chassis;
+		
+		//IroutingNumericEvent
+		public event EventHandler<RoutingNumericEventArgs> NumericSwitchChange;
 
-        public RoutingPortCollection<RoutingInputPort> InputPorts { get; private set; }
-        public RoutingPortCollection<RoutingOutputPort> OutputPorts { get; private set; }
+		public Dictionary<uint, string> InputNames { get; set; }
+		public Dictionary<uint, string> OutputNames { get; set; }
+
+		public RoutingPortCollection<RoutingInputPort> InputPorts { get; private set; }
+		public RoutingPortCollection<RoutingOutputPort> OutputPorts { get; private set; }
+
+		public FeedbackCollection<BoolFeedback> VideoInputSyncFeedbacks { get; private set; }
+		public FeedbackCollection<IntFeedback> VideoOutputRouteFeedbacks { get; private set; }
+		public FeedbackCollection<StringFeedback> InputNameFeedbacks { get; private set; }
+		public FeedbackCollection<StringFeedback> OutputNameFeedbacks { get; private set; }
+		public FeedbackCollection<StringFeedback> OutputRouteNameFeedbacks { get; private set; }
+		public FeedbackCollection<BoolFeedback> InputHdcpEnableFeedback { get; private set; }
+		public StringFeedback DeviceNameFeedback { get; private set; }
+        public BoolFeedback AutoRouteFeedback { get; private set; }
+
+		#region Constructor
+
+		public HdMdNxM4kEBridgeableController(string key, string name, HdMdNxM chassis,
+			HdMdNxM4kEPropertiesConfig props)
+			: base(key, name, chassis)
+		{
+			_Chassis = chassis;
+		    Name = name;
+
+			if (props == null)
+			{
+				Debug.LogDebug(this, "HdMdNx4keBridgeableController properties are null, failed to build the device");
+				return;
+			}
 
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="key"></param>
-        /// <param name="name"></param>
-        /// <param name="chassis"></param>
-        public HdMdNxM4kEController(string key, string name, HdMdNxM chassis,
-            HdMdNxM4kEPropertiesConfig props)
-            : base(key, name, chassis)
-        {
-            Debug.LogInformation(this, "Type hdmd4x14ke is obsolete. Please use hdmd4x14ke-bridgeable");
-            Chassis = chassis;
+			if (props.Inputs != null)
+			{
+				foreach (var kvp in props.Inputs)
+				{
+					Debug.LogDebug(this, "props.Inputs: {0}-{1}", kvp.Key, kvp.Value);
+				}
+				InputNames = props.Inputs;
+			}
+			if (props.Outputs != null)
+			{
+				foreach (var kvp in props.Outputs)
+				{
+					Debug.LogDebug(this, "props.Outputs: {0}-{1}", kvp.Key, kvp.Value);
+				}
+				OutputNames = props.Outputs;
+			}
 
-            // logical ports
-            InputPorts = new RoutingPortCollection<RoutingInputPort>();
-            for (uint i = 1; i <= 4; i++)
-            {
-                InputPorts.Add(new RoutingInputPort("hdmiIn" + i, eRoutingSignalType.Audio | eRoutingSignalType.Video,
-                    eRoutingPortConnectionType.Hdmi, i, this));
-            }
-            OutputPorts = new RoutingPortCollection<RoutingOutputPort>();
-            OutputPorts.Add(new RoutingOutputPort(DmPortName.HdmiOut, eRoutingSignalType.Audio | eRoutingSignalType.Video,
-                eRoutingPortConnectionType.Hdmi, null, this));
-	        
-            // physical settings
-            if (props != null && props.Inputs != null)
-            {
-				var inputRegex = new Regex(@"(?<InputNum>\d)", RegexOptions.IgnoreCase);
-                foreach (var kvp in props.Inputs)
-                {
-                    // get numnbers from key and convert to int
-                    //var inputNum = Convert.ToUInt32(kvp.Key.Substring(6));
-					var inputMatch = inputRegex.Match(kvp.Key);
-	                if (inputMatch == null) continue;
-					
-					var inputNum = Convert.ToUInt32(inputMatch.Groups["InputNum"].Value);
+            DeviceNameFeedback = new StringFeedback(()=>Name);		    
 
-                    var port = chassis.HdmiInputs[inputNum].HdmiInputPort;
-                    // set hdcp disables
-                    if (kvp.Value.DisableHdcp)
+			VideoInputSyncFeedbacks = new FeedbackCollection<BoolFeedback>();
+			VideoOutputRouteFeedbacks = new FeedbackCollection<IntFeedback>();
+			InputNameFeedbacks = new FeedbackCollection<StringFeedback>();
+			OutputNameFeedbacks = new FeedbackCollection<StringFeedback>();
+			OutputRouteNameFeedbacks = new FeedbackCollection<StringFeedback>();
+			InputHdcpEnableFeedback = new FeedbackCollection<BoolFeedback>();
+		                
+			InputPorts = new RoutingPortCollection<RoutingInputPort>();
+			OutputPorts = new RoutingPortCollection<RoutingOutputPort>();
+
+			if(_Chassis is HdMd4x14kE _chssis)
+			{
+				AutoRouteFeedback = new BoolFeedback("autoRouteFeedback", () => _chssis.AutoModeOnFeedback.BoolValue);
+			}
+
+			for (uint i = 1; i <= _Chassis.NumberOfInputs; i++)
+			{
+				var index = i;
+				var inputName = InputNames[index];
+			    //_Chassis.Inputs[index].Name.StringValue = inputName;
+			    _Chassis.HdmiInputs[index].Name.StringValue = inputName;
+
+				InputPorts.Add(new RoutingInputPort(inputName, eRoutingSignalType.AudioVideo,
+					eRoutingPortConnectionType.Hdmi, _Chassis.HdmiInputs[index], this)
+				{
+					FeedbackMatchObject = _Chassis.HdmiInputs[index]
+				});
+
+				VideoInputSyncFeedbacks.Add(new BoolFeedback(inputName, () => _Chassis.Inputs[index].VideoDetectedFeedback.BoolValue));
+                //InputNameFeedbacks.Add(new StringFeedback(inputName, () => _Chassis.Inputs[index].NameFeedback.StringValue));
+                InputNameFeedbacks.Add(new StringFeedback(inputName, () => InputNames[index]));
+				InputHdcpEnableFeedback.Add(new BoolFeedback(inputName, () => _Chassis.HdmiInputs[index].HdmiInputPort.HdcpSupportOnFeedback.BoolValue));
+			}
+
+			for (uint i = 1; i <= _Chassis.NumberOfOutputs; i++)
+			{
+				var index = i;
+				var outputName = OutputNames[index];
+				//_Chassis.Outputs[index].Name.StringValue = outputName;
+                //_Chassis.HdmiOutputs[index].Name.StringValue = outputName;
+
+				OutputPorts.Add(new RoutingOutputPort(outputName, eRoutingSignalType.AudioVideo,
+					eRoutingPortConnectionType.Hdmi, _Chassis.HdmiOutputs[index], this)
+				{
+					FeedbackMatchObject = _Chassis.HdmiOutputs[index]
+				});
+				VideoOutputRouteFeedbacks.Add(new IntFeedback(outputName, () => _Chassis.Outputs[index].VideoOutFeedback == null ? 0 : (int)_Chassis.Outputs[index].VideoOutFeedback.Number));
+				OutputNameFeedbacks.Add(new StringFeedback(outputName, () => OutputNames[index]));
+				OutputRouteNameFeedbacks.Add(new StringFeedback(outputName, () => _Chassis.Outputs[index].VideoOutFeedback.NameFeedback.StringValue));
+			}
+
+			_Chassis.DMInputChange += Chassis_DMInputChange;
+			_Chassis.DMOutputChange += Chassis_DMOutputChange;
+
+			AddPostActivationAction(AddFeedbackCollections);
+		}
+
+		#endregion
+
+		#region Methods
+
+		/// <summary>
+		/// Raise an event when the status of a switch object changes.
+		/// </summary>
+		/// <param name="e">Arguments defined as IKeyName sender, output, input, and eRoutingSignalType</param>
+		private void OnSwitchChange(RoutingNumericEventArgs e)
+		{
+			var newEvent = NumericSwitchChange;
+			if (newEvent != null) newEvent(this, e);
+		}
+
+		public void EnableHdcp(uint port)
+		{
+			if (port > _Chassis.NumberOfInputs) return;
+			if (port <= 0) return;
+
+			_Chassis.HdmiInputs[port].HdmiInputPort.HdcpSupportOn();
+			InputHdcpEnableFeedback[InputNames[port]].FireUpdate();
+		}
+
+		public void DisableHdcp(uint port)
+		{
+			if (port > _Chassis.NumberOfInputs) return;
+			if (port <= 0) return;
+
+			_Chassis.HdmiInputs[port].HdmiInputPort.HdcpSupportOff();
+			InputHdcpEnableFeedback[InputNames[port]].FireUpdate();
+		}
+
+		public void EnableAutoRoute()
+		{
+			if (_Chassis.NumberOfOutputs > 1) return;
+
+			if(!(_Chassis is HdMd4x14kE _chassis)) return;
+
+			_chassis.AutoModeOn();
+		}
+
+		public void DisableAutoRoute()
+		{
+			if (_Chassis.NumberOfOutputs > 1) return;
+
+			if (!(_Chassis is HdMd4x14kE _chassis)) return;
+
+			_chassis.AutoModeOff();
+		}
+
+		#region PostActivate
+
+		public void AddFeedbackCollections()
+		{
+            AddFeedbackToList(DeviceNameFeedback);
+			AddCollectionsToList(VideoInputSyncFeedbacks, InputHdcpEnableFeedback);
+			AddCollectionsToList(VideoOutputRouteFeedbacks);
+			AddCollectionsToList(InputNameFeedbacks, OutputNameFeedbacks, OutputRouteNameFeedbacks);
+		}
+
+		#endregion
+
+		#region FeedbackCollection Methods
+
+		//Add arrays of collections
+		public void AddCollectionsToList(params FeedbackCollection<BoolFeedback>[] newFbs)
+		{
+			foreach (FeedbackCollection<BoolFeedback> fbCollection in newFbs)
+			{
+				foreach (var item in newFbs)
+				{
+					AddCollectionToList(item);
+				}
+			}
+		}
+		public void AddCollectionsToList(params FeedbackCollection<IntFeedback>[] newFbs)
+		{
+			foreach (FeedbackCollection<IntFeedback> fbCollection in newFbs)
+			{
+				foreach (var item in newFbs)
+				{
+					AddCollectionToList(item);
+				}
+			}
+		}
+
+		public void AddCollectionsToList(params FeedbackCollection<StringFeedback>[] newFbs)
+		{
+			foreach (FeedbackCollection<StringFeedback> fbCollection in newFbs)
+			{
+				foreach (var item in newFbs)
+				{
+					AddCollectionToList(item);
+				}
+			}
+		}
+
+		//Add Collections
+		public void AddCollectionToList(FeedbackCollection<BoolFeedback> newFbs)
+		{
+			foreach (var f in newFbs)
+			{
+				if (f == null) continue;
+
+				AddFeedbackToList(f);
+			}
+		}
+
+		public void AddCollectionToList(FeedbackCollection<IntFeedback> newFbs)
+		{
+			foreach (var f in newFbs)
+			{
+				if (f == null) continue;
+
+				AddFeedbackToList(f);
+			}
+		}
+
+		public void AddCollectionToList(FeedbackCollection<StringFeedback> newFbs)
+		{
+			foreach (var f in newFbs)
+			{
+				if (f == null) continue;
+
+				AddFeedbackToList(f);
+			}
+		}
+
+		//Add Individual Feedbacks
+		public void AddFeedbackToList(PepperDash.Essentials.Core.Feedback newFb)
+		{
+			if (newFb == null) return;
+
+			if (!Feedbacks.Contains(newFb))
+			{
+				Feedbacks.Add(newFb);
+			}
+		}
+
+		#endregion
+
+		#region IRouting Members
+
+		public void ExecuteSwitch(object inputSelector, object outputSelector, eRoutingSignalType signalType)
+		{		    
+            var input = inputSelector as HdMdNxMHdmiInput; //changed from HdMdNxM4kzEHdmiInput;
+		    var output = outputSelector as HdMdNxMHdmiOutput;
+            Debug.LogVerbose(this, "ExecuteSwitch: input={0} output={1}", input, output);
+
+		    if (output == null)
+		    {
+		        Debug.LogInformation(this, "Unable to make switch. output selector is not HdMdNxMHdmiOutput");
+		        return;
+		    }
+
+			// Try to make switch only when necessary.  The unit appears to toggle when already selected.
+			var current = output.VideoOut;
+		    if (current != input)
+		        output.VideoOut = input;		        
+		}
+
+		#endregion
+
+		#region IRoutingNumeric Members
+
+		public void ExecuteNumericSwitch(ushort inputSelector, ushort outputSelector, eRoutingSignalType signalType)
+		{
+            var input = inputSelector == 0 ? null : _Chassis.HdmiInputs[inputSelector];
+		    var output = _Chassis.HdmiOutputs[outputSelector];
+
+            Debug.LogVerbose(this, "ExecuteNumericSwitch: input={0} output={1}", input, output);
+
+			ExecuteSwitch(input, output, signalType);
+		}
+
+		#endregion
+
+		#endregion
+
+		#region Bridge Linking
+
+		public override void LinkToApi(BasicTriList trilist, uint joinStart, string joinMapKey, EiscApiAdvanced bridge)
+		{
+			var joinMap = new HdMdNxM4kEControllerJoinMap(joinStart);
+
+			var joinMapSerialized = JoinMapHelper.GetSerializedJoinMapForDevice(joinMapKey);
+
+			if (!string.IsNullOrEmpty(joinMapSerialized))
+				joinMap = JsonConvert.DeserializeObject<HdMdNxM4kEControllerJoinMap>(joinMapSerialized);
+
+			if (bridge != null)
+			{
+				bridge.AddJoinMap(Key, joinMap);
+			}
+			else
+			{
+				Debug.LogInformation(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
+			}
+
+			IsOnline.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
+			DeviceNameFeedback.LinkInputSig(trilist.StringInput[joinMap.Name.JoinNumber]);
+
+			if (_Chassis != null && _Chassis is HdMd4x14kE _chassis)
+			{
+				trilist.SetSigTrueAction(joinMap.EnableAutoRoute.JoinNumber, () => _chassis.AutoModeOn());
+				trilist.SetSigFalseAction(joinMap.EnableAutoRoute.JoinNumber, () => _chassis.AutoModeOff());
+				AutoRouteFeedback.LinkInputSig(trilist.BooleanInput[joinMap.EnableAutoRoute.JoinNumber]);
+			}
+
+			for (uint i = 1; i <= _Chassis.NumberOfInputs; i++)
+			{
+				var joinIndex = i - 1;
+			    var input = i;
+				//Digital
+				VideoInputSyncFeedbacks[InputNames[input]].LinkInputSig(trilist.BooleanInput[joinMap.InputSync.JoinNumber + joinIndex]);
+				InputHdcpEnableFeedback[InputNames[input]].LinkInputSig(trilist.BooleanInput[joinMap.EnableInputHdcp.JoinNumber + joinIndex]);
+				InputHdcpEnableFeedback[InputNames[input]].LinkComplementInputSig(trilist.BooleanInput[joinMap.DisableInputHdcp.JoinNumber + joinIndex]);
+				trilist.SetSigTrueAction(joinMap.EnableInputHdcp.JoinNumber + joinIndex, () => EnableHdcp(input));
+				trilist.SetSigTrueAction(joinMap.DisableInputHdcp.JoinNumber + joinIndex, () => DisableHdcp(input));
+
+				//Serial                
+				InputNameFeedbacks[InputNames[input]].LinkInputSig(trilist.StringInput[joinMap.InputName.JoinNumber + joinIndex]);                
+			}
+
+			for (uint i = 1; i <= _Chassis.NumberOfOutputs; i++)
+			{
+				var joinIndex = i - 1;
+			    var output = i;
+				//Analog
+				VideoOutputRouteFeedbacks[OutputNames[output]].LinkInputSig(trilist.UShortInput[joinMap.OutputRoute.JoinNumber + joinIndex]);
+				trilist.SetUShortSigAction(joinMap.OutputRoute.JoinNumber + joinIndex, (a) => ExecuteNumericSwitch(a, (ushort) output, eRoutingSignalType.AudioVideo));
+
+				//Serial
+				OutputNameFeedbacks[OutputNames[output]].LinkInputSig(trilist.StringInput[joinMap.OutputName.JoinNumber + joinIndex]);
+				OutputRouteNameFeedbacks[OutputNames[output]].LinkInputSig(trilist.StringInput[joinMap.OutputRoutedName.JoinNumber + joinIndex]);
+			}
+
+			_Chassis.OnlineStatusChange += Chassis_OnlineStatusChange;
+
+			trilist.OnlineStatusChange += (d, args) =>
+			{
+			    if (!args.DeviceOnLine)  return;
+
+                // feedback updates was moved to the Chassis_OnlineStatusChange 
+                // due to the amount of time it takes for the device to come online                
+			};
+		}
+
+
+		#endregion
+
+		#region Events
+
+		void Chassis_OnlineStatusChange(Crestron.SimplSharpPro.GenericBase currentDevice, Crestron.SimplSharpPro.OnlineOfflineEventArgs args)
+		{
+            IsOnline.FireUpdate();
+
+		    if (!args.DeviceOnLine) return;
+
+			foreach (var feedback in Feedbacks)
+			{
+				feedback.FireUpdate();
+			}
+			
+			if(_Chassis == null && _Chassis is HdMd4x14kE _chassis)
+			{
+				AutoRouteFeedback.FireUpdate();	
+			}            
+		}
+
+		void Chassis_DMOutputChange(Switch device, DMOutputEventArgs args)
+		{
+			if (args.EventId != DMOutputEventIds.VideoOutEventId) return;
+
+		    var output = args.Number;
+
+		    var inputNumber = _Chassis.HdmiOutputs[output].VideoOutFeedback == null
+		        ? 0
+		        : _Chassis.HdmiOutputs[output].VideoOutFeedback.Number;
+
+		    var outputName = OutputNames[output];
+
+		    var feedback = VideoOutputRouteFeedbacks[outputName];
+
+		    if (feedback == null)
+		    {
+		        return;
+		    }
+		    var inPort =
+		        InputPorts.FirstOrDefault(p => p.FeedbackMatchObject == _Chassis.HdmiOutputs[output].VideoOutFeedback);
+		    var outPort = OutputPorts.FirstOrDefault(p => p.FeedbackMatchObject == _Chassis.HdmiOutputs[output]);
+
+		    feedback.FireUpdate();
+		    OnSwitchChange(new RoutingNumericEventArgs(output, inputNumber, outPort, inPort, eRoutingSignalType.AudioVideo));
+		}
+
+		void Chassis_DMInputChange(Switch device, DMInputEventArgs args)
+		{           
+		    switch (args.EventId)
+		    {
+                case DMInputEventIds.VideoDetectedEventId:
+		        {
+                    Debug.LogDebug(this, "Event ID {0}: Updating VideoInputSyncFeedbacks", args.EventId);
+                    foreach (var item in VideoInputSyncFeedbacks)
                     {
-                        Debug.LogInformation(this, "Configuration disables HDCP support on {0}", kvp.Key);
-                        port.HdcpSupportOff();
+                        item.FireUpdate();
                     }
-                    else
-                        port.HdcpSupportOn();
-                }
-            }
-        }
+		            break;
+		        }
+                case DMInputEventIds.InputNameFeedbackEventId:
+                case DMInputEventIds.InputNameEventId:
+                case DMInputEventIds.NameFeedbackEventId:
+		        {
+		            Debug.LogDebug(this, "Event ID {0}:  Updating name feedbacks.", args.EventId);
+		            Debug.LogDebug(this, "Input {0} Name {1}", args.Number,
+		                _Chassis.HdmiInputs[args.Number].NameFeedback.StringValue);
+                    foreach (var item in InputNameFeedbacks)
+                    {
+                        item.FireUpdate();
+                    }
+		            break;
+		        }
+                default:
+		        {
+                    Debug.LogDebug(this, "Unhandled DM Input Event ID {0}", args.EventId);
+		            break;
+		        }
+		    }			
+		}
 
-        public override bool CustomActivate()
-        {
-            var result = Chassis.Register();
-            if (result != Crestron.SimplSharpPro.eDeviceRegistrationUnRegistrationResponse.Success)
-            {
-                Debug.LogInformation(this, "Device registration failed: {0}", result);
-                return false;
-            }
+		#endregion
 
-            return base.CustomActivate();
-        }
+		#region Factory
 
+		public class HdMdNxM4kEControllerFactory : EssentialsPluginDeviceFactory<HdMdNxM4kEBridgeableController>
+		{
+			public HdMdNxM4kEControllerFactory()
+			{
+                MinimumEssentialsFrameworkVersion = "2.4.5";
+                TypeNames = new List<string>() { "hdmd4x14ke-bridgeable", "hdmd4x14ke", "hdmd4x24ke", "hdmd6x24ke" };
+			}
 
+			public override EssentialsDevice BuildDevice(DeviceConfig dc)
+			{
+				Debug.LogDebug("Factory Attempting to create new HD-MD-NxM-4K-E Device");
 
-        #region IRouting Members
+				var props = JsonConvert.DeserializeObject<HdMdNxM4kEPropertiesConfig>(dc.Properties.ToString());
 
-        public void ExecuteSwitch(object inputSelector, object outputSelector, eRoutingSignalType signalType)
-        {
-            // Try to make switch only when necessary.  The unit appears to toggle when already selected.
-            var current = Chassis.HdmiOutputs[1].VideoOut;
-            if (current != Chassis.HdmiInputs[(uint)inputSelector])
-                Chassis.HdmiOutputs[1].VideoOut = Chassis.HdmiInputs[(uint)inputSelector];
-        }
+				var type = dc.Type.ToLower();
+				var control = props.Control;
+				var ipid = control.IpIdInt;
+				var address = control.TcpSshProperties.Address;
 
-        #endregion
+				switch (type)
+				{
+					case ("hdmd4x14ke-bridgeable"):
+					case ("hdmd4x14ke"):
+						return new HdMdNxM4kEBridgeableController(dc.Key, dc.Name, new HdMd4x14kE(ipid, address, Global.ControlSystem), props);
+					case ("hdmd4x24ke"):
+						return new HdMdNxM4kEBridgeableController(dc.Key, dc.Name, new HdMd4x24kE(ipid, address, Global.ControlSystem), props);
+					case ("hdmd6x24ke"):
+						return new HdMdNxM4kEBridgeableController(dc.Key, dc.Name, new HdMd6x24kE(ipid, address, Global.ControlSystem), props);
+					default:
+						return null;
+				}
+			}
+		}
 
-        /////////////////////////////////////////////////////
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="key"></param>
-        /// <param name="name"></param>
-        /// <param name="type"></param>
-        /// <param name="properties"></param>
-        /// <returns></returns>
-        /// /*
-        /*
-        public static HdMdNxM4kEController GetController(string key, string name,
-            string type, HdMdNxM4kEPropertiesConfig properties)
-        {
-            try
-            {
-                var ipid = properties.Control.IpIdInt;
-                var address = properties.Control.TcpSshProperties.Address;
-
-                type = type.ToLower();
-                if (type == "hdmd4x14ke")
-                {
-                    Debug.Console(0, @"The 'hdmd4x14ke' device is not an Essentials Bridgeable device.  
-                        If an essentials Bridgeable Device is required, use the 'hdmd4x14ke-bridgeable' type");
-  
-                    var chassis = new HdMd4x14kE(ipid, address, Global.ControlSystem);
-                    return new HdMdNxM4kEController(key, name, chassis, properties);
-                }
-                return null;
-            }
-            catch (Exception e)
-            {
-                Debug.LogInformation("ERROR Creating device key {0}: \r{1}", key, e);
-                return null;
-            }
-        }*/
-
-        #region Factory
-
-        public class HdMdNxM4kEFactory : EssentialsPluginDeviceFactory<HdMdNxM4kEController>
-        {
-            public HdMdNxM4kEFactory()
-            {
-                TypeNames = new List<string>() {"hdmd4x14ke"};
-            }
+		#endregion
 
 
-            public override EssentialsDevice BuildDevice(DeviceConfig dc)
-            {
-                Debug.LogDebug("Factory Attempting to create new HD-MD-NxM-4K-E Device");
 
-                var props = JsonConvert.DeserializeObject<HdMdNxM4kEPropertiesConfig>(dc.Properties.ToString());
-
-                var type = dc.Type.ToLower();
-                var control = props.Control;
-                var ipid = control.IpIdInt;
-                var address = control.TcpSshProperties.Address;
-
-                return new HdMdNxM4kEController(dc.Key, dc.Name, new HdMd4x14kE(ipid, address, Global.ControlSystem), props);
-
-            }
-        }
-
-        #endregion
-
-    }
+	}
 }
