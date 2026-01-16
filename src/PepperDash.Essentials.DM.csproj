@@ -1,21 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
-    <PropertyGroup>
-	    <ProjectType>ProgramLibrary</ProjectType>
-    </PropertyGroup>
+  <PropertyGroup>
+    <ProjectType>ProgramLibrary</ProjectType>
+  </PropertyGroup>
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
     <RootNamespace>PepperDash.Essentials.DM</RootNamespace>
     <Deterministic>false</Deterministic>
     <AssemblyTitle>PepperDash.Essentials.DM</AssemblyTitle>
-    <Description>This software is a PepperDash Essentials Plugin for PepperDash.Essentials.DM.</Description>    
+    <Description>This software is a PepperDash Essentials Plugin for PepperDash.Essentials.DM.</Description>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <OutputPath>4Series\bin\$(Configuration)\</OutputPath>    
+    <OutputPath>4Series\bin\$(Configuration)\</OutputPath>
     <PackageId>PepperDash.Essentials.Plugin.4Series.DM</PackageId>
     <PackageProjectUrl>https://github.com/PepperDash/PepperDash.Essentials.DM.git</PackageProjectUrl>
     <PackageTags>crestron 4series essentials plugin</PackageTags>
     <Product>PepperDash Essentials DM</Product>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Title>PepperDash Essentials DM 4Series Plugin</Title>    
+    <Title>PepperDash Essentials DM 4Series Plugin</Title>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/PepperDash/PepperDash.Essentials.DM</RepositoryUrl>
     <PackageTags>crestron;4series;</PackageTags>
