@@ -16,7 +16,7 @@ using PepperDash.Essentials.Core.Config;
 namespace PepperDash.Essentials.DM.Chassis
 {
 	[Description("Wrapper class for all HdMdNxM4E switchers")]
-	public class HdMdNxM4kEBridgeableController : CrestronGenericBridgeableBaseDevice, IRoutingNumericWithFeedback, IHasFeedback
+	public class HdMdNxM4kEController : CrestronGenericBridgeableBaseDevice, IRoutingNumericWithFeedback, IHasFeedback
 	{
 		private readonly HdMdNxM _Chassis;
 		
@@ -41,7 +41,7 @@ namespace PepperDash.Essentials.DM.Chassis
 
 		#region Constructor
 
-		public HdMdNxM4kEBridgeableController(string key, string name, HdMdNxM chassis,
+		public HdMdNxM4kEController(string key, string name, HdMdNxM chassis,
 			HdMdNxM4kEPropertiesConfig props)
 			: base(key, name, chassis)
 		{
@@ -520,7 +520,7 @@ namespace PepperDash.Essentials.DM.Chassis
 
 		#region Factory
 
-		public class HdMdNxM4kEControllerFactory : EssentialsPluginDeviceFactory<HdMdNxM4kEBridgeableController>
+		public class HdMdNxM4kEControllerFactory : EssentialsPluginDeviceFactory<HdMdNxM4kEController>
 		{
 			public HdMdNxM4kEControllerFactory()
 			{
@@ -543,11 +543,11 @@ namespace PepperDash.Essentials.DM.Chassis
 				{
 					case ("hdmd4x14ke-bridgeable"):
 					case ("hdmd4x14ke"):
-						return new HdMdNxM4kEBridgeableController(dc.Key, dc.Name, new HdMd4x14kE(ipid, address, Global.ControlSystem), props);
+						return new HdMdNxM4kEController(dc.Key, dc.Name, new HdMd4x14kE(ipid, address, Global.ControlSystem), props);
 					case ("hdmd4x24ke"):
-						return new HdMdNxM4kEBridgeableController(dc.Key, dc.Name, new HdMd4x24kE(ipid, address, Global.ControlSystem), props);
+						return new HdMdNxM4kEController(dc.Key, dc.Name, new HdMd4x24kE(ipid, address, Global.ControlSystem), props);
 					case ("hdmd6x24ke"):
-						return new HdMdNxM4kEBridgeableController(dc.Key, dc.Name, new HdMd6x24kE(ipid, address, Global.ControlSystem), props);
+						return new HdMdNxM4kEController(dc.Key, dc.Name, new HdMd6x24kE(ipid, address, Global.ControlSystem), props);
 					default:
 						return null;
 				}
