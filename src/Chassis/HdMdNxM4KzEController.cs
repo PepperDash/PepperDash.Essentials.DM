@@ -45,8 +45,13 @@ namespace PepperDash.Essentials.DM.Chassis
 			HdMdNxM4kEPropertiesConfig props)
 			: base(key, name, chassis)
 		{
+			Name = name;
 			_Chassis = chassis;
-		    Name = name;
+			if(_Chassis == null)
+			{
+				Debug.LogDebug(this, "HdMdNxM4kZEController chassis is null, failed to build the device");
+				return;
+			}
 
 			if (props == null)
 			{
@@ -88,7 +93,7 @@ namespace PepperDash.Essentials.DM.Chassis
 
             if (_Chassis is HdMd4x14kzE _chassis)
             {
-                AutoRouteFeedback = new BoolFeedback("autoRouteFeedback", () => _chassis.AutoRouteOnFeedback.BoolValue);
+                AutoRouteFeedback = new BoolFeedback("AutoRouteFeedback", () => _chassis.AutoRouteOnFeedback.BoolValue);
             }
 
 			if (InputNames == null)
@@ -215,16 +220,42 @@ namespace PepperDash.Essentials.DM.Chassis
 
 		public void AddFeedbackCollections()
 		{
-            AddFeedbackToList(DeviceNameFeedback);
-			AddCollectionsToList(VideoInputSyncFeedbacks, InputHdcpEnableFeedback);
-			AddCollectionsToList(VideoOutputRouteFeedbacks);
-			AddCollectionsToList(InputNameFeedbacks, OutputNameFeedbacks, OutputRouteNameFeedbacks);
+			// AddFeedbackToList(DeviceNameFeedback);
+			// AddCollectionsToList(VideoInputSyncFeedbacks, InputHdcpEnableFeedback);
+			// AddCollectionsToList(VideoOutputRouteFeedbacks);
+			// AddCollectionsToList(InputNameFeedbacks, OutputNameFeedbacks, OutputRouteNameFeedbacks);
+
+			AddFeedbackToList(DeviceNameFeedback);
+			foreach (var fb in VideoInputSyncFeedbacks)
+			{
+				AddFeedbackToList(fb);
+			}
+			foreach (var fb in InputHdcpEnableFeedback)
+			{
+				AddFeedbackToList(fb);
+			}
+			foreach (var fb in VideoOutputRouteFeedbacks)
+			{
+				AddFeedbackToList(fb);
+			}
+			foreach (var fb in InputNameFeedbacks)
+			{
+				AddFeedbackToList(fb);
+			}
+			foreach (var fb in OutputNameFeedbacks)
+			{
+				AddFeedbackToList(fb);
+			}
+			foreach (var fb in OutputRouteNameFeedbacks)
+			{
+				AddFeedbackToList(fb);
+			}			
 		}
 
 		#endregion
 
 		#region FeedbackCollection Methods
-
+/*
 		//Add arrays of collections
 		public void AddCollectionsToList(params FeedbackCollection<BoolFeedback>[] newFbs)
 		{
@@ -232,7 +263,7 @@ namespace PepperDash.Essentials.DM.Chassis
 			{
 				foreach (var item in newFbs)
 				{
-					AddCollectionToList(item);
+					AddFeedbackToList(item);
 				}
 			}
 		}
@@ -242,7 +273,7 @@ namespace PepperDash.Essentials.DM.Chassis
 			{
 				foreach (var item in newFbs)
 				{
-					AddCollectionToList(item);
+					AddFeedbackToList(item);
 				}
 			}
 		}
@@ -253,7 +284,7 @@ namespace PepperDash.Essentials.DM.Chassis
 			{
 				foreach (var item in newFbs)
 				{
-					AddCollectionToList(item);
+					AddFeedbackToList(item);
 				}
 			}
 		}
@@ -261,9 +292,9 @@ namespace PepperDash.Essentials.DM.Chassis
 		//Add Collections
 		public void AddCollectionToList(FeedbackCollection<BoolFeedback> newFbs)
 		{
-			foreach (var f in newFbs)
+			foreach (var f in newFbs.Where(f => f != null))
 			{
-				if (f == null) continue;
+				//if (f == null) continue;
 
 				AddFeedbackToList(f);
 			}
@@ -271,9 +302,9 @@ namespace PepperDash.Essentials.DM.Chassis
 
 		public void AddCollectionToList(FeedbackCollection<IntFeedback> newFbs)
 		{
-			foreach (var f in newFbs)
+			foreach (var f in newFbs.Where(f => f != null))
 			{
-				if (f == null) continue;
+				//if (f == null) continue;
 
 				AddFeedbackToList(f);
 			}
@@ -281,14 +312,14 @@ namespace PepperDash.Essentials.DM.Chassis
 
 		public void AddCollectionToList(FeedbackCollection<StringFeedback> newFbs)
 		{
-			foreach (var f in newFbs)
+			foreach (var f in newFbs.Where(f => f != null))
 			{
-				if (f == null) continue;
+				//if (f == null) continue;
 
 				AddFeedbackToList(f);
 			}
 		}
-
+*/
 		//Add Individual Feedbacks
 		public void AddFeedbackToList(PepperDash.Essentials.Core.Feedback newFb)
 		{
@@ -363,7 +394,7 @@ namespace PepperDash.Essentials.DM.Chassis
 			IsOnline.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
 			DeviceNameFeedback.LinkInputSig(trilist.StringInput[joinMap.Name.JoinNumber]);
 
-			if (_Chassis != null && _Chassis is HdMd4x14kzE _chassis)
+			if (_Chassis is HdMd4x14kzE _chassis)
 			{
 				trilist.SetSigTrueAction(joinMap.EnableAutoRoute.JoinNumber, () => _chassis.AutoRouteOn());
 				trilist.SetSigFalseAction(joinMap.EnableAutoRoute.JoinNumber, () => _chassis.AutoRouteOff());
@@ -425,8 +456,10 @@ namespace PepperDash.Essentials.DM.Chassis
 	            feedback.FireUpdate();
 	        }
 
-            if (_Chassis != null)
-                AutoRouteFeedback.FireUpdate();
+			if (_Chassis is HdMd4x14kzE)
+			{
+				AutoRouteFeedback.FireUpdate();
+			}
 		}
 
 		void Chassis_DMOutputChange(Switch device, DMOutputEventArgs args)
