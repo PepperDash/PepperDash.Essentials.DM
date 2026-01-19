@@ -352,6 +352,8 @@ namespace PepperDash.Essentials.DM
         protected short MinLevel { get; set; }
         protected short MaxLevel { get; set; }
 
+        public string Key { get; private set; }
+        public string Name { get; private set; }
         public eDmpsLevelType Type { get; private set; }
         public BoolFeedback MuteFeedback { get; private set; }
         public IntFeedback VolumeLevelFeedback { get; private set; }
@@ -367,6 +369,8 @@ namespace PepperDash.Essentials.DM
             VolumeLevelInput = 0;
             EnableVolumeSend = false;
             Type = type;
+            Key = string.Format("DmpsAudioOutput-{0}", type);
+            Name = Key;
             MinLevel = -800;
             MaxLevel = 100;
 
