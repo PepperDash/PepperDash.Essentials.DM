@@ -510,69 +510,75 @@ namespace PepperDash.Essentials.DM.Chassis
 		}
 
 		void Chassis_DMOutputChange(Switch device, DMOutputEventArgs args)
-        {
-            // TODO - Remove after testing
-            Debug.LogInformation(this, $"Chassis_DMOutputChange: EventId = {args.EventId}; Index = {args.Index}; Number = {args.Number}; Stream = {args.Stream} ");
-
-            if (args.EventId != DMOutputEventIds.VideoOutEventId)
-            {
-                Debug.LogInformation(this, $"Chassis_DMOutputChange: EventId {args.EventId} != {DMOutputEventIds.VideoOutEventId}, ignoring.");
-                return;
-            }
-
-            var output = args.Number;
-            var outputName = OutputNames[output];
-
-            var inputNumber = _Chassis.HdmiOutputs[output].VideoOutFeedback?.Number ?? 0;
-
-			var feedback = VideoOutputRouteFeedbacks.FirstOrDefault(f => f.Key == outputName);
-			if (feedback != null)
-			{
-				var inPort = InputPorts.FirstOrDefault(p => p.FeedbackMatchObject == _Chassis.HdmiOutputs[output].VideoOutFeedback);
-				var outPort = OutputPorts.FirstOrDefault(p => p.FeedbackMatchObject == _Chassis.HdmiOutputs[output]);
-
-				feedback.FireUpdate();
-				OnSwitchChange(new RoutingNumericEventArgs(output, inputNumber, outPort, inPort, eRoutingSignalType.AudioVideo));
-			}
-			else
-			{
-				Debug.LogInformation(this, $"Chassis_DMOutputChange: {outputName} not found in VideoOutputRouteFeedbacks");
-				return;
-			}
-        }
-
-        void Chassis_DMInputChange(Switch device, DMInputEventArgs args)
 		{
+			// TODO - Remove after testing
+			var eventName = Enum.GetName(typeof(DMOutputEventIds), args.EventId);
+			Debug.LogInformation(this, $"Chassis_DMOutputChange: received {eventName} (id-{args.EventId}); Index = {args.Index}; Number = {args.Number}; Stream = {args.Stream} ");
+
 			switch (args.EventId)
 			{
-				case DMInputEventIds.VideoDetectedEventId:
+				case DMOutputEventIds.VideoOutEventId:
 					{
-						Debug.LogDebug(this, $"Chassis_DMInputChange: Event ID {args.EventId}: Updating VideoInputSyncFeedbacks");
-						foreach (var item in VideoInputSyncFeedbacks)
+						var output = args.Number;
+						var outputName = OutputNames[output];
+
+						var inputNumber = _Chassis.HdmiOutputs[output].VideoOutFeedback?.Number ?? 0;
+
+						var feedback = VideoOutputRouteFeedbacks.FirstOrDefault(f => f.Key == outputName);
+						if (feedback != null)
 						{
-							item.FireUpdate();
+							var inPort = InputPorts.FirstOrDefault(p => p.FeedbackMatchObject == _Chassis.HdmiOutputs[output].VideoOutFeedback);
+							var outPort = OutputPorts.FirstOrDefault(p => p.FeedbackMatchObject == _Chassis.HdmiOutputs[output]);
+
+							feedback.FireUpdate();
+							OnSwitchChange(new RoutingNumericEventArgs(output, inputNumber, outPort, inPort, eRoutingSignalType.AudioVideo));
 						}
-						break;
-					}
-				case DMInputEventIds.InputNameFeedbackEventId:
-				case DMInputEventIds.InputNameEventId:
-				case DMInputEventIds.NameFeedbackEventId:
-					{
-						Debug.LogDebug(this, $"Chassis_DMInputChange: Event ID {args.EventId}:  Updating name feedbacks.");
-						Debug.LogDebug(this, $"Chassis_DMInputChange: Input {args.Number} Name {_Chassis.HdmiInputs[args.Number].NameFeedback.StringValue}");
-						foreach (var item in InputNameFeedbacks)
+						else
 						{
-							item.FireUpdate();
+							Debug.LogInformation(this, $"Chassis_DMOutputChange: {outputName} not found in VideoOutputRouteFeedbacks");
 						}
 						break;
 					}
 				default:
 					{
-						Debug.LogDebug(this, $"Chassis_DMInputChange: Unhandled DM Input Event ID {args.EventId}");
+						Debug.LogDebug(this, $"Chassis_DMOutputChange: Unhandled DM Output Event {eventName} (id-{args.EventId}), ignoring.");
 						break;
 					}
 			}
 		}
+
+		void Chassis_DMInputChange(Switch device, DMInputEventArgs args)
+		{
+				var eventName = Enum.GetName(typeof(DMInputEventIds), args.EventId);
+				switch (args.EventId)
+				{
+					case DMInputEventIds.VideoDetectedEventId:
+						{
+							Debug.LogDebug(this, $"Chassis_DMInputChange: received {eventName} (id-{args.EventId}) | Updating VideoInputSyncFeedbacks");
+							foreach (var item in VideoInputSyncFeedbacks)
+							{
+								item.FireUpdate();
+							}
+							break;
+						}
+					case DMInputEventIds.InputNameFeedbackEventId:
+					case DMInputEventIds.InputNameEventId:
+					case DMInputEventIds.NameFeedbackEventId:
+						{
+							Debug.LogDebug(this, $"Chassis_DMInputChange: received {eventName} (id-{args.EventId}) | Input {args.Number} Name {_Chassis.HdmiInputs[args.Number].NameFeedback.StringValue}, updating InputNameFeedbacks");
+							foreach (var item in InputNameFeedbacks)
+							{
+								item.FireUpdate();
+							}
+							break;
+						}
+					default:
+						{
+							Debug.LogDebug(this, $"Chassis_DMInputChange: Unhandled DM Input Event {eventName} (id-{args.EventId}), ignoring.");
+							break;
+						}
+				}
+			}
 
 		#endregion
 
