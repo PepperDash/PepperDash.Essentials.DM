@@ -12,6 +12,7 @@ using PepperDash.Essentials.Core;
 using PepperDash.Essentials.DM.Config;
 using PepperDash.Essentials.Core.Bridges;
 using PepperDash.Essentials.Core.Config;
+using System.Threading;
 
 namespace PepperDash.Essentials.DM.Chassis
 {
@@ -159,10 +160,10 @@ namespace PepperDash.Essentials.DM.Chassis
 
 			AddPostActivationAction(AddFeedbackCollections);
 		}
-
+		
 		#endregion
 
-		#region Methods
+		#region Methods		
 
 		/// <summary>
 		/// Raise an event when the status of a switch object changes.
@@ -225,105 +226,83 @@ namespace PepperDash.Essentials.DM.Chassis
 			// AddCollectionsToList(VideoOutputRouteFeedbacks);
 			// AddCollectionsToList(InputNameFeedbacks, OutputNameFeedbacks, OutputRouteNameFeedbacks);
 
+			// TODO - Remove after testing
+			//Debug.LogInformation(this, $"AddFeedbackCollections: VideoInputSyncFeedbacks has {VideoInputSyncFeedbacks.Count} FBs");
+			//Debug.LogInformation(this, $"AddFeedbackCollections: InputHdcpEnableFeedback has {InputHdcpEnableFeedback.Count} FBs");
+			//Debug.LogInformation(this, $"AddFeedbackCollections: VideoOutputRouteFeedbacks has {VideoOutputRouteFeedbacks.Count} FBs");
+			//Debug.LogInformation(this, $"AddFeedbackCollections: InputNameFeedbacks has {InputNameFeedbacks.Count} FBs");
+			//Debug.LogInformation(this, $"AddFeedbackCollections: OutputNameFeedbacks has {OutputNameFeedbacks.Count} FBs");
+			//Debug.LogInformation(this, $"AddFeedbackCollections: OutputRouteNameFeedbacks has {OutputRouteNameFeedbacks.Count} FBs");
+
 			AddFeedbackToList(DeviceNameFeedback);
 			foreach (var fb in VideoInputSyncFeedbacks)
 			{
+				// TODO - Remove after testing
+				//Debug.LogInformation(this, $"AddFeedbackCollections: adding VideoInputSyncFeedbaks {fb.Key} to collection");
+				
 				AddFeedbackToList(fb);
 			}
 			foreach (var fb in InputHdcpEnableFeedback)
 			{
+				// TODO - Remove after testing
+				//Debug.LogInformation(this, $"AddFeedbackCollections: adding InputHdcpEnableFeedback {fb.Key} to collection");
+				
 				AddFeedbackToList(fb);
 			}
 			foreach (var fb in VideoOutputRouteFeedbacks)
 			{
+				// TODO - Remove after testing
+				//Debug.LogInformation(this, $"AddFeedbackCollections: adding VideoOutputRouteFeedbacks {fb.Key} to collection");
+				
 				AddFeedbackToList(fb);
 			}
 			foreach (var fb in InputNameFeedbacks)
 			{
+				// TODO - Remove after testing
+				//Debug.LogInformation(this, $"AddFeedbackCollections: adding InputNameFeedbacks {fb.Key} to collection");
+				
 				AddFeedbackToList(fb);
 			}
 			foreach (var fb in OutputNameFeedbacks)
 			{
+				// TODO - Remove after testing
+				//Debug.LogInformation(this, $"AddFeedbackCollections: adding OutputNameFeedbacks {fb.Key} to collection");
+				
 				AddFeedbackToList(fb);
 			}
 			foreach (var fb in OutputRouteNameFeedbacks)
 			{
+				// TODO - Remove after testing
+				//Debug.LogInformation(this, $"AddFeedbackCollections: adding OutputRouteNameFeedbacks {fb.Key} to collection");
+				
 				AddFeedbackToList(fb);
-			}			
+			}
+
+			Debug.LogInformation(this, $"AddFeedbackCollections: Feedbacks contains {Feedbacks.Count} items");
+			foreach(var fb in Feedbacks)
+			{
+				// TODO - Remove after testing
+				Debug.LogInformation(this, $"AddFeedbackCollections: Feedbacks = {fb.Key}");
+				
+			}
 		}
 
 		#endregion
 
 		#region FeedbackCollection Methods
-/*
-		//Add arrays of collections
-		public void AddCollectionsToList(params FeedbackCollection<BoolFeedback>[] newFbs)
-		{
-			foreach (FeedbackCollection<BoolFeedback> fbCollection in newFbs)
-			{
-				foreach (var item in newFbs)
-				{
-					AddFeedbackToList(item);
-				}
-			}
-		}
-		public void AddCollectionsToList(params FeedbackCollection<IntFeedback>[] newFbs)
-		{
-			foreach (FeedbackCollection<IntFeedback> fbCollection in newFbs)
-			{
-				foreach (var item in newFbs)
-				{
-					AddFeedbackToList(item);
-				}
-			}
-		}
 
-		public void AddCollectionsToList(params FeedbackCollection<StringFeedback>[] newFbs)
-		{
-			foreach (FeedbackCollection<StringFeedback> fbCollection in newFbs)
-			{
-				foreach (var item in newFbs)
-				{
-					AddFeedbackToList(item);
-				}
-			}
-		}
-
-		//Add Collections
-		public void AddCollectionToList(FeedbackCollection<BoolFeedback> newFbs)
-		{
-			foreach (var f in newFbs.Where(f => f != null))
-			{
-				//if (f == null) continue;
-
-				AddFeedbackToList(f);
-			}
-		}
-
-		public void AddCollectionToList(FeedbackCollection<IntFeedback> newFbs)
-		{
-			foreach (var f in newFbs.Where(f => f != null))
-			{
-				//if (f == null) continue;
-
-				AddFeedbackToList(f);
-			}
-		}
-
-		public void AddCollectionToList(FeedbackCollection<StringFeedback> newFbs)
-		{
-			foreach (var f in newFbs.Where(f => f != null))
-			{
-				//if (f == null) continue;
-
-				AddFeedbackToList(f);
-			}
-		}
-*/
 		//Add Individual Feedbacks
 		public void AddFeedbackToList(PepperDash.Essentials.Core.Feedback newFb)
 		{
-			if (newFb == null) return;
+			if (newFb == null) 
+			{
+				// TODO - Remove after testing
+				Debug.LogInformation(this, $"AddFeedbackToList: newFb is null");
+				return;
+			}
+
+			// TODO - Remove after testing
+			Debug.LogInformation(this, $"AddFeedbackToList: adding {newFb.Key} ");
 
 			if (!Feedbacks.Contains(newFb))
 			{
@@ -359,10 +338,12 @@ namespace PepperDash.Essentials.DM.Chassis
 
 		public void ExecuteNumericSwitch(ushort inputSelector, ushort outputSelector, eRoutingSignalType signalType)
 		{
-            var input = inputSelector == 0 ? null : _Chassis.HdmiInputs[inputSelector];
+            Debug.LogInformation(this, $"ExecuteNumericSwitch: inputSelector={inputSelector} outputSelector={outputSelector}");
+
+			var input = inputSelector == 0 ? null : _Chassis.HdmiInputs[inputSelector];
 		    var output = _Chassis.HdmiOutputs[outputSelector];
 
-            Debug.LogVerbose(this, "ExecuteNumericSwitch: input={0} output={1}", input, output);
+            Debug.LogVerbose(this, $"ExecuteNumericSwitch: input={input} output={output}");
 
 			ExecuteSwitch(input, output, signalType);
 		}
@@ -396,6 +377,8 @@ namespace PepperDash.Essentials.DM.Chassis
 
 			if (_Chassis is HdMd4x14kzE _chassis)
 			{
+				Debug.LogInformation(this, $"LinkToApi: _Chassis is HdMd4x14kzE, setting up AutoRoute links");
+
 				trilist.SetSigTrueAction(joinMap.EnableAutoRoute.JoinNumber, () => _chassis.AutoRouteOn());
 				trilist.SetSigFalseAction(joinMap.EnableAutoRoute.JoinNumber, () => _chassis.AutoRouteOff());
 				AutoRouteFeedback?.LinkInputSig(trilist.BooleanInput[joinMap.EnableAutoRoute.JoinNumber]);
@@ -405,6 +388,9 @@ namespace PepperDash.Essentials.DM.Chassis
 			{
 				var joinIndex = i - 1;
 			    var input = i;
+
+				Debug.LogInformation(this, $"LinkToApi: _Chassis.NumberOfInputs > input = {input}, joinIndex = {joinIndex}");
+
 				//Digital
 				VideoInputSyncFeedbacks[InputNames[input]].LinkInputSig(trilist.BooleanInput[joinMap.InputSync.JoinNumber + joinIndex]);
 				InputHdcpEnableFeedback[InputNames[input]].LinkInputSig(trilist.BooleanInput[joinMap.EnableInputHdcp.JoinNumber + joinIndex]);
@@ -420,6 +406,9 @@ namespace PepperDash.Essentials.DM.Chassis
 			{
 				var joinIndex = i - 1;
 			    var output = i;
+
+				Debug.LogInformation(this, $"LinkToApi: _Chassis.NumberOfOutputs > output = {output}, joinIndex = {joinIndex}");
+
 				//Analog
 				VideoOutputRouteFeedbacks[OutputNames[output]].LinkInputSig(trilist.UShortInput[joinMap.OutputRoute.JoinNumber + joinIndex]);
 				trilist.SetUShortSigAction(joinMap.OutputRoute.JoinNumber + joinIndex, (a) => ExecuteNumericSwitch(a, (ushort) output, eRoutingSignalType.AudioVideo));
@@ -441,18 +430,72 @@ namespace PepperDash.Essentials.DM.Chassis
 		}
 
 
+		private void UpdateFeedbacks()
+		{
+			IsOnline?.FireUpdate();
+			DeviceNameFeedback?.FireUpdate();
+			AutoRouteFeedback?.FireUpdate();
+			
+			foreach(var item in VideoInputSyncFeedbacks)
+			{
+				item.FireUpdate();
+			}
+
+			foreach(var item in VideoOutputRouteFeedbacks)
+			{
+				item.FireUpdate();
+			}
+
+			foreach(var item in InputHdcpEnableFeedback)
+			{
+				item.FireUpdate();
+			}
+
+			foreach(var item in InputNameFeedbacks)
+			{
+				item.FireUpdate();
+			}
+
+			foreach(var item in OutputNameFeedbacks)
+			{
+				item.FireUpdate();
+			}
+
+			foreach(var item in OutputRouteNameFeedbacks)
+			{
+				item.FireUpdate();
+			}
+
+			foreach(var item in Feedbacks)
+			{
+				// TODO - Remove after testing
+				Debug.LogInformation(this, $"UpdateFeedbacks: Firing feedback for {item.Key}");
+				item.FireUpdate();
+			}
+		}
+
 		#endregion
 
 		#region Events
 
 		void Chassis_OnlineStatusChange(Crestron.SimplSharpPro.GenericBase currentDevice, Crestron.SimplSharpPro.OnlineOfflineEventArgs args)
 		{
+			// TODO - Remove after testing
+			Debug.LogInformation(this, $"Chassis_OnlineStatusChange: DeviceOnline = {args.DeviceOnLine}");
+
             IsOnline.FireUpdate();
 
 		    if (!args.DeviceOnLine) return;
+
+			// TODO - Remove after testing
+			Debug.LogInformation(this, $"Chassis_OnlineStatusChange: Feedbacks has {Feedbacks.Count} items in the collection");
+
 	        
             foreach (var feedback in Feedbacks)
 	        {
+				// TODO - Remove after testing
+				Debug.LogInformation(this, $"Chassis_OnlineStatusChange: Firing update for {feedback.Key}");
+
 	            feedback.FireUpdate();
 	        }
 
@@ -465,6 +508,9 @@ namespace PepperDash.Essentials.DM.Chassis
 		void Chassis_DMOutputChange(Switch device, DMOutputEventArgs args)
 		{
 			if (args.EventId != DMOutputEventIds.VideoOutEventId) return;
+
+			// TODO - Remove after testing
+			Debug.LogInformation(this, $"Chassis_DMOutputChange: EventId = {args.EventId}; Index = {args.Index}; Number = {args.Number}; Stream = {args.Stream} ");
 
 		    var output = args.Number;
 
@@ -493,20 +539,19 @@ namespace PepperDash.Essentials.DM.Chassis
 		    {
                 case DMInputEventIds.VideoDetectedEventId:
 		        {
-                    Debug.LogDebug(this, "Event ID {0}: Updating VideoInputSyncFeedbacks", args.EventId);
+                    Debug.LogDebug(this, $"Chassis_DMInputChange: Event ID {args.EventId}: Updating VideoInputSyncFeedbacks");
                     foreach (var item in VideoInputSyncFeedbacks)
                     {
                         item.FireUpdate();
                     }
 		            break;
-		        }
+		        }				
                 case DMInputEventIds.InputNameFeedbackEventId:
                 case DMInputEventIds.InputNameEventId:
                 case DMInputEventIds.NameFeedbackEventId:
 		        {
-		            Debug.LogDebug(this, "Event ID {0}:  Updating name feedbacks.", args.EventId);
-		            Debug.LogDebug(this, "Input {0} Name {1}", args.Number,
-		                _Chassis.HdmiInputs[args.Number].NameFeedback.StringValue);
+		            Debug.LogDebug(this, $"Chassis_DMInputChange: Event ID {args.EventId}:  Updating name feedbacks.");
+		            Debug.LogDebug(this, $"Chassis_DMInputChange: Input {args.Number} Name {_Chassis.HdmiInputs[args.Number].NameFeedback.StringValue}");
                     foreach (var item in InputNameFeedbacks)
                     {
                         item.FireUpdate();
@@ -515,7 +560,7 @@ namespace PepperDash.Essentials.DM.Chassis
 		        }
                 default:
 		        {
-                    Debug.LogDebug(this, "Unhandled DM Input Event ID {0}", args.EventId);
+                    Debug.LogDebug(this, $"Chassis_DMInputChange: Unhandled DM Input Event ID {args.EventId}");
 		            break;
 		        }
 		    }			
