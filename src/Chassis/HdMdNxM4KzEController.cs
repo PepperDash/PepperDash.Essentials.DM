@@ -95,15 +95,20 @@ namespace PepperDash.Essentials.DM.Chassis
 				AutoRouteFeedback = new BoolFeedback("AutoRouteFeedback", () => _chassis.AutoRouteOnFeedback?.BoolValue ?? false);
 			}
 
+			SetupInputs();
+			SetupOutputs();			
+
+			_Chassis.DMInputChange += Chassis_DMInputChange;
+			_Chassis.DMOutputChange += Chassis_DMOutputChange;
+
+			AddPostActivationAction(AddFeedbackCollections);
+		}
+
+		private void SetupInputs()
+		{
 			if (InputNames == null)
 			{
-				Debug.LogMessage(Serilog.Events.LogEventLevel.Error, "InputNames is null. Ensure 'inputs' is defined in the device configuration.", this);
-				return;
-			}
-
-			if (OutputNames == null)
-			{
-				Debug.LogMessage(Serilog.Events.LogEventLevel.Error, "OutputNames is null. Ensure 'outputs' is defined in the device configuration.", this);
+				Debug.LogMessage(Serilog.Events.LogEventLevel.Error, "SetupInputs: InputNames is null. Ensure 'inputs' is defined in the device configuration.", this);
 				return;
 			}
 
@@ -111,24 +116,25 @@ namespace PepperDash.Essentials.DM.Chassis
 			{
 				var index = kvp.Key;
 				var inputName = kvp.Value;
+				var inputFbKeyPrefix = inputName.Replace(" ", "").Trim();
 
 				if (index < 1 || index > _Chassis.NumberOfInputs)
 				{
-					Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "Input index {index} is out of range (1-{max}). Skipping.", this, index, _Chassis.NumberOfInputs);
+					Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "SetupInputs: Input index {index} is out of range (1-{max}). Skipping.", this, index, _Chassis.NumberOfInputs);
 					continue;
 				}
 
 				var hdmiInput = _Chassis.HdmiInputs[index];
 				if (hdmiInput == null)
 				{
-					Debug.LogMessage(Serilog.Events.LogEventLevel.Error, "HdmiInput at index {index} is null. Skipping.", this, index);
+					Debug.LogMessage(Serilog.Events.LogEventLevel.Error, "SetupInputs: HdmiInput at index {index} is null. Skipping.", this, index);
 					continue;
 				}
 
 				var chassisInput = _Chassis.Inputs[index];
 				if (chassisInput == null)
 				{
-					Debug.LogMessage(Serilog.Events.LogEventLevel.Error, "Chassis Input at index {index} is null. Skipping.", this, index);
+					Debug.LogMessage(Serilog.Events.LogEventLevel.Error, "SetupInputs: Chassis Input at index {index} is null. Skipping.", this, index);
 					continue;
 				}
 
@@ -140,39 +146,49 @@ namespace PepperDash.Essentials.DM.Chassis
 					FeedbackMatchObject = hdmiInput
 				});
 
-				VideoInputSyncFeedbacks.Add(new BoolFeedback(inputName, () => chassisInput?.VideoDetectedFeedback?.BoolValue ?? false));
-				InputNameFeedbacks.Add(new StringFeedback(inputName, () => InputNames[index]));
+				VideoInputSyncFeedbacks.Add(new BoolFeedback(string.Format($"{inputFbKeyPrefix}VideoInputSyncFeedback"), () => chassisInput?.VideoDetectedFeedback?.BoolValue ?? false));
+				InputNameFeedbacks.Add(new StringFeedback(string.Format($"{inputFbKeyPrefix}InputNameFeedback"), () => InputNames[index]));
 				
 				if (hdmiInput.HdmiInputPort == null)
 				{
 					Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "HdmiInputPort at index {index} is null. HDCP feedback will default to false.", this, index);
 				}
 				
-				InputHdcpEnableFeedback.Add(new BoolFeedback(inputName, () => hdmiInput?.HdmiInputPort?.HdcpSupportOnFeedback?.BoolValue ?? false));
+				InputHdcpEnableFeedback.Add(new BoolFeedback(string.Format($"{inputFbKeyPrefix}HdcpEnableFeedback"), () => hdmiInput?.HdmiInputPort?.HdcpSupportOnFeedback?.BoolValue ?? false));
+			}
+		}
+
+		private void SetupOutputs()
+		{
+			if (OutputNames == null)
+			{
+				Debug.LogMessage(Serilog.Events.LogEventLevel.Error, "SetupOutputs: OutputNames is null. Ensure 'outputs' is defined in the device configuration.", this);
+				return;
 			}
 
 			foreach (var kvp in OutputNames)
 			{
 				var index = kvp.Key;
 				var outputName = kvp.Value;
+				var outputFbKeyPrefix = outputName.Replace(" ", "").Trim();
 
 				if (index < 1 || index > _Chassis.NumberOfOutputs)
 				{
-					Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "Output index {index} is out of range (1-{max}). Skipping.", this, index, _Chassis.NumberOfOutputs);
+					Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "SetupOutputs: Output index {index} is out of range (1-{max}). Skipping.", this, index, _Chassis.NumberOfOutputs);
 					continue;
 				}
 
 				var hdmiOutput = _Chassis.HdmiOutputs[index];
 				if (hdmiOutput == null)
 				{
-					Debug.LogMessage(Serilog.Events.LogEventLevel.Error, "HdmiOutput at index {index} is null. Skipping.", this, index);
+					Debug.LogMessage(Serilog.Events.LogEventLevel.Error, "SetupOutputs: HdmiOutput at index {index} is null. Skipping.", this, index);
 					continue;
 				}
 
 				var chassisOutput = _Chassis.Outputs[index];
 				if (chassisOutput == null)
 				{
-					Debug.LogMessage(Serilog.Events.LogEventLevel.Error, "Chassis Output at index {index} is null. Skipping.", this, index);
+					Debug.LogMessage(Serilog.Events.LogEventLevel.Error, "SetupOutputs: Chassis Output at index {index} is null. Skipping.", this, index);
 					continue;
 				}
 
@@ -182,15 +198,10 @@ namespace PepperDash.Essentials.DM.Chassis
 					FeedbackMatchObject = hdmiOutput
 				});
 
-				VideoOutputRouteFeedbacks.Add(new IntFeedback(outputName, () => chassisOutput.VideoOutFeedback == null ? 0 : (int)chassisOutput.VideoOutFeedback.Number));
-				OutputNameFeedbacks.Add(new StringFeedback(outputName, () => OutputNames[index]));
-				OutputRouteNameFeedbacks.Add(new StringFeedback(outputName, () => chassisOutput.VideoOutFeedback == null ? NoRouteText : chassisOutput.VideoOutFeedback.NameFeedback.StringValue));
+				VideoOutputRouteFeedbacks.Add(new IntFeedback(string.Format($"{outputFbKeyPrefix}VideoOutputRouteFeedback"), () => chassisOutput.VideoOutFeedback == null ? 0 : (int)chassisOutput.VideoOutFeedback.Number));
+				OutputNameFeedbacks.Add(new StringFeedback(string.Format($"{outputFbKeyPrefix}OutputNameFeedback"), () => OutputNames[index]));
+				OutputRouteNameFeedbacks.Add(new StringFeedback(string.Format($"{outputFbKeyPrefix}OutputRouteNameFeedback"), () => chassisOutput.VideoOutFeedback == null ? NoRouteText : chassisOutput.VideoOutFeedback.NameFeedback.StringValue));
 			}
-
-			_Chassis.DMInputChange += Chassis_DMInputChange;
-			_Chassis.DMOutputChange += Chassis_DMOutputChange;
-
-			AddPostActivationAction(AddFeedbackCollections);
 		}
 
 		#endregion
@@ -250,6 +261,7 @@ namespace PepperDash.Essentials.DM.Chassis
 
 
 		#region FeedbackCollection Methods
+		
 
 		public void AddFeedbackCollections()
 		{
