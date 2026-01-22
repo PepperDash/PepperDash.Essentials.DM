@@ -69,37 +69,45 @@ namespace PepperDash.Essentials.DM.Chassis
 
 			if (props.Inputs != null)
 			{
-				foreach (var kvp in props.Inputs)
-				{
-					Debug.LogDebug(this, "props.Inputs: {0}-{1}", kvp.Key, kvp.Value);
-				}
 				InputNames = props.Inputs;
+				foreach (var kvp in InputNames)
+				{
+					Debug.LogDebug(this, "InputNames: {0}-{1}", kvp.Key, kvp.Value);
+				}
 			}
 			if (props.Outputs != null)
 			{
-				foreach (var kvp in props.Outputs)
-				{
-					Debug.LogDebug(this, "props.Outputs: {0}-{1}", kvp.Key, kvp.Value);
-				}
 				OutputNames = props.Outputs;
+				foreach (var kvp in OutputNames)
+				{
+					Debug.LogDebug(this, "OutputNamess: {0}-{1}", kvp.Key, kvp.Value);
+				}
 			}
 
-			DeviceNameFeedback = new StringFeedback("DeviceName", () => Name);
-
-			VideoInputSyncFeedbacks = new FeedbackCollection<BoolFeedback>();
-			VideoOutputRouteFeedbacks = new FeedbackCollection<IntFeedback>();
-			InputNameFeedbacks = new FeedbackCollection<StringFeedback>();
-			OutputNameFeedbacks = new FeedbackCollection<StringFeedback>();
-			OutputRouteNameFeedbacks = new FeedbackCollection<StringFeedback>();
-			InputHdcpEnableFeedback = new FeedbackCollection<BoolFeedback>();
-
-			InputPorts = new RoutingPortCollection<RoutingInputPort>();
-			OutputPorts = new RoutingPortCollection<RoutingOutputPort>();
-
-			if (_Chassis is HdMd4x14kzE _chassis)
+			try 
 			{
-				AutoRouteFeedback = new BoolFeedback("AutoRouteFeedback", () => _chassis.AutoRouteOnFeedback?.BoolValue ?? false);
+				DeviceNameFeedback = new StringFeedback("DeviceName", () => Name);
+
+				VideoInputSyncFeedbacks = new FeedbackCollection<BoolFeedback>();
+				VideoOutputRouteFeedbacks = new FeedbackCollection<IntFeedback>();
+				InputNameFeedbacks = new FeedbackCollection<StringFeedback>();
+				OutputNameFeedbacks = new FeedbackCollection<StringFeedback>();
+				OutputRouteNameFeedbacks = new FeedbackCollection<StringFeedback>();
+				InputHdcpEnableFeedback = new FeedbackCollection<BoolFeedback>();
+
+				InputPorts = new RoutingPortCollection<RoutingInputPort>();
+				OutputPorts = new RoutingPortCollection<RoutingOutputPort>();
+
+				if (_Chassis is HdMd4x14kzE _chassis)
+				{
+					AutoRouteFeedback = new BoolFeedback("AutoRouteFeedback", () => _chassis.AutoRouteOnFeedback?.BoolValue ?? false);
+				}
 			}
+			catch(Exception ex)
+			{
+				Debug.LogError(this, "Constructor Exception: {ex}", ex);
+			}
+			
 
 			SetupInputs();
 			SetupOutputs();
@@ -114,100 +122,113 @@ namespace PepperDash.Essentials.DM.Chassis
 		{
 			if (InputNames == null)
 			{
-				Debug.LogMessage(Serilog.Events.LogEventLevel.Error, "SetupInputs: InputNames is null. Ensure 'inputs' is defined in the device configuration.", this);
+				Debug.LogError(this, "SetupInputs: InputNames is null. Ensure 'inputs' is defined in the device configuration.");
 				return;
 			}
-
-			foreach (var kvp in InputNames)
+			try 
 			{
-				var index = kvp.Key;
-				var inputName = kvp.Value;
-				var inputFbKeyPrefix = inputName.Replace(" ", "").Trim();
-
-				if (index < 1 || index > _Chassis.NumberOfInputs)
+				foreach (var kvp in InputNames)
 				{
-					Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "SetupInputs: Input index {index} is out of range (1-{max}). Skipping.", this, index, _Chassis.NumberOfInputs);
-					continue;
+					var index = kvp.Key;
+					var inputName = kvp.Value;
+					var inputFbKeyPrefix = inputName.Replace(" ", "").Trim();
+
+					if (index < 1 || index > _Chassis.NumberOfInputs)
+					{
+						Debug.LogWarning(this, "SetupInputs: Input index {index} is out of range (1-{max}). Skipping.", index, _Chassis.NumberOfInputs);
+						continue;
+					}
+
+					var hdmiInput = _Chassis.HdmiInputs[index];
+					if (hdmiInput == null)
+					{
+						Debug.LogError(this, "SetupInputs: HdmiInput at index {index} is null. Skipping.", index);
+						continue;
+					}
+
+					var chassisInput = _Chassis.Inputs[index];
+					if (chassisInput == null)
+					{
+						Debug.LogError(this, "SetupInputs: Chassis Input at index {index} is null. Skipping.", index);
+						continue;
+					}
+
+					hdmiInput.Name.StringValue = inputName;
+
+					InputPorts.Add(new RoutingInputPort(inputName, eRoutingSignalType.AudioVideo,
+						eRoutingPortConnectionType.Hdmi, hdmiInput, this)
+					{
+						FeedbackMatchObject = hdmiInput
+					});
+
+					VideoInputSyncFeedbacks.Add(new BoolFeedback(string.Format($"{inputFbKeyPrefix}VideoInputSyncFeedback"), () => chassisInput?.VideoDetectedFeedback?.BoolValue ?? false));
+					InputNameFeedbacks.Add(new StringFeedback(string.Format($"{inputFbKeyPrefix}InputNameFeedback"), () => InputNames[index]));
+
+					if (hdmiInput.HdmiInputPort == null)
+					{
+						Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "HdmiInputPort at index {index} is null. HDCP feedback will default to false.", this, index);
+					}
+
+					InputHdcpEnableFeedback.Add(new BoolFeedback(string.Format($"{inputFbKeyPrefix}HdcpEnableFeedback"), () => hdmiInput?.HdmiInputPort?.HdcpSupportOnFeedback?.BoolValue ?? false));
 				}
-
-				var hdmiInput = _Chassis.HdmiInputs[index];
-				if (hdmiInput == null)
-				{
-					Debug.LogMessage(Serilog.Events.LogEventLevel.Error, "SetupInputs: HdmiInput at index {index} is null. Skipping.", this, index);
-					continue;
-				}
-
-				var chassisInput = _Chassis.Inputs[index];
-				if (chassisInput == null)
-				{
-					Debug.LogMessage(Serilog.Events.LogEventLevel.Error, "SetupInputs: Chassis Input at index {index} is null. Skipping.", this, index);
-					continue;
-				}
-
-				hdmiInput.Name.StringValue = inputName;
-
-				InputPorts.Add(new RoutingInputPort(inputName, eRoutingSignalType.AudioVideo,
-					eRoutingPortConnectionType.Hdmi, hdmiInput, this)
-				{
-					FeedbackMatchObject = hdmiInput
-				});
-
-				VideoInputSyncFeedbacks.Add(new BoolFeedback(string.Format($"{inputFbKeyPrefix}VideoInputSyncFeedback"), () => chassisInput?.VideoDetectedFeedback?.BoolValue ?? false));
-				InputNameFeedbacks.Add(new StringFeedback(string.Format($"{inputFbKeyPrefix}InputNameFeedback"), () => InputNames[index]));
-
-				if (hdmiInput.HdmiInputPort == null)
-				{
-					Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "HdmiInputPort at index {index} is null. HDCP feedback will default to false.", this, index);
-				}
-
-				InputHdcpEnableFeedback.Add(new BoolFeedback(string.Format($"{inputFbKeyPrefix}HdcpEnableFeedback"), () => hdmiInput?.HdmiInputPort?.HdcpSupportOnFeedback?.BoolValue ?? false));
 			}
+			catch(Exception ex)
+			{
+				Debug.LogError(this, "SetupInputs: Exception {ex}", ex);
+			}			
 		}
 
 		private void SetupOutputs()
 		{
 			if (OutputNames == null)
 			{
-				Debug.LogMessage(Serilog.Events.LogEventLevel.Error, "SetupOutputs: OutputNames is null. Ensure 'outputs' is defined in the device configuration.", this);
+				Debug.LogWarning(this, "SetupOutputs: OutputNames is null. Ensure 'outputs' is defined in the device configuration.");
 				return;
 			}
 
-			foreach (var kvp in OutputNames)
+			try
 			{
-				var index = kvp.Key;
-				var outputName = kvp.Value;
-				var outputFbKeyPrefix = outputName.Replace(" ", "").Trim();
-
-				if (index < 1 || index > _Chassis.NumberOfOutputs)
+				foreach (var kvp in OutputNames)
 				{
-					Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "SetupOutputs: Output index {index} is out of range (1-{max}). Skipping.", this, index, _Chassis.NumberOfOutputs);
-					continue;
+					var index = kvp.Key;
+					var outputName = kvp.Value;
+					var outputFbKeyPrefix = outputName.Replace(" ", "").Trim();
+
+					if (index < 1 || index > _Chassis.NumberOfOutputs)
+					{
+						Debug.LogWarning(this, "SetupOutputs: Output index {index} is out of range (1-{max}). Skipping.", index, _Chassis.NumberOfOutputs);
+						continue;
+					}
+
+					var hdmiOutput = _Chassis.HdmiOutputs[index];
+					if (hdmiOutput == null)
+					{
+						Debug.LogWarning(this, "SetupOutputs: HdmiOutput at index {index} is null. Skipping.", index);
+						continue;
+					}
+
+					var chassisOutput = _Chassis.Outputs[index];
+					if (chassisOutput == null)
+					{
+						Debug.LogError(this, "SetupOutputs: Chassis Output at index {index} is null. Skipping.", index);
+						continue;
+					}
+
+					OutputPorts.Add(new RoutingOutputPort(outputName, eRoutingSignalType.AudioVideo,
+						eRoutingPortConnectionType.Hdmi, hdmiOutput, this)
+					{
+						FeedbackMatchObject = hdmiOutput
+					});
+
+					VideoOutputRouteFeedbacks.Add(new IntFeedback(string.Format($"{outputFbKeyPrefix}VideoOutputRouteFeedback"), () => chassisOutput.VideoOutFeedback == null ? 0 : (int)chassisOutput.VideoOutFeedback.Number));
+					OutputNameFeedbacks.Add(new StringFeedback(string.Format($"{outputFbKeyPrefix}OutputNameFeedback"), () => OutputNames[index]));
+					OutputRouteNameFeedbacks.Add(new StringFeedback(string.Format($"{outputFbKeyPrefix}OutputRouteNameFeedback"), () => chassisOutput.VideoOutFeedback == null ? NoRouteText : chassisOutput.VideoOutFeedback.NameFeedback.StringValue));
 				}
-
-				var hdmiOutput = _Chassis.HdmiOutputs[index];
-				if (hdmiOutput == null)
-				{
-					Debug.LogMessage(Serilog.Events.LogEventLevel.Error, "SetupOutputs: HdmiOutput at index {index} is null. Skipping.", this, index);
-					continue;
-				}
-
-				var chassisOutput = _Chassis.Outputs[index];
-				if (chassisOutput == null)
-				{
-					Debug.LogMessage(Serilog.Events.LogEventLevel.Error, "SetupOutputs: Chassis Output at index {index} is null. Skipping.", this, index);
-					continue;
-				}
-
-				OutputPorts.Add(new RoutingOutputPort(outputName, eRoutingSignalType.AudioVideo,
-					eRoutingPortConnectionType.Hdmi, hdmiOutput, this)
-				{
-					FeedbackMatchObject = hdmiOutput
-				});
-
-				VideoOutputRouteFeedbacks.Add(new IntFeedback(string.Format($"{outputFbKeyPrefix}VideoOutputRouteFeedback"), () => chassisOutput.VideoOutFeedback == null ? 0 : (int)chassisOutput.VideoOutFeedback.Number));
-				OutputNameFeedbacks.Add(new StringFeedback(string.Format($"{outputFbKeyPrefix}OutputNameFeedback"), () => OutputNames[index]));
-				OutputRouteNameFeedbacks.Add(new StringFeedback(string.Format($"{outputFbKeyPrefix}OutputRouteNameFeedback"), () => chassisOutput.VideoOutFeedback == null ? NoRouteText : chassisOutput.VideoOutFeedback.NameFeedback.StringValue));
 			}
+			catch(Exception ex)
+			{
+				Debug.LogError("SetupOutputs: Exception {ex}", ex);
+			}			
 		}
 
 		#endregion
@@ -235,7 +256,7 @@ namespace PepperDash.Essentials.DM.Chassis
 			var hdmiInput = _Chassis.HdmiInputs[port];
 			if (hdmiInput?.HdmiInputPort == null)
 			{
-				Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "EnableHdcp: HdmiInputPort at index {port} is null. Cannot enable HDCP.", this, port);
+				Debug.LogWarning(this, "EnableHdcp: HdmiInputPort at index {port} is null. Cannot enable HDCP.", port);
 				return;
 			}
 
@@ -272,7 +293,7 @@ namespace PepperDash.Essentials.DM.Chassis
 			var hdmiInput = _Chassis.HdmiInputs[port];
 			if (hdmiInput?.HdmiInputPort == null)
 			{
-				Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "DisableHdcp: HdmiInputPort at index {port} is null. Cannot disable HDCP.", this, port);
+				Debug.LogWarning(this, "DisableHdcp: HdmiInputPort at index {port} is null. Cannot disable HDCP.", port);
 				return;
 			}
 
