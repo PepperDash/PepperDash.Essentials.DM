@@ -13,6 +13,7 @@ using PepperDash.Essentials.DM.Config;
 using PepperDash.Essentials.Core.Bridges;
 using PepperDash.Essentials.Core.Config;
 using System.Threading;
+using System.Runtime.InteropServices;
 
 namespace PepperDash.Essentials.DM.Chassis
 {
@@ -515,10 +516,9 @@ namespace PepperDash.Essentials.DM.Chassis
 		void Chassis_DMOutputChange(Switch device, DMOutputEventArgs args)
 		{
 			// TODO - Remove after testing
-			var eventIdType = args.EventId.GetType();
-			//var eventName = eventIdType.IsEnum ? Enum.GetName(eventIdType, args.EventId) : args.EventId.ToString();
-			var eventName = nameof(args.EventId);
-			Debug.LogInformation(this, $"Chassis_DMOutputChange: Event Type = {eventIdType}, Event Name = {eventName}");
+			var eventName = typeof(DMOutputEventIds)
+                .GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+    			.FirstOrDefault(f => f.IsLiteral && (int)f.GetValue(null) == args.EventId)?.Name ?? args.EventId.ToString();
 			Debug.LogInformation(this, $"Chassis_DMOutputChange: received {eventName} (id-{args.EventId}); Index = {args.Index}; Number = {args.Number}; Stream = {args.Stream} ");
 
 			switch (args.EventId)
@@ -555,8 +555,10 @@ namespace PepperDash.Essentials.DM.Chassis
 
 		void Chassis_DMInputChange(Switch device, DMInputEventArgs args)
 		{
-				var eventIdType = args.EventId.GetType();
-				var eventName = eventIdType.IsEnum ? Enum.GetName(eventIdType, args.EventId) : args.EventId.ToString();
+			var eventName = typeof(DMInputEventIds)
+                .GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+    			.FirstOrDefault(f => f.IsLiteral && (int)f.GetValue(null) == args.EventId)?.Name ?? args.EventId.ToString();	
+
 				switch (args.EventId)
 				{
 					case DMInputEventIds.VideoDetectedEventId:
