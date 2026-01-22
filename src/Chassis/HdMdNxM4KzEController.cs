@@ -109,50 +109,84 @@ namespace PepperDash.Essentials.DM.Chassis
 				return;
 			}
 
-			for (uint i = 1; i <= _Chassis.NumberOfInputs; i++)
+			foreach (var kvp in InputNames)
 			{
-				var index = i;
-				if (!InputNames.TryGetValue(index, out var inputName))
+				var index = kvp.Key;
+				var inputName = kvp.Value;
+
+				if (index < 1 || index > _Chassis.NumberOfInputs)
 				{
-					Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "No input name defined for input {index}. Using default name.", this, index);
-					inputName = $"Input {index}";
-					InputNames[index] = inputName;
+					Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "Input index {index} is out of range (1-{max}). Skipping.", this, index, _Chassis.NumberOfInputs);
+					continue;
 				}
-				// _Chassis.Inputs[index].Name.StringValue = inputName;			    
-				_Chassis.HdmiInputs[index].Name.StringValue = inputName;
+
+				var hdmiInput = _Chassis.HdmiInputs[index];
+				if (hdmiInput == null)
+				{
+					Debug.LogMessage(Serilog.Events.LogEventLevel.Error, "HdmiInput at index {index} is null. Skipping.", this, index);
+					continue;
+				}
+
+				var chassisInput = _Chassis.Inputs[index];
+				if (chassisInput == null)
+				{
+					Debug.LogMessage(Serilog.Events.LogEventLevel.Error, "Chassis Input at index {index} is null. Skipping.", this, index);
+					continue;
+				}
+
+				hdmiInput.Name.StringValue = inputName;
 
 				InputPorts.Add(new RoutingInputPort(inputName, eRoutingSignalType.AudioVideo,
-					eRoutingPortConnectionType.Hdmi, _Chassis.HdmiInputs[index], this)
+					eRoutingPortConnectionType.Hdmi, hdmiInput, this)
 				{
-					FeedbackMatchObject = _Chassis.HdmiInputs[index]
+					FeedbackMatchObject = hdmiInput
 				});
 
-				VideoInputSyncFeedbacks.Add(new BoolFeedback(inputName, () => _Chassis.Inputs[index].VideoDetectedFeedback?.BoolValue ?? false));
-				//InputNameFeedbacks.Add(new StringFeedback(inputName, () => _Chassis.Inputs[index].NameFeedback.StringValue));
+				VideoInputSyncFeedbacks.Add(new BoolFeedback(inputName, () => chassisInput?.VideoDetectedFeedback?.BoolValue ?? false));
 				InputNameFeedbacks.Add(new StringFeedback(inputName, () => InputNames[index]));
-				InputHdcpEnableFeedback.Add(new BoolFeedback(inputName, () => _Chassis.HdmiInputs[index].HdmiInputPort.HdcpSupportOnFeedback?.BoolValue ?? false));
+				
+				if (hdmiInput.HdmiInputPort == null)
+				{
+					Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "HdmiInputPort at index {index} is null. HDCP feedback will default to false.", this, index);
+				}
+				
+				InputHdcpEnableFeedback.Add(new BoolFeedback(inputName, () => hdmiInput?.HdmiInputPort?.HdcpSupportOnFeedback?.BoolValue ?? false));
 			}
 
-			for (uint i = 1; i <= _Chassis.NumberOfOutputs; i++)
+			foreach (var kvp in OutputNames)
 			{
-				var index = i;
-				if (!OutputNames.TryGetValue(index, out var outputName))
+				var index = kvp.Key;
+				var outputName = kvp.Value;
+
+				if (index < 1 || index > _Chassis.NumberOfOutputs)
 				{
-					Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "No output name defined for output {index}. Using default name.", this, index);
-					outputName = $"Output {index}";
-					OutputNames[index] = outputName;
+					Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "Output index {index} is out of range (1-{max}). Skipping.", this, index, _Chassis.NumberOfOutputs);
+					continue;
 				}
-				//_Chassis.Outputs[index].Name.StringValue = outputName;
-				//_Chassis.HdmiOutputs[index].Name.StringValue = outputName;
+
+				var hdmiOutput = _Chassis.HdmiOutputs[index];
+				if (hdmiOutput == null)
+				{
+					Debug.LogMessage(Serilog.Events.LogEventLevel.Error, "HdmiOutput at index {index} is null. Skipping.", this, index);
+					continue;
+				}
+
+				var chassisOutput = _Chassis.Outputs[index];
+				if (chassisOutput == null)
+				{
+					Debug.LogMessage(Serilog.Events.LogEventLevel.Error, "Chassis Output at index {index} is null. Skipping.", this, index);
+					continue;
+				}
 
 				OutputPorts.Add(new RoutingOutputPort(outputName, eRoutingSignalType.AudioVideo,
-					eRoutingPortConnectionType.Hdmi, _Chassis.HdmiOutputs[index], this)
+					eRoutingPortConnectionType.Hdmi, hdmiOutput, this)
 				{
-					FeedbackMatchObject = _Chassis.HdmiOutputs[index]
+					FeedbackMatchObject = hdmiOutput
 				});
-				VideoOutputRouteFeedbacks.Add(new IntFeedback(outputName, () => _Chassis.Outputs[index].VideoOutFeedback == null ? 0 : (int)_Chassis.Outputs[index].VideoOutFeedback.Number));
+
+				VideoOutputRouteFeedbacks.Add(new IntFeedback(outputName, () => chassisOutput.VideoOutFeedback == null ? 0 : (int)chassisOutput.VideoOutFeedback.Number));
 				OutputNameFeedbacks.Add(new StringFeedback(outputName, () => OutputNames[index]));
-				OutputRouteNameFeedbacks.Add(new StringFeedback(outputName, () => _Chassis.Outputs[index].VideoOutFeedback == null ? NoRouteText : _Chassis.Outputs[index].VideoOutFeedback.NameFeedback.StringValue));
+				OutputRouteNameFeedbacks.Add(new StringFeedback(outputName, () => chassisOutput.VideoOutFeedback == null ? NoRouteText : chassisOutput.VideoOutFeedback.NameFeedback.StringValue));
 			}
 
 			_Chassis.DMInputChange += Chassis_DMInputChange;
@@ -215,7 +249,7 @@ namespace PepperDash.Essentials.DM.Chassis
 
 			Debug.LogVerbose(this, "DisableAutoRoute: AutoRoute is not supported on this chassis.");
 		}
-		
+
 
 		#region FeedbackCollection Methods
 
@@ -476,36 +510,38 @@ namespace PepperDash.Essentials.DM.Chassis
 		}
 
 		void Chassis_DMOutputChange(Switch device, DMOutputEventArgs args)
-		{
-			// TODO - Remove after testing
-			Debug.LogInformation(this, $"Chassis_DMOutputChange: EventId = {args.EventId}; Index = {args.Index}; Number = {args.Number}; Stream = {args.Stream} ");
+        {
+            // TODO - Remove after testing
+            Debug.LogInformation(this, $"Chassis_DMOutputChange: EventId = {args.EventId}; Index = {args.Index}; Number = {args.Number}; Stream = {args.Stream} ");
 
-			if (args.EventId != DMOutputEventIds.VideoOutEventId)
+            if (args.EventId != DMOutputEventIds.VideoOutEventId)
+            {
+                Debug.LogInformation(this, $"Chassis_DMOutputChange: EventId {args.EventId} != {DMOutputEventIds.VideoOutEventId}, ignoring.");
+                return;
+            }
+
+            var output = args.Number;
+            var outputName = OutputNames[output];
+
+            var inputNumber = _Chassis.HdmiOutputs[output].VideoOutFeedback?.Number ?? 0;
+
+			var feedback = VideoOutputRouteFeedbacks.FirstOrDefault(f => f.Key == outputName);
+			if (feedback != null)
 			{
-				Debug.LogInformation(this, $"Chassis_DMOutputChange: EventId {args.EventId} != {DMOutputEventIds.VideoOutEventId}, ignoring.");
-				return;
+				var inPort = InputPorts.FirstOrDefault(p => p.FeedbackMatchObject == _Chassis.HdmiOutputs[output].VideoOutFeedback);
+				var outPort = OutputPorts.FirstOrDefault(p => p.FeedbackMatchObject == _Chassis.HdmiOutputs[output]);
+
+				feedback.FireUpdate();
+				OnSwitchChange(new RoutingNumericEventArgs(output, inputNumber, outPort, inPort, eRoutingSignalType.AudioVideo));
 			}
-
-			var output = args.Number;
-			var outputName = OutputNames[output];
-
-			var inputNumber = _Chassis.HdmiOutputs[output].VideoOutFeedback?.Number ?? 0;
-
-			if (!VideoOutputRouteFeedbacks.ContainsKey(outputName))
+			else
 			{
 				Debug.LogInformation(this, $"Chassis_DMOutputChange: {outputName} not found in VideoOutputRouteFeedbacks");
 				return;
 			}
+        }
 
-			var feedback = VideoOutputRouteFeedbacks[outputName];
-			var inPort = InputPorts.FirstOrDefault(p => p.FeedbackMatchObject == _Chassis.HdmiOutputs[output].VideoOutFeedback);
-			var outPort = OutputPorts.FirstOrDefault(p => p.FeedbackMatchObject == _Chassis.HdmiOutputs[output]);
-
-			feedback.FireUpdate();
-			OnSwitchChange(new RoutingNumericEventArgs(output, inputNumber, outPort, inPort, eRoutingSignalType.AudioVideo));
-		}
-
-		void Chassis_DMInputChange(Switch device, DMInputEventArgs args)
+        void Chassis_DMInputChange(Switch device, DMInputEventArgs args)
 		{
 			switch (args.EventId)
 			{
