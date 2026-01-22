@@ -512,7 +512,8 @@ namespace PepperDash.Essentials.DM.Chassis
 		void Chassis_DMOutputChange(Switch device, DMOutputEventArgs args)
 		{
 			// TODO - Remove after testing
-			var eventName = Enum.GetName(typeof(DMOutputEventIds), args.EventId);
+			var eventIdType = args.EventId.GetType();
+			var eventName = eventIdType.IsEnum ? Enum.GetName(eventIdType, args.EventId) : args.EventId.ToString();
 			Debug.LogInformation(this, $"Chassis_DMOutputChange: received {eventName} (id-{args.EventId}); Index = {args.Index}; Number = {args.Number}; Stream = {args.Stream} ");
 
 			switch (args.EventId)
@@ -549,7 +550,8 @@ namespace PepperDash.Essentials.DM.Chassis
 
 		void Chassis_DMInputChange(Switch device, DMInputEventArgs args)
 		{
-				var eventName = Enum.GetName(typeof(DMInputEventIds), args.EventId);
+				var eventIdType = args.EventId.GetType();
+				var eventName = eventIdType.IsEnum ? Enum.GetName(eventIdType, args.EventId) : args.EventId.ToString();
 				switch (args.EventId)
 				{
 					case DMInputEventIds.VideoDetectedEventId:
