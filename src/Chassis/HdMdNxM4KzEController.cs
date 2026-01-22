@@ -19,7 +19,6 @@ namespace PepperDash.Essentials.DM.Chassis
 	{
 		private HdMdNxM4kzE _Chassis;
 
-		//IroutingNumericEvent
 		public event EventHandler<RoutingNumericEventArgs> NumericSwitchChange;
 
 		public Dictionary<uint, string> InputNames { get; set; }
@@ -40,6 +39,13 @@ namespace PepperDash.Essentials.DM.Chassis
 
 		#region Constructor
 
+		/// <summary>
+		/// Constructor for the HdMdNxM4kZEController
+		/// </summary>
+		/// <param name="key">The device key.</param>
+		/// <param name="name">The device name.</param>
+		/// <param name="chassis">The HdMdNxM4kzE chassis instance.</param>
+		/// <param name="props">The HdMdNxM4kE properties config.</param>
 		public HdMdNxM4kZEController(string key, string name, HdMdNxM4kzE chassis,
 			HdMdNxM4kEPropertiesConfig props)
 			: base(key, name, chassis)
@@ -96,7 +102,7 @@ namespace PepperDash.Essentials.DM.Chassis
 			}
 
 			SetupInputs();
-			SetupOutputs();			
+			SetupOutputs();
 
 			_Chassis.DMInputChange += Chassis_DMInputChange;
 			_Chassis.DMOutputChange += Chassis_DMOutputChange;
@@ -148,12 +154,12 @@ namespace PepperDash.Essentials.DM.Chassis
 
 				VideoInputSyncFeedbacks.Add(new BoolFeedback(string.Format($"{inputFbKeyPrefix}VideoInputSyncFeedback"), () => chassisInput?.VideoDetectedFeedback?.BoolValue ?? false));
 				InputNameFeedbacks.Add(new StringFeedback(string.Format($"{inputFbKeyPrefix}InputNameFeedback"), () => InputNames[index]));
-				
+
 				if (hdmiInput.HdmiInputPort == null)
 				{
 					Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "HdmiInputPort at index {index} is null. HDCP feedback will default to false.", this, index);
 				}
-				
+
 				InputHdcpEnableFeedback.Add(new BoolFeedback(string.Format($"{inputFbKeyPrefix}HdcpEnableFeedback"), () => hdmiInput?.HdmiInputPort?.HdcpSupportOnFeedback?.BoolValue ?? false));
 			}
 		}
@@ -217,24 +223,83 @@ namespace PepperDash.Essentials.DM.Chassis
 			NumericSwitchChange?.Invoke(this, e);
 		}
 
+		/// <summary>
+		/// Enables HDCP on the specified input port.
+		/// </summary>
+		/// <param name="port">The input port number to enable HDCP on.</param>
 		public void EnableHdcp(uint port)
 		{
 			if (port > _Chassis.NumberOfInputs) return;
 			if (port <= 0) return;
 
-			_Chassis.HdmiInputs[port].HdmiInputPort.HdcpSupportOn();
-			InputHdcpEnableFeedback[InputNames[port]].FireUpdate();
+			var hdmiInput = _Chassis.HdmiInputs[port];
+			if (hdmiInput?.HdmiInputPort == null)
+			{
+				Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "EnableHdcp: HdmiInputPort at index {port} is null. Cannot enable HDCP.", this, port);
+				return;
+			}
+
+			hdmiInput.HdmiInputPort.HdcpSupportOn();
+
+			if (InputNames.ContainsKey(port))
+			{
+				var inputName = InputNames[port];
+				var feedback = InputHdcpEnableFeedback.FirstOrDefault(f => f.Key == inputName);
+				if (feedback == null)
+				{
+					return;
+				}
+				try
+				{
+					feedback.FireUpdate();
+				}
+				catch (Exception ex)
+				{
+					Debug.LogError(this, $"EnableHdcp: Exception occurred while updating HDCP feedback for input {inputName}: {ex.Message}");
+				}
+			}
 		}
 
+		/// <summary>
+		/// Disables HDCP on the specified input port.
+		/// </summary>
+		/// <param name="port">The input port number to disable HDCP on.</param>
 		public void DisableHdcp(uint port)
 		{
 			if (port > _Chassis.NumberOfInputs) return;
 			if (port <= 0) return;
 
-			_Chassis.HdmiInputs[port].HdmiInputPort.HdcpSupportOff();
-			InputHdcpEnableFeedback[InputNames[port]].FireUpdate();
+			var hdmiInput = _Chassis.HdmiInputs[port];
+			if (hdmiInput?.HdmiInputPort == null)
+			{
+				Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "DisableHdcp: HdmiInputPort at index {port} is null. Cannot disable HDCP.", this, port);
+				return;
+			}
+
+			hdmiInput.HdmiInputPort.HdcpSupportOff();
+
+			if (InputNames.ContainsKey(port))
+			{
+				var inputName = InputNames[port];
+				var feedback = InputHdcpEnableFeedback.FirstOrDefault(f => f.Key == inputName);
+				if (feedback == null)
+				{
+					return;
+				}
+				try
+				{
+					feedback.FireUpdate();
+				}
+				catch (Exception ex)
+				{
+					Debug.LogError(this, $"DisableHdcp: Exception occurred while updating HDCP feedback for input {inputName}: {ex.Message}");
+				}
+			}
 		}
 
+		/// <summary>
+		/// Enables AutoRoute on the chassis if supported.	
+		/// </summary>
 		public void EnableAutoRoute()
 		{
 			if (_Chassis.NumberOfOutputs > 1) return;
@@ -247,6 +312,9 @@ namespace PepperDash.Essentials.DM.Chassis
 			Debug.LogVerbose(this, "EnableAutoRoute: AutoRoute is not supported on this chassis.");
 		}
 
+		/// <summary>
+		/// Disables AutoRoute on the chassis if supported.
+		/// </summary>
 		public void DisableAutoRoute()
 		{
 			if (_Chassis.NumberOfOutputs > 1) return;
@@ -261,8 +329,11 @@ namespace PepperDash.Essentials.DM.Chassis
 
 
 		#region FeedbackCollection Methods
-		
 
+
+		/// <summary>
+		/// Adds all feedback collections to the Feedbacks collection.
+		/// </summary>
 		public void AddFeedbackCollections()
 		{
 			AddFeedbackToList(IsOnline);
@@ -307,7 +378,9 @@ namespace PepperDash.Essentials.DM.Chassis
 			}
 		}
 
-		//Add Individual Feedbacks
+		/// <summary>
+		/// Adds a feedback to the Feedbacks collection if it does not already exist.
+		/// </summary>
 		public void AddFeedbackToList(Essentials.Core.Feedback newFb)
 		{
 			if (newFb == null) return;
@@ -323,6 +396,12 @@ namespace PepperDash.Essentials.DM.Chassis
 
 		#region IRouting Members
 
+		/// <summary>
+		/// Executes a switch from input to output for the specified signal type.
+		/// </summary>
+		/// <param name="inputSelector">The input selector object.</param>
+		/// <param name="outputSelector">The output selector object.</param>
+		/// <param name="signalType">The type of signal to switch.</param>
 		public void ExecuteSwitch(object inputSelector, object outputSelector, eRoutingSignalType signalType)
 		{
 			var input = inputSelector as HdMdNxM4kzEHdmiInput;
@@ -345,6 +424,12 @@ namespace PepperDash.Essentials.DM.Chassis
 
 		#region IRoutingNumeric Members
 
+		/// <summary>
+		/// Executes a numeric switch from input to output for the specified signal type.
+		/// </summary>
+		/// <param name="inputSelector">The input selector number.</param>
+		/// <param name="outputSelector">The output selector number.</param>
+		/// <param name="signalType">The type of signal to switch.</param>
 		public void ExecuteNumericSwitch(ushort inputSelector, ushort outputSelector, eRoutingSignalType signalType)
 		{
 			Debug.LogInformation(this, $"ExecuteNumericSwitch: inputSelector={inputSelector} outputSelector={outputSelector}");
@@ -363,6 +448,13 @@ namespace PepperDash.Essentials.DM.Chassis
 
 		#region Bridge Linking
 
+		/// <summary>
+		/// Links the device to the API bridge.
+		/// </summary>
+		/// <param name="trilist">The trilist to link to.</param>
+		/// <param name="joinStart">The join start number.</param>	
+		/// <param name="joinMapKey">The join map key.</param>
+		/// <param name="bridge">The EISC API bridge.</param>
 		public override void LinkToApi(BasicTriList trilist, uint joinStart, string joinMapKey, EiscApiAdvanced bridge)
 		{
 			var joinMap = new HdMdNxM4kEControllerJoinMap(joinStart);
@@ -457,7 +549,7 @@ namespace PepperDash.Essentials.DM.Chassis
 					VideoOutputRouteFeedbacks[outputName]?.LinkInputSig(trilist.UShortInput[joinNumberOutputRoute]);
 
 					trilist.SetUShortSigAction(joinNumberOutputRoute, (a) => ExecuteNumericSwitch(a, (ushort)output, eRoutingSignalType.AudioVideo));
-					
+
 					//Serial
 					OutputNameFeedbacks[outputName]?.LinkInputSig(trilist.StringInput[joinNumberOutputName]);
 					OutputRouteNameFeedbacks[outputName]?.LinkInputSig(trilist.StringInput[joinNumberOutputRouteName]);
@@ -479,51 +571,58 @@ namespace PepperDash.Essentials.DM.Chassis
 			};
 		}
 
-
+		/*
 		private void UpdateFeedbacks()
 		{
-			IsOnline?.FireUpdate();
-			DeviceNameFeedback?.FireUpdate();
-			AutoRouteFeedback?.FireUpdate();
-
-			foreach (var item in VideoInputSyncFeedbacks)
+			try
 			{
-				item.FireUpdate();
+				IsOnline.FireUpdate();
+				DeviceNameFeedback.FireUpdate();
+				AutoRouteFeedback.FireUpdate();
+
+				foreach (var item in VideoInputSyncFeedbacks)
+				{
+					item.FireUpdate();
+				}
+
+				foreach (var item in VideoOutputRouteFeedbacks)
+				{
+					item.FireUpdate();
+				}
+
+				foreach (var item in InputHdcpEnableFeedback)
+				{
+					item.FireUpdate();
+				}
+
+				foreach (var item in InputNameFeedbacks)
+				{
+					item.FireUpdate();
+				}
+
+				foreach (var item in OutputNameFeedbacks)
+				{
+					item.FireUpdate();
+				}
+
+				foreach (var item in OutputRouteNameFeedbacks)
+				{
+					item.FireUpdate();
+				}
+
+				foreach (var item in Feedbacks)
+				{
+					// TODO - Remove after testing
+					Debug.LogInformation(this, $"UpdateFeedbacks: Firing feedback for {item.Key}");
+					item.FireUpdate();
+				}
 			}
-
-			foreach (var item in VideoOutputRouteFeedbacks)
+			catch (Exception ex)
 			{
-				item.FireUpdate();
-			}
-
-			foreach (var item in InputHdcpEnableFeedback)
-			{
-				item.FireUpdate();
-			}
-
-			foreach (var item in InputNameFeedbacks)
-			{
-				item.FireUpdate();
-			}
-
-			foreach (var item in OutputNameFeedbacks)
-			{
-				item.FireUpdate();
-			}
-
-			foreach (var item in OutputRouteNameFeedbacks)
-			{
-				item.FireUpdate();
-			}
-
-			foreach (var item in Feedbacks)
-			{
-				// TODO - Remove after testing
-				Debug.LogInformation(this, $"UpdateFeedbacks: Firing feedback for {item.Key}");
-				item.FireUpdate();
+				Debug.LogError(this, $"UpdateFeedbacks: Exception occurred while updating feedbacks: {ex.Message}");
 			}
 		}
-
+		*/
 		#endregion
 
 		#region Events
@@ -533,8 +632,15 @@ namespace PepperDash.Essentials.DM.Chassis
 			// TODO - Remove after testing
 			Debug.LogInformation(this, $"Chassis_OnlineStatusChange: DeviceOnline = {args.DeviceOnLine}");
 
-			IsOnline.FireUpdate();
-			
+			try
+			{
+				IsOnline.FireUpdate();
+			}
+			catch (Exception ex)
+			{
+				Debug.LogError(this, $"Chassis_OnlineStatusChange: Exception occurred while updating IsOnline feedback: {ex.Message}");
+			}
+
 			if (!args.DeviceOnLine) return;
 
 			// TODO - Remove after testing
@@ -542,14 +648,28 @@ namespace PepperDash.Essentials.DM.Chassis
 
 			foreach (var feedback in Feedbacks)
 			{
-				// TODO - Remove after testing
-				Debug.LogInformation(this, $"Chassis_OnlineStatusChange: Firing update for {feedback.Key}");
-				feedback.FireUpdate();
+				try
+				{
+					// TODO - Remove after testing
+					Debug.LogInformation(this, $"Chassis_OnlineStatusChange: Firing update for {feedback.Key}");
+					feedback.FireUpdate();
+				}
+				catch (Exception ex)
+				{
+					Debug.LogError(this, $"Chassis_OnlineStatusChange: Exception occurred while updating feedback {feedback.Key}: {ex.Message}");
+				}
 			}
 
 			if (_Chassis is HdMd4x14kzE)
 			{
-				AutoRouteFeedback.FireUpdate();
+				try
+				{
+					AutoRouteFeedback.FireUpdate();
+				}
+				catch (Exception ex)
+				{
+					Debug.LogError(this, $"Chassis_OnlineStatusChange: Exception occurred while updating AutoRouteFeedback: {ex.Message}");
+				}
 			}
 		}
 
@@ -557,8 +677,8 @@ namespace PepperDash.Essentials.DM.Chassis
 		{
 			// TODO - Remove after testing
 			var eventName = typeof(DMOutputEventIds)
-                .GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
-    			.FirstOrDefault(f => f.IsLiteral && (int)f.GetValue(null) == args.EventId)?.Name ?? args.EventId.ToString();
+				.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+				.FirstOrDefault(f => f.IsLiteral && (int)f.GetValue(null) == args.EventId)?.Name ?? args.EventId.ToString();
 			Debug.LogInformation(this, $"Chassis_DMOutputChange: received {eventName} (id-{args.EventId}); Index = {args.Index}; Number = {args.Number}; Stream = {args.Stream} ");
 
 			switch (args.EventId)
@@ -576,8 +696,15 @@ namespace PepperDash.Essentials.DM.Chassis
 							var inPort = InputPorts.FirstOrDefault(p => p.FeedbackMatchObject == _Chassis.HdmiOutputs[output].VideoOutFeedback);
 							var outPort = OutputPorts.FirstOrDefault(p => p.FeedbackMatchObject == _Chassis.HdmiOutputs[output]);
 
-							feedback.FireUpdate();
-							OnSwitchChange(new RoutingNumericEventArgs(output, inputNumber, outPort, inPort, eRoutingSignalType.AudioVideo));
+							try
+							{
+								feedback.FireUpdate();
+								OnSwitchChange(new RoutingNumericEventArgs(output, inputNumber, outPort, inPort, eRoutingSignalType.AudioVideo));
+							}
+							catch (Exception ex)
+							{
+								Debug.LogError(this, $"Chassis_DMOutputChange: Exception occurred while updating {eventName} (id-{args.EventId}) {feedback.Key}: {ex.Message}");
+							}
 						}
 						else
 						{
@@ -596,51 +723,75 @@ namespace PepperDash.Essentials.DM.Chassis
 		void Chassis_DMInputChange(Switch device, DMInputEventArgs args)
 		{
 			var eventName = typeof(DMInputEventIds)
-                .GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
-    			.FirstOrDefault(f => f.IsLiteral && (int)f.GetValue(null) == args.EventId)?.Name ?? args.EventId.ToString();	
+				.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+				.FirstOrDefault(f => f.IsLiteral && (int)f.GetValue(null) == args.EventId)?.Name ?? args.EventId.ToString();
 
-				switch (args.EventId)
-				{
-					case DMInputEventIds.VideoDetectedEventId:
+			switch (args.EventId)
+			{
+				case DMInputEventIds.VideoDetectedEventId:
+					{
+						Debug.LogDebug(this, $"Chassis_DMInputChange: received {eventName} (id-{args.EventId}) | Updating VideoInputSyncFeedbacks");
+						foreach (var item in VideoInputSyncFeedbacks)
 						{
-							Debug.LogDebug(this, $"Chassis_DMInputChange: received {eventName} (id-{args.EventId}) | Updating VideoInputSyncFeedbacks");
-							foreach (var item in VideoInputSyncFeedbacks)
+							try
 							{
 								item.FireUpdate();
 							}
-							break;
+							catch (Exception ex)
+							{
+								Debug.LogError(this, $"Chassis_DMInputChange: Exception occurred while updating {eventName} (id-{args.EventId}) {item.Key}: {ex.Message}");
+							}
 						}
-					case DMInputEventIds.InputNameFeedbackEventId:
-					case DMInputEventIds.InputNameEventId:
-					case DMInputEventIds.NameFeedbackEventId:
+						break;
+					}
+				case DMInputEventIds.InputNameFeedbackEventId:
+				case DMInputEventIds.InputNameEventId:
+				case DMInputEventIds.NameFeedbackEventId:
+					{
+						Debug.LogDebug(this, $"Chassis_DMInputChange: received {eventName} (id-{args.EventId}) | Input {args.Number} Name {_Chassis.HdmiInputs[args.Number].NameFeedback.StringValue}, updating InputNameFeedbacks");
+						foreach (var item in InputNameFeedbacks)
 						{
-							Debug.LogDebug(this, $"Chassis_DMInputChange: received {eventName} (id-{args.EventId}) | Input {args.Number} Name {_Chassis.HdmiInputs[args.Number].NameFeedback.StringValue}, updating InputNameFeedbacks");
-							foreach (var item in InputNameFeedbacks)
+							try
 							{
 								item.FireUpdate();
 							}
-							break;
+							catch (Exception ex)
+							{
+								Debug.LogError(this, $"Chassis_DMInputChange: Exception occurred while updating {eventName} (id-{args.EventId}) {item.Key}: {ex.Message}");
+							}
 						}
-					default:
-						{
-							Debug.LogDebug(this, $"Chassis_DMInputChange: Unhandled DM Input Event {eventName} (id-{args.EventId}), ignoring.");
-							break;
-						}
-				}
+						break;
+					}
+				default:
+					{
+						Debug.LogDebug(this, $"Chassis_DMInputChange: Unhandled DM Input Event {eventName} (id-{args.EventId}), ignoring.");
+						break;
+					}
 			}
+		}
 
 		#endregion
 
 		#region Factory
 
+		/// <summary>
+		/// Factory for creating HdMdNxM4kZEController devices
+		/// </summary>
 		public class HdMdNxM4kZEControllerFactory : EssentialsPluginDeviceFactory<HdMdNxM4kZEController>
 		{
+			/// <summary>
+			/// Constructor
+			/// </summary>
 			public HdMdNxM4kZEControllerFactory()
 			{
 				MinimumEssentialsFrameworkVersion = "2.24.4";
 				TypeNames = new List<string>() { "hdmd4x14kze", "hdmd4x24kze", "hdmd8x84kze" };
 			}
 
+			/// <summary>
+			/// Builds a HdMdNxM4kZEController device
+			/// </summary>
+			/// <param name="dc">The device config</param>
 			public override EssentialsDevice BuildDevice(DeviceConfig dc)
 			{
 				Debug.LogDebug("Factory Attempting to create new HD-MD-NxM-4KZ-E Device");
