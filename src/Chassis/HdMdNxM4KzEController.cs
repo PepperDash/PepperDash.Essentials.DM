@@ -513,7 +513,9 @@ namespace PepperDash.Essentials.DM.Chassis
 		{
 			// TODO - Remove after testing
 			var eventIdType = args.EventId.GetType();
-			var eventName = eventIdType.IsEnum ? Enum.GetName(eventIdType, args.EventId) : args.EventId.ToString();
+			//var eventName = eventIdType.IsEnum ? Enum.GetName(eventIdType, args.EventId) : args.EventId.ToString();
+			var eventName = nameof(args.EventId);
+			Debug.LogInformation(this, $"Chassis_DMOutputChange: Event Type = {eventIdType}, Event Name = {eventName}");
 			Debug.LogInformation(this, $"Chassis_DMOutputChange: received {eventName} (id-{args.EventId}); Index = {args.Index}; Number = {args.Number}; Stream = {args.Stream} ");
 
 			switch (args.EventId)
