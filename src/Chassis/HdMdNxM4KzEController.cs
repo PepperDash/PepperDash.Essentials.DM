@@ -10,6 +10,7 @@ using PepperDash.Essentials.Core;
 using PepperDash.Essentials.DM.Config;
 using PepperDash.Essentials.Core.Bridges;
 using PepperDash.Essentials.Core.Config;
+using Crestron.SimplSharpPro;
 
 
 namespace PepperDash.Essentials.DM.Chassis
@@ -35,6 +36,7 @@ namespace PepperDash.Essentials.DM.Chassis
 		public FeedbackCollection<BoolFeedback> InputHdcpEnableFeedback { get; private set; }
 		public StringFeedback DeviceNameFeedback { get; private set; }
 		public BoolFeedback AutoRouteFeedback { get; private set; }
+		public BoolFeedback PriorityRouteFeedback { get; private set; }
 		public string NoRouteText { get; private set; }
 
 		#region Constructor
@@ -66,7 +68,6 @@ namespace PepperDash.Essentials.DM.Chassis
 
 			NoRouteText = props.NoRouteText ?? "None";
 
-
 			if (props.Inputs != null)
 			{
 				InputNames = props.Inputs;
@@ -84,7 +85,7 @@ namespace PepperDash.Essentials.DM.Chassis
 				}
 			}
 
-			try 
+			try
 			{
 				DeviceNameFeedback = new StringFeedback("DeviceName", () => Name);
 
@@ -98,22 +99,27 @@ namespace PepperDash.Essentials.DM.Chassis
 				InputPorts = new RoutingPortCollection<RoutingInputPort>();
 				OutputPorts = new RoutingPortCollection<RoutingOutputPort>();
 
-				if (_Chassis is HdMd4x14kzE _chassis)
+				if (_Chassis is HdMdNxM4kzE _chassis_M4kzE)
 				{
-					AutoRouteFeedback = new BoolFeedback("AutoRouteFeedback", () => _chassis.AutoRouteOnFeedback?.BoolValue ?? false);
+					AutoRouteFeedback = new BoolFeedback("AutoRouteFeedback", () => _chassis_M4kzE.AutoRouteOnFeedback?.BoolValue ?? false);
+				}
+				if(_Chassis is HdMd4xX4kzE _chassis_X4kzE)
+				{
+					PriorityRouteFeedback = new BoolFeedback("PriorityRouteFeedback", () => _chassis_X4kzE.PriorityRouteOnFeedback?.BoolValue ?? false);
 				}
 			}
-			catch(Exception ex)
+			catch (Exception ex)
 			{
 				Debug.LogError(this, "Constructor Exception: {ex}", ex);
 			}
-			
+
 
 			SetupInputs();
 			SetupOutputs();
 
 			_Chassis.DMInputChange += Chassis_DMInputChange;
 			_Chassis.DMOutputChange += Chassis_DMOutputChange;
+			_Chassis.BaseEvent += Chassis_BaseEvent;
 
 			AddPostActivationAction(AddFeedbackCollections);
 		}
@@ -125,7 +131,7 @@ namespace PepperDash.Essentials.DM.Chassis
 				Debug.LogError(this, "SetupInputs: InputNames is null. Ensure 'inputs' is defined in the device configuration.");
 				return;
 			}
-			try 
+			try
 			{
 				foreach (var kvp in InputNames)
 				{
@@ -172,10 +178,10 @@ namespace PepperDash.Essentials.DM.Chassis
 					InputHdcpEnableFeedback.Add(new BoolFeedback(string.Format($"{inputFbKeyPrefix}HdcpEnableFeedback"), () => hdmiInput?.HdmiInputPort?.HdcpSupportOnFeedback?.BoolValue ?? false));
 				}
 			}
-			catch(Exception ex)
+			catch (Exception ex)
 			{
 				Debug.LogError(this, "SetupInputs: Exception {ex}", ex);
-			}			
+			}
 		}
 
 		private void SetupOutputs()
@@ -225,10 +231,10 @@ namespace PepperDash.Essentials.DM.Chassis
 					OutputRouteNameFeedbacks.Add(new StringFeedback(string.Format($"{outputFbKeyPrefix}OutputRouteNameFeedback"), () => chassisOutput.VideoOutFeedback == null ? NoRouteText : chassisOutput.VideoOutFeedback.NameFeedback.StringValue));
 				}
 			}
-			catch(Exception ex)
+			catch (Exception ex)
 			{
 				Debug.LogError("SetupOutputs: Exception {ex}", ex);
-			}			
+			}
 		}
 
 		#endregion
@@ -319,14 +325,14 @@ namespace PepperDash.Essentials.DM.Chassis
 		}
 
 		/// <summary>
-		/// Enables AutoRoute on the chassis if supported.	
+		/// Enables AutoRoute on the chassis if supported.	Auto route is supported by HdMdNxM4kzE
 		/// </summary>
 		public void EnableAutoRoute()
 		{
 			if (_Chassis.NumberOfOutputs > 1) return;
-			if (_Chassis is HdMd4x14kzE _chassis)
+			if (_Chassis is HdMdNxM4kzE _chassis_M4kzE)
 			{
-				_chassis.AutoRouteOn();
+				_chassis_M4kzE.AutoRouteOn();
 				return;
 			}
 
@@ -334,18 +340,46 @@ namespace PepperDash.Essentials.DM.Chassis
 		}
 
 		/// <summary>
-		/// Disables AutoRoute on the chassis if supported.
+		/// Disables AutoRoute on the chassis if supported.  Auto route is supported by HdMdNxM4kzE
 		/// </summary>
 		public void DisableAutoRoute()
 		{
 			if (_Chassis.NumberOfOutputs > 1) return;
-			if (_Chassis is HdMd4x14kzE _chassis)
+			if (_Chassis is HdMdNxM4kzE _chassis_M4kzE)
 			{
-				_chassis.AutoRouteOff();
+				_chassis_M4kzE.AutoRouteOff();
 				return;
 			}
 
 			Debug.LogVerbose(this, "DisableAutoRoute: AutoRoute is not supported on this chassis.");
+		}
+
+		/// <summary>
+		/// Enables Priority Route on the chassis if supported. Priority route is support by HdMd4xX4kzE
+		/// </summary>
+		public void EnablePriorityRoute()
+		{
+			if (_Chassis is HdMd4xX4kzE _chassis_X4kzE)
+			{
+				_chassis_X4kzE.PriorityRouteOn();
+				return;
+			}
+
+			Debug.LogVerbose(this, "EnablePriorityRoute: Priority Route is not supported on this chassis.");
+		}
+
+		/// <summary>
+		/// Disables Priority Route on the chassis if supported. Priority route is support by HdMd4xX4kzE
+		/// </summary>
+		public void DisablePriorityRoute()
+		{
+			if (_Chassis is HdMd4xX4kzE _chassis_X4kzE)
+			{
+				_chassis_X4kzE.PriorityRouteOff();
+				return;
+			}
+
+			Debug.LogVerbose(this, "DisablePriorityRoute: Priority Route is not supported on this chassis.");
 		}
 
 
@@ -357,7 +391,9 @@ namespace PepperDash.Essentials.DM.Chassis
 		/// </summary>
 		public void AddFeedbackCollections()
 		{
-			AddFeedbackToList(IsOnline);
+			if(IsOnline != null)
+				AddFeedbackToList(IsOnline);
+			
 			AddFeedbackToList(DeviceNameFeedback);
 
 			if (AutoRouteFeedback != null)
@@ -494,16 +530,26 @@ namespace PepperDash.Essentials.DM.Chassis
 				Debug.LogInformation(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
 			}
 
-			IsOnline?.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
+			if( IsOnline != null) IsOnline?.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
+			
 			DeviceNameFeedback?.LinkInputSig(trilist.StringInput[joinMap.Name.JoinNumber]);
 
-			if (_Chassis is HdMd4x14kzE _chassis)
+			if (_Chassis is HdMdNxM4kzE _chassis_M4kzE)
 			{
-				Debug.LogInformation(this, $"LinkToApi: _Chassis is HdMd4x14kzE, setting up AutoRoute links > joinNumber = {joinMap.EnableAutoRoute.JoinNumber}");
+				Debug.LogInformation(this, $"LinkToApi: _Chassis is HdMdNxM4kzE, setting up AutoRoute links");
 
-				trilist.SetSigTrueAction(joinMap.EnableAutoRoute.JoinNumber, () => _chassis.AutoRouteOn());
-				trilist.SetSigFalseAction(joinMap.EnableAutoRoute.JoinNumber, () => _chassis.AutoRouteOff());
+				trilist.SetSigTrueAction(joinMap.EnableAutoRoute.JoinNumber, () => _chassis_M4kzE.AutoRouteOn());
+				trilist.SetSigFalseAction(joinMap.EnableAutoRoute.JoinNumber, () => _chassis_M4kzE.AutoRouteOff());
 				AutoRouteFeedback?.LinkInputSig(trilist.BooleanInput[joinMap.EnableAutoRoute.JoinNumber]);
+			}
+
+			if(_Chassis is HdMd4xX4kzE _chassis_X4kzE)
+			{
+				Debug.LogInformation(this, $"LinkToApi: _Chassis is HdMd4xX4kzE, setting up PriorityRoute links - not implemented");
+
+				// trilist.SetSigTrueAction(joinMap.EnablePriorityRoute.JoinNumber, () => _chassis_X4kzE.PriorityRouteOn());
+				// trilist.SetSigFalseAction(joinMap.EnablePriorityRoute.JoinNumber, () => _chassis_X4kzE.PriorityRouteOff());
+				// PriorityRouteFeedback?.LinkInputSig(trilist.BooleanInput[joinMap.EnablePriorityRoute.JoinNumber]);
 			}
 
 			if (InputNames != null)
@@ -648,6 +694,15 @@ namespace PepperDash.Essentials.DM.Chassis
 
 		#region Events
 
+		private void Chassis_BaseEvent(GenericBase device, BaseEventArgs args)
+		{
+			var eventName = typeof(BaseEventArgs)
+				.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+				.FirstOrDefault(f => f.IsLiteral && (int)f.GetValue(null) == args.EventId)?.Name ?? args.EventId.ToString();
+			Debug.LogInformation(this, $"Chassis_BaseEvent: received {eventName} (id-{args.EventId}) received from device {device.GetType().Name}");
+		}
+
+
 		void Chassis_OnlineStatusChange(Crestron.SimplSharpPro.GenericBase currentDevice, Crestron.SimplSharpPro.OnlineOfflineEventArgs args)
 		{
 			// TODO - Remove after testing
@@ -681,7 +736,7 @@ namespace PepperDash.Essentials.DM.Chassis
 				}
 			}
 
-			if (_Chassis is HdMd4x14kzE)
+			if (_Chassis is HdMd4xX4kzE)
 			{
 				try
 				{
@@ -690,6 +745,18 @@ namespace PepperDash.Essentials.DM.Chassis
 				catch (Exception ex)
 				{
 					Debug.LogError(this, $"Chassis_OnlineStatusChange: Exception occurred while updating AutoRouteFeedback: {ex.Message}");
+				}
+			}
+
+			if(_Chassis is HdMd4xX4kzE)
+			{
+				try
+				{
+					PriorityRouteFeedback.FireUpdate();
+				}
+				catch (Exception ex)
+				{
+					Debug.LogError(this, $"Chassis_OnlineStatusChange: Exception occurred while updating PriorityRouteFeedback: {ex.Message}");
 				}
 			}
 		}
@@ -733,6 +800,50 @@ namespace PepperDash.Essentials.DM.Chassis
 						}
 						break;
 					}
+				case DMOutputEventIds.AutoModeOffEventId:
+				case DMOutputEventIds.AutoModeOnEventId:
+					{
+						Debug.LogDebug(this, $"Chassis_DMOutputChange: received {eventName} (id-{args.EventId}) | Updating AutoRouteFeedback");
+						try
+						{
+							AutoRouteFeedback?.FireUpdate();
+						}
+						catch (Exception ex)
+						{
+							Debug.LogError(this, $"Chassis_DMOutputChange: Exception occurred while updating {eventName} (id-{args.EventId}) AutoRouteFeedback: {ex.Message}");
+						}
+						break;
+					}
+				case DMOutputEventIds.InputPrioritiesFeedbackEventId:
+					{
+						Debug.LogDebug(this, $"Chassis_DMOutputChange: received {eventName} (id-{args.EventId}) | Updating PriorityRouteFeedback");
+						try
+						{
+							PriorityRouteFeedback?.FireUpdate();
+						}
+						catch (Exception ex)
+						{
+							Debug.LogError(this, $"Chassis_DMOutputChange: Exception occurred while updating {eventName} (id-{args.EventId}) PriorityRouteFeedback: {ex.Message}");
+						}
+						break;
+					}
+				case DMOutputEventIds.OutputNameEventId:
+				case DMOutputEventIds.NameFeedbackEventId:
+					{
+						Debug.LogDebug(this, $"Chassis_DMOutputChange: received {eventName} (id-{args.EventId}) | Output {args.Number} Name {_Chassis.HdmiOutputs[args.Number].NameFeedback.StringValue}, updating OutputNameFeedbacks and OutputRouteNameFeedbacks");
+						foreach (var item in OutputNameFeedbacks)
+						{
+							try
+							{
+								item.FireUpdate();
+							}
+							catch (Exception ex)
+							{
+								Debug.LogError(this, $"Chassis_DMOutputChange: Exception occurred while updating {eventName} (id-{args.EventId}) {item.Key}: {ex.Message}");
+							}
+						}
+						break;
+					}
 				default:
 					{
 						Debug.LogDebug(this, $"Chassis_DMOutputChange: Unhandled DM Output Event {eventName} (id-{args.EventId}), ignoring.");
@@ -749,6 +860,7 @@ namespace PepperDash.Essentials.DM.Chassis
 
 			switch (args.EventId)
 			{
+				case DMInputEventIds.SourceSyncEventId:
 				case DMInputEventIds.VideoDetectedEventId:
 					{
 						Debug.LogDebug(this, $"Chassis_DMInputChange: received {eventName} (id-{args.EventId}) | Updating VideoInputSyncFeedbacks");
@@ -780,6 +892,19 @@ namespace PepperDash.Essentials.DM.Chassis
 							{
 								Debug.LogError(this, $"Chassis_DMInputChange: Exception occurred while updating {eventName} (id-{args.EventId}) {item.Key}: {ex.Message}");
 							}
+						}
+						break;
+					}
+				case DMInputEventIds.PriorityEventId:
+					{
+						Debug.LogDebug(this, $"Chassis_DMInputChange: received {eventName} (id-{args.EventId}) | Updating PriorityRouteFeedback");
+						try
+						{
+							PriorityRouteFeedback?.FireUpdate();
+						}
+						catch (Exception ex)
+						{
+							Debug.LogError(this, $"Chassis_DMInputChange: Exception occurred while updating {eventName} (id-{args.EventId}) PriorityRouteFeedback: {ex.Message}");
 						}
 						break;
 					}
