@@ -314,13 +314,13 @@ namespace PepperDash.Essentials.DM.Chassis
 
 		public void ExecuteSwitch(object inputSelector, object outputSelector, eRoutingSignalType signalType)
 		{
-			var input = inputSelector as HdMdNxMHdmiInput;
-			var output = outputSelector as HdMdNxMHdmiOutput;
+			var input = inputSelector as HdMdNxM4kzEHdmiInput;
+			var output = outputSelector as HdMdNxM4kzEHdmiOutput;
 			Debug.LogVerbose(this, "ExecuteSwitch: input={0} output={1}", input, output);
 
 			if (output == null)
 			{
-				Debug.LogInformation(this, "Unable to make switch. output selector is not HdMdNxMHdmiOutput");
+				Debug.LogInformation(this, "Unable to make switch. output selector is not HdMdNxM4kzEHdmiOutput");
 				return;
 			}
 
