@@ -381,8 +381,8 @@ namespace PepperDash.Essentials.DM.Chassis
 				Debug.LogInformation(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
 			}
 
-			IsOnline.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
-			DeviceNameFeedback.LinkInputSig(trilist.StringInput[joinMap.Name.JoinNumber]);
+			IsOnline?.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
+			DeviceNameFeedback?.LinkInputSig(trilist.StringInput[joinMap.Name.JoinNumber]);
 
 			if (_Chassis is HdMd4x14kzE _chassis)
 			{
@@ -393,46 +393,79 @@ namespace PepperDash.Essentials.DM.Chassis
 				AutoRouteFeedback?.LinkInputSig(trilist.BooleanInput[joinMap.EnableAutoRoute.JoinNumber]);
 			}
 
-			for (uint i = 1; i <= _Chassis.NumberOfInputs; i++)
+			if (InputNames != null)
 			{
-				var joinIndex = i - 1;
-				var input = i;
+				foreach (var kvp in InputNames)
+				{
+					var input = kvp.Key;
+					var inputName = kvp.Value;
 
-				var joinNumberInputSync = joinMap.InputSync.JoinNumber + joinIndex;
-				var joinNumberEnableInputHdcp = joinMap.EnableInputHdcp.JoinNumber + joinIndex;
-				var joinNumberDisableInputHdcp = joinMap.DisableInputHdcp.JoinNumber + joinIndex;
-				var joinNumberInputName = joinMap.InputName.JoinNumber + joinIndex;
+					if (input < 1 || input > _Chassis.NumberOfInputs)
+					{
+						Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "LinkToApi: Input index {index} is out of range (1-{max}). Skipping.", this, input, _Chassis.NumberOfInputs);
+						continue;
+					}
 
-				Debug.LogInformation(this, $"LinkToApi: _Chassis.NumberOfInputs > {input} | joinIndex = {joinIndex}, InputSyncJoin = {joinNumberInputSync}, EnableHdcpJoin = {joinNumberEnableInputHdcp}, DisableHdcpJoin = {joinNumberDisableInputHdcp}, InputNameJoin = {joinNumberInputName}");
+					var joinIndex = input - 1;
 
-				//Digital
-				VideoInputSyncFeedbacks[InputNames[input]].LinkInputSig(trilist.BooleanInput[joinNumberInputSync]);
-				InputHdcpEnableFeedback[InputNames[input]].LinkInputSig(trilist.BooleanInput[joinNumberEnableInputHdcp]);
-				InputHdcpEnableFeedback[InputNames[input]].LinkComplementInputSig(trilist.BooleanInput[joinNumberDisableInputHdcp]);
-				trilist.SetSigTrueAction(joinNumberEnableInputHdcp, () => EnableHdcp(input));
-				trilist.SetSigTrueAction(joinNumberDisableInputHdcp, () => DisableHdcp(input));
+					var joinNumberInputSync = joinMap.InputSync.JoinNumber + joinIndex;
+					var joinNumberEnableInputHdcp = joinMap.EnableInputHdcp.JoinNumber + joinIndex;
+					var joinNumberDisableInputHdcp = joinMap.DisableInputHdcp.JoinNumber + joinIndex;
+					var joinNumberInputName = joinMap.InputName.JoinNumber + joinIndex;
 
-				//Serial                
-				InputNameFeedbacks[InputNames[input]].LinkInputSig(trilist.StringInput[joinNumberInputName]);
+					Debug.LogInformation(this, $"LinkToApi: Input {input} | joinIndex = {joinIndex}, InputSyncJoin = {joinNumberInputSync}, EnableHdcpJoin = {joinNumberEnableInputHdcp}, DisableHdcpJoin = {joinNumberDisableInputHdcp}, InputNameJoin = {joinNumberInputName}");
+
+					//Digital
+					VideoInputSyncFeedbacks[inputName]?.LinkInputSig(trilist.BooleanInput[joinNumberInputSync]);
+					InputHdcpEnableFeedback[inputName]?.LinkInputSig(trilist.BooleanInput[joinNumberEnableInputHdcp]);
+					InputHdcpEnableFeedback[inputName]?.LinkComplementInputSig(trilist.BooleanInput[joinNumberDisableInputHdcp]);
+
+					trilist.SetSigTrueAction(joinNumberEnableInputHdcp, () => EnableHdcp(input));
+					trilist.SetSigTrueAction(joinNumberDisableInputHdcp, () => DisableHdcp(input));
+
+					//Serial                
+					InputNameFeedbacks[inputName]?.LinkInputSig(trilist.StringInput[joinNumberInputName]);
+				}
+			}
+			else
+			{
+				Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "LinkToApi: InputNames is null. Skipping input linking.", this);
 			}
 
-			for (uint i = 1; i <= _Chassis.NumberOfOutputs; i++)
+			if (OutputNames != null)
 			{
-				var joinIndex = i - 1;
-				var output = i;
+				foreach (var kvp in OutputNames)
+				{
+					var output = kvp.Key;
+					var outputName = kvp.Value;
 
-				var joinNumberOutputRoute = joinMap.OutputRoute.JoinNumber + joinIndex;
-				var joinNumberOutputName = joinMap.OutputName.JoinNumber + joinIndex;
-				var joinNumberOutputRouteName = joinMap.OutputRoutedName.JoinNumber + joinIndex;
+					if (output < 1 || output > _Chassis.NumberOfOutputs)
+					{
+						Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "LinkToApi: Output index {index} is out of range (1-{max}). Skipping.", this, output, _Chassis.NumberOfOutputs);
+						continue;
+					}
 
-				Debug.LogInformation(this, $"LinkToApi: _Chassis.NumberOfOutputs > {output} | joinIndex = {joinIndex}, OutputRouteJoin = {joinNumberOutputRoute}, OutputNameJoin = {joinNumberOutputName}, OutputRouteNameJoin = {joinNumberOutputRouteName}");
+					var joinIndex = output - 1;
 
-				//Analog
-				VideoOutputRouteFeedbacks[OutputNames[output]].LinkInputSig(trilist.UShortInput[joinNumberOutputRoute]);
-				trilist.SetUShortSigAction(joinNumberOutputRoute, (a) => ExecuteNumericSwitch(a, (ushort)output, eRoutingSignalType.AudioVideo));
-				//Serial
-				OutputNameFeedbacks[OutputNames[output]].LinkInputSig(trilist.StringInput[joinNumberOutputName]);
-				OutputRouteNameFeedbacks[OutputNames[output]].LinkInputSig(trilist.StringInput[joinNumberOutputRouteName]);
+					var joinNumberOutputRoute = joinMap.OutputRoute.JoinNumber + joinIndex;
+					var joinNumberOutputName = joinMap.OutputName.JoinNumber + joinIndex;
+					var joinNumberOutputRouteName = joinMap.OutputRoutedName.JoinNumber + joinIndex;
+
+					Debug.LogInformation(this, $"LinkToApi: Output {output} | joinIndex = {joinIndex}, OutputRouteJoin = {joinNumberOutputRoute}, OutputNameJoin = {joinNumberOutputName}, OutputRouteNameJoin = {joinNumberOutputRouteName}");
+
+					//Analog
+					VideoOutputRouteFeedbacks[outputName]?.LinkInputSig(trilist.UShortInput[joinNumberOutputRoute]);
+
+					trilist.SetUShortSigAction(joinNumberOutputRoute, (a) => ExecuteNumericSwitch(a, (ushort)output, eRoutingSignalType.AudioVideo));
+					
+					//Serial
+					OutputNameFeedbacks[outputName]?.LinkInputSig(trilist.StringInput[joinNumberOutputName]);
+					OutputRouteNameFeedbacks[outputName]?.LinkInputSig(trilist.StringInput[joinNumberOutputRouteName]);
+				}
+			}
+			else
+			{
+				Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "LinkToApi: OutputNames is null. Skipping output linking.", this);
 			}
 
 			_Chassis.OnlineStatusChange += Chassis_OnlineStatusChange;
