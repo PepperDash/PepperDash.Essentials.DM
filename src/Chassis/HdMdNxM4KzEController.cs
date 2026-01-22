@@ -36,6 +36,7 @@ namespace PepperDash.Essentials.DM.Chassis
 		public FeedbackCollection<StringFeedback> OutputNameFeedbacks { get; private set; }
 		public FeedbackCollection<StringFeedback> OutputRouteNameFeedbacks { get; private set; }
 		public FeedbackCollection<BoolFeedback> InputHdcpEnableFeedback { get; private set; }
+		public BoolFeedback IsOnlineFeedback { get; private set;}
 		public StringFeedback DeviceNameFeedback { get; private set; }
 		public BoolFeedback AutoRouteFeedback { get; private set; }
 		public string NoRouteText { get; private set; }
@@ -80,6 +81,7 @@ namespace PepperDash.Essentials.DM.Chassis
 				OutputNames = props.Outputs;
 			}
 
+			IsOnlineFeedback = new BoolFeedback("IsOnline", () => _Chassis.IsOnline);
 			DeviceNameFeedback = new StringFeedback("DeviceName", () => Name);
 
 			VideoInputSyncFeedbacks = new FeedbackCollection<BoolFeedback>();
@@ -255,6 +257,7 @@ namespace PepperDash.Essentials.DM.Chassis
 
 		public void AddFeedbackCollections()
 		{
+			AddFeedbackToList(IsOnlineFeedback);
 			AddFeedbackToList(DeviceNameFeedback);
 
 			if (AutoRouteFeedback != null)
@@ -370,7 +373,7 @@ namespace PepperDash.Essentials.DM.Chassis
 				Debug.LogInformation(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
 			}
 
-			IsOnline.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
+			IsOnlineFeedback.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
 			DeviceNameFeedback.LinkInputSig(trilist.StringInput[joinMap.Name.JoinNumber]);
 
 			if (_Chassis is HdMd4x14kzE _chassis)
@@ -438,7 +441,7 @@ namespace PepperDash.Essentials.DM.Chassis
 
 		private void UpdateFeedbacks()
 		{
-			IsOnline?.FireUpdate();
+			IsOnlineFeedback?.FireUpdate();
 			DeviceNameFeedback?.FireUpdate();
 			AutoRouteFeedback?.FireUpdate();
 
@@ -489,7 +492,7 @@ namespace PepperDash.Essentials.DM.Chassis
 			// TODO - Remove after testing
 			Debug.LogInformation(this, $"Chassis_OnlineStatusChange: DeviceOnline = {args.DeviceOnLine}");
 
-			IsOnline.FireUpdate();
+			IsOnlineFeedback.FireUpdate();
 
 			if (!args.DeviceOnLine) return;
 
