@@ -11,6 +11,7 @@ using PepperDash.Essentials.DM.Config;
 using PepperDash.Essentials.Core.Bridges;
 using PepperDash.Essentials.Core.Config;
 using Crestron.SimplSharpPro;
+using PepperDash.Core.Logging;
 
 
 namespace PepperDash.Essentials.DM.Chassis
@@ -85,34 +86,38 @@ namespace PepperDash.Essentials.DM.Chassis
 				}
 			}
 
-			try
+			DeviceNameFeedback = new StringFeedback("DeviceName", () =>
 			{
-				DeviceNameFeedback = new StringFeedback("DeviceName", () => Name);
+				try { return Name; }
+				catch { this.LogError("Error getting DeviceNameFeedback"); return ""; }
+			});
 
-				VideoInputSyncFeedbacks = new FeedbackCollection<BoolFeedback>();
-				VideoOutputRouteFeedbacks = new FeedbackCollection<IntFeedback>();
-				InputNameFeedbacks = new FeedbackCollection<StringFeedback>();
-				OutputNameFeedbacks = new FeedbackCollection<StringFeedback>();
-				OutputRouteNameFeedbacks = new FeedbackCollection<StringFeedback>();
-				InputHdcpEnableFeedback = new FeedbackCollection<BoolFeedback>();
+			VideoInputSyncFeedbacks = new FeedbackCollection<BoolFeedback>();
+			VideoOutputRouteFeedbacks = new FeedbackCollection<IntFeedback>();
+			InputNameFeedbacks = new FeedbackCollection<StringFeedback>();
+			OutputNameFeedbacks = new FeedbackCollection<StringFeedback>();
+			OutputRouteNameFeedbacks = new FeedbackCollection<StringFeedback>();
+			InputHdcpEnableFeedback = new FeedbackCollection<BoolFeedback>();
 
-				InputPorts = new RoutingPortCollection<RoutingInputPort>();
-				OutputPorts = new RoutingPortCollection<RoutingOutputPort>();
+			InputPorts = new RoutingPortCollection<RoutingInputPort>();
+			OutputPorts = new RoutingPortCollection<RoutingOutputPort>();
 
-				if (_Chassis is HdMdNxM4kzE _chassis_M4kzE)
-				{
-					AutoRouteFeedback = new BoolFeedback("AutoRouteFeedback", () => _chassis_M4kzE.AutoRouteOnFeedback?.BoolValue ?? false);
-				}
-				if(_Chassis is HdMd4xX4kzE _chassis_X4kzE)
-				{
-					PriorityRouteFeedback = new BoolFeedback("PriorityRouteFeedback", () => _chassis_X4kzE.PriorityRouteOnFeedback?.BoolValue ?? false);
-				}
-			}
-			catch (Exception ex)
+			if (_Chassis is HdMdNxM4kzE _chassis_M4kzE)
 			{
-				Debug.LogError(this, "Constructor Exception: {ex}", ex);
+				AutoRouteFeedback = new BoolFeedback("AutoRouteFeedback", () =>
+				{
+					try { return _chassis_M4kzE.AutoRouteOnFeedback?.BoolValue ?? false; }
+					catch { this.LogError("Error getting AutoRouteFeedback"); return false; }
+				});
 			}
-
+			if (_Chassis is HdMd4xX4kzE _chassis_X4kzE)
+			{
+				PriorityRouteFeedback = new BoolFeedback("PriorityRouteFeedback", () =>
+				{
+					try { return _chassis_X4kzE.PriorityRouteOnFeedback?.BoolValue ?? false; }
+					catch { this.LogError("Error getting PriorityRouteFeedback"); return false; }
+				});
+			}
 
 			SetupInputs();
 			SetupOutputs();
@@ -128,59 +133,65 @@ namespace PepperDash.Essentials.DM.Chassis
 		{
 			if (InputNames == null)
 			{
-				Debug.LogError(this, "SetupInputs: InputNames is null. Ensure 'inputs' is defined in the device configuration.");
+				this.LogError("SetupInputs: InputNames is null. Ensure 'inputs' is defined in the device configuration.");
 				return;
 			}
-			try
+
+			foreach (var kvp in InputNames)
 			{
-				foreach (var kvp in InputNames)
+				var index = kvp.Key;
+				var inputName = kvp.Value;
+				var inputFbKeyPrefix = inputName.Replace(" ", "").Trim();
+
+				if (index < 1 || index > _Chassis.NumberOfInputs)
 				{
-					var index = kvp.Key;
-					var inputName = kvp.Value;
-					var inputFbKeyPrefix = inputName.Replace(" ", "").Trim();
-
-					if (index < 1 || index > _Chassis.NumberOfInputs)
-					{
-						Debug.LogWarning(this, "SetupInputs: Input index {index} is out of range (1-{max}). Skipping.", index, _Chassis.NumberOfInputs);
-						continue;
-					}
-
-					var hdmiInput = _Chassis.HdmiInputs[index];
-					if (hdmiInput == null)
-					{
-						Debug.LogError(this, "SetupInputs: HdmiInput at index {index} is null. Skipping.", index);
-						continue;
-					}
-
-					var chassisInput = _Chassis.Inputs[index];
-					if (chassisInput == null)
-					{
-						Debug.LogError(this, "SetupInputs: Chassis Input at index {index} is null. Skipping.", index);
-						continue;
-					}
-
-					hdmiInput.Name.StringValue = inputName;
-
-					InputPorts.Add(new RoutingInputPort(inputName, eRoutingSignalType.AudioVideo,
-						eRoutingPortConnectionType.Hdmi, hdmiInput, this)
-					{
-						FeedbackMatchObject = hdmiInput
-					});
-
-					VideoInputSyncFeedbacks.Add(new BoolFeedback(string.Format($"{inputFbKeyPrefix}VideoInputSyncFeedback"), () => chassisInput?.VideoDetectedFeedback?.BoolValue ?? false));
-					InputNameFeedbacks.Add(new StringFeedback(string.Format($"{inputFbKeyPrefix}InputNameFeedback"), () => InputNames[index]));
-
-					if (hdmiInput.HdmiInputPort == null)
-					{
-						Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "HdmiInputPort at index {index} is null. HDCP feedback will default to false.", this, index);
-					}
-
-					InputHdcpEnableFeedback.Add(new BoolFeedback(string.Format($"{inputFbKeyPrefix}HdcpEnableFeedback"), () => hdmiInput?.HdmiInputPort?.HdcpSupportOnFeedback?.BoolValue ?? false));
+					this.LogWarning("SetupInputs: Input index {index} is out of range (1-{max}). Skipping.", index, _Chassis.NumberOfInputs);
+					continue;
 				}
-			}
-			catch (Exception ex)
-			{
-				Debug.LogError(this, "SetupInputs: Exception {ex}", ex);
+
+				var hdmiInput = _Chassis.HdmiInputs[index];
+				if (hdmiInput == null)
+				{
+					this.LogError("SetupInputs: HdmiInput at index {index} is null. Skipping.", index);
+					continue;
+				}
+
+				var chassisInput = _Chassis.Inputs[index];
+				if (chassisInput == null)
+				{
+					this.LogError("SetupInputs: Chassis Input at index {index} is null. Skipping.", index);
+					continue;
+				}
+
+				hdmiInput.Name.StringValue = inputName;
+
+				InputPorts.Add(new RoutingInputPort(inputName, eRoutingSignalType.AudioVideo,
+					eRoutingPortConnectionType.Hdmi, hdmiInput, this)
+				{
+					FeedbackMatchObject = hdmiInput
+				});
+
+				VideoInputSyncFeedbacks.Add(new BoolFeedback(string.Format($"{inputFbKeyPrefix}VideoInputSyncFeedback"), () =>
+				{
+					try { return chassisInput?.VideoDetectedFeedback?.BoolValue ?? false; }
+					catch { this.LogError($"Error getting VideoInputSyncFeedback for input {inputName}"); return false; }
+				}));
+				InputNameFeedbacks.Add(new StringFeedback(string.Format($"{inputFbKeyPrefix}InputNameFeedback"), () =>
+				{
+					try { return InputNames[index]; }
+					catch { this.LogError($"Error getting InputNameFeedback for input {inputName}"); return ""; }
+				}));
+
+				if (hdmiInput.HdmiInputPort == null)
+				{
+					this.LogWarning("HdmiInputPort at index {index} is null. HDCP feedback will default to false.", index);
+				}
+
+				InputHdcpEnableFeedback.Add(new BoolFeedback(string.Format($"{inputFbKeyPrefix}HdcpEnableFeedback"), () =>
+				{
+					try { return hdmiInput?.HdmiInputPort?.HdcpSupportOnFeedback?.BoolValue ?? false; }
+					catch { this.LogError($"Error getting HdcpEnableFeedback for input {inputName}"); return false; }
+				}));
 			}
 		}
 
@@ -188,52 +199,57 @@ namespace PepperDash.Essentials.DM.Chassis
 		{
 			if (OutputNames == null)
 			{
-				Debug.LogWarning(this, "SetupOutputs: OutputNames is null. Ensure 'outputs' is defined in the device configuration.");
+				this.LogWarning("SetupOutputs: OutputNames is null. Ensure 'outputs' is defined in the device configuration.");
 				return;
 			}
 
-			try
+			foreach (var kvp in OutputNames)
 			{
-				foreach (var kvp in OutputNames)
+				var index = kvp.Key;
+				var outputName = kvp.Value;
+				var outputFbKeyPrefix = outputName.Replace(" ", "").Trim();
+
+				if (index < 1 || index > _Chassis.NumberOfOutputs)
 				{
-					var index = kvp.Key;
-					var outputName = kvp.Value;
-					var outputFbKeyPrefix = outputName.Replace(" ", "").Trim();
-
-					if (index < 1 || index > _Chassis.NumberOfOutputs)
-					{
-						Debug.LogWarning(this, "SetupOutputs: Output index {index} is out of range (1-{max}). Skipping.", index, _Chassis.NumberOfOutputs);
-						continue;
-					}
-
-					var hdmiOutput = _Chassis.HdmiOutputs[index];
-					if (hdmiOutput == null)
-					{
-						Debug.LogWarning(this, "SetupOutputs: HdmiOutput at index {index} is null. Skipping.", index);
-						continue;
-					}
-
-					var chassisOutput = _Chassis.Outputs[index];
-					if (chassisOutput == null)
-					{
-						Debug.LogError(this, "SetupOutputs: Chassis Output at index {index} is null. Skipping.", index);
-						continue;
-					}
-
-					OutputPorts.Add(new RoutingOutputPort(outputName, eRoutingSignalType.AudioVideo,
-						eRoutingPortConnectionType.Hdmi, hdmiOutput, this)
-					{
-						FeedbackMatchObject = hdmiOutput
-					});
-
-					VideoOutputRouteFeedbacks.Add(new IntFeedback(string.Format($"{outputFbKeyPrefix}VideoOutputRouteFeedback"), () => chassisOutput.VideoOutFeedback == null ? 0 : (int)chassisOutput.VideoOutFeedback.Number));
-					OutputNameFeedbacks.Add(new StringFeedback(string.Format($"{outputFbKeyPrefix}OutputNameFeedback"), () => OutputNames[index]));
-					OutputRouteNameFeedbacks.Add(new StringFeedback(string.Format($"{outputFbKeyPrefix}OutputRouteNameFeedback"), () => chassisOutput.VideoOutFeedback == null ? NoRouteText : chassisOutput.VideoOutFeedback.NameFeedback.StringValue));
+					this.LogWarning("SetupOutputs: Output index {index} is out of range (1-{max}). Skipping.", index, _Chassis.NumberOfOutputs);
+					continue;
 				}
-			}
-			catch (Exception ex)
-			{
-				Debug.LogError("SetupOutputs: Exception {ex}", ex);
+
+				var hdmiOutput = _Chassis.HdmiOutputs[index];
+				if (hdmiOutput == null)
+				{
+					this.LogWarning("SetupOutputs: HdmiOutput at index {index} is null. Skipping.", index);
+					continue;
+				}
+
+				var chassisOutput = _Chassis.Outputs[index];
+				if (chassisOutput == null)
+				{
+					this.LogError("SetupOutputs: Chassis Output at index {index} is null. Skipping.", index);
+					continue;
+				}
+
+				OutputPorts.Add(new RoutingOutputPort(outputName, eRoutingSignalType.AudioVideo,
+					eRoutingPortConnectionType.Hdmi, hdmiOutput, this)
+				{
+					FeedbackMatchObject = hdmiOutput
+				});
+
+				VideoOutputRouteFeedbacks.Add(new IntFeedback(string.Format($"{outputFbKeyPrefix}VideoOutputRouteFeedback"), () =>
+				{
+					try { return chassisOutput.VideoOutFeedback == null ? 0 : (int)chassisOutput.VideoOutFeedback.Number; }
+					catch { this.LogError($"Error getting VideoOutputRouteFeedback for output {outputName}"); return 0; }
+				}));
+				OutputNameFeedbacks.Add(new StringFeedback(string.Format($"{outputFbKeyPrefix}OutputNameFeedback"), () =>
+				{
+					try { return OutputNames[index]; }
+					catch { this.LogError($"Error getting OutputNameFeedback for output {outputName}"); return ""; }
+				}));
+				OutputRouteNameFeedbacks.Add(new StringFeedback(string.Format($"{outputFbKeyPrefix}OutputRouteNameFeedback"), () =>
+				{
+					try { return chassisOutput.VideoOutFeedback == null ? NoRouteText : chassisOutput.VideoOutFeedback.NameFeedback.StringValue; }
+					catch { this.LogError($"Error getting OutputRouteNameFeedback for output {outputName}"); return NoRouteText; }
+				}));
 			}
 		}
 
@@ -262,7 +278,7 @@ namespace PepperDash.Essentials.DM.Chassis
 			var hdmiInput = _Chassis.HdmiInputs[port];
 			if (hdmiInput?.HdmiInputPort == null)
 			{
-				Debug.LogWarning(this, "EnableHdcp: HdmiInputPort at index {port} is null. Cannot enable HDCP.", port);
+				this.LogWarning("EnableHdcp: HdmiInputPort at index {port} is null. Cannot enable HDCP.", port);
 				return;
 			}
 
@@ -276,14 +292,8 @@ namespace PepperDash.Essentials.DM.Chassis
 				{
 					return;
 				}
-				try
-				{
-					feedback.FireUpdate();
-				}
-				catch (Exception ex)
-				{
-					Debug.LogError(this, $"EnableHdcp: Exception occurred while updating HDCP feedback for input {inputName}: {ex.Message}");
-				}
+
+				feedback.FireUpdate();
 			}
 		}
 
@@ -299,7 +309,7 @@ namespace PepperDash.Essentials.DM.Chassis
 			var hdmiInput = _Chassis.HdmiInputs[port];
 			if (hdmiInput?.HdmiInputPort == null)
 			{
-				Debug.LogWarning(this, "DisableHdcp: HdmiInputPort at index {port} is null. Cannot disable HDCP.", port);
+				this.LogWarning("DisableHdcp: HdmiInputPort at index {port} is null. Cannot disable HDCP.", port);
 				return;
 			}
 
@@ -313,14 +323,7 @@ namespace PepperDash.Essentials.DM.Chassis
 				{
 					return;
 				}
-				try
-				{
-					feedback.FireUpdate();
-				}
-				catch (Exception ex)
-				{
-					Debug.LogError(this, $"DisableHdcp: Exception occurred while updating HDCP feedback for input {inputName}: {ex.Message}");
-				}
+				feedback.FireUpdate();
 			}
 		}
 
@@ -336,7 +339,7 @@ namespace PepperDash.Essentials.DM.Chassis
 				return;
 			}
 
-			Debug.LogVerbose(this, "EnableAutoRoute: AutoRoute is not supported on this chassis.");
+			this.LogVerbose("EnableAutoRoute: AutoRoute is not supported on this chassis.");
 		}
 
 		/// <summary>
@@ -351,7 +354,7 @@ namespace PepperDash.Essentials.DM.Chassis
 				return;
 			}
 
-			Debug.LogVerbose(this, "DisableAutoRoute: AutoRoute is not supported on this chassis.");
+			this.LogVerbose("DisableAutoRoute: AutoRoute is not supported on this chassis.");
 		}
 
 		/// <summary>
@@ -365,7 +368,7 @@ namespace PepperDash.Essentials.DM.Chassis
 				return;
 			}
 
-			Debug.LogVerbose(this, "EnablePriorityRoute: Priority Route is not supported on this chassis.");
+			this.LogVerbose("EnablePriorityRoute: Priority Route is not supported on this chassis.");
 		}
 
 		/// <summary>
@@ -379,7 +382,7 @@ namespace PepperDash.Essentials.DM.Chassis
 				return;
 			}
 
-			Debug.LogVerbose(this, "DisablePriorityRoute: Priority Route is not supported on this chassis.");
+			this.LogVerbose("DisablePriorityRoute: Priority Route is not supported on this chassis.");
 		}
 
 
@@ -391,9 +394,9 @@ namespace PepperDash.Essentials.DM.Chassis
 		/// </summary>
 		public void AddFeedbackCollections()
 		{
-			if(IsOnline != null)
+			if (IsOnline != null)
 				AddFeedbackToList(IsOnline);
-			
+
 			AddFeedbackToList(DeviceNameFeedback);
 
 			if (AutoRouteFeedback != null)
@@ -427,11 +430,11 @@ namespace PepperDash.Essentials.DM.Chassis
 			}
 
 			// TODO - Remove after testing
-			Debug.LogInformation(this, $"AddFeedbackCollections: Feedbacks contains {Feedbacks.Count} items");
+			this.LogInformation("AddFeedbackCollections: Feedbacks contains {feedbacksCount} items", Feedbacks.Count);
 			foreach (var fb in Feedbacks)
 			{
 				// TODO - Remove after testing
-				Debug.LogInformation(this, $"AddFeedbackCollections: Feedbacks = {fb.Key}");
+				this.LogInformation("AddFeedbackCollections: Feedbacks = {feedbackKey}", fb.Key);
 			}
 		}
 
@@ -445,7 +448,7 @@ namespace PepperDash.Essentials.DM.Chassis
 			if (Feedbacks.Any(f => f.Key == newFb.Key)) return;
 
 			// TODO - Remove after testing
-			Debug.LogVerbose(this, $"AddFeedbackToList: adding {newFb.Key} to Feedbacks collection");
+			this.LogVerbose("AddFeedbackToList: adding {feedbackKey} to Feedbacks collection", newFb.Key);
 			Feedbacks.Add(newFb);
 		}
 
@@ -463,11 +466,11 @@ namespace PepperDash.Essentials.DM.Chassis
 		{
 			var input = inputSelector as HdMdNxM4kzEHdmiInput;
 			var output = outputSelector as HdMdNxM4kzEHdmiOutput;
-			Debug.LogVerbose(this, "ExecuteSwitch: input={0} output={1}", input, output);
+			this.LogVerbose("ExecuteSwitch: input={0} output={1}", input, output);
 
 			if (output == null)
 			{
-				Debug.LogInformation(this, "Unable to make switch. output selector is not HdMdNxM4kzEHdmiOutput");
+				this.LogInformation("Unable to make switch. output selector is not HdMdNxM4kzEHdmiOutput");
 				return;
 			}
 
@@ -489,12 +492,12 @@ namespace PepperDash.Essentials.DM.Chassis
 		/// <param name="signalType">The type of signal to switch.</param>
 		public void ExecuteNumericSwitch(ushort inputSelector, ushort outputSelector, eRoutingSignalType signalType)
 		{
-			Debug.LogInformation(this, $"ExecuteNumericSwitch: inputSelector={inputSelector} outputSelector={outputSelector}");
+			this.LogInformation("ExecuteNumericSwitch: inputSelector={inputSelector} outputSelector={outputSelector}", inputSelector, outputSelector);
 
 			var input = inputSelector == 0 ? null : _Chassis.HdmiInputs[inputSelector];
 			var output = _Chassis.HdmiOutputs[outputSelector];
 
-			Debug.LogVerbose(this, $"ExecuteNumericSwitch: input={input} output={output}");
+			this.LogVerbose("ExecuteNumericSwitch: input={input} output={output}", input, output);
 
 			ExecuteSwitch(input, output, signalType);
 		}
@@ -527,26 +530,25 @@ namespace PepperDash.Essentials.DM.Chassis
 			}
 			else
 			{
-				Debug.LogInformation(this, "Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
+				this.LogInformation("Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
 			}
 
-			if( IsOnline != null) IsOnline?.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
-			
+			if (IsOnline != null) IsOnline?.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
+
 			DeviceNameFeedback?.LinkInputSig(trilist.StringInput[joinMap.Name.JoinNumber]);
 
 			if (_Chassis is HdMdNxM4kzE _chassis_M4kzE)
 			{
-				Debug.LogInformation(this, $"LinkToApi: _Chassis is HdMdNxM4kzE, setting up AutoRoute links");
+				this.LogInformation("LinkToApi: _Chassis is HdMdNxM4kzE, setting up AutoRoute links");
 
 				trilist.SetSigTrueAction(joinMap.EnableAutoRoute.JoinNumber, () => _chassis_M4kzE.AutoRouteOn());
 				trilist.SetSigFalseAction(joinMap.EnableAutoRoute.JoinNumber, () => _chassis_M4kzE.AutoRouteOff());
 				AutoRouteFeedback?.LinkInputSig(trilist.BooleanInput[joinMap.EnableAutoRoute.JoinNumber]);
 			}
 
-			if(_Chassis is HdMd4xX4kzE _chassis_X4kzE)
+			if (_Chassis is HdMd4xX4kzE _chassis_X4kzE)
 			{
-				Debug.LogInformation(this, $"LinkToApi: _Chassis is HdMd4xX4kzE, setting up PriorityRoute links - not implemented");
-
+				this.LogInformation("LinkToApi: _Chassis is HdMd4xX4kzE, setting up PriorityRoute links - not implemented");
 				// trilist.SetSigTrueAction(joinMap.EnablePriorityRoute.JoinNumber, () => _chassis_X4kzE.PriorityRouteOn());
 				// trilist.SetSigFalseAction(joinMap.EnablePriorityRoute.JoinNumber, () => _chassis_X4kzE.PriorityRouteOff());
 				// PriorityRouteFeedback?.LinkInputSig(trilist.BooleanInput[joinMap.EnablePriorityRoute.JoinNumber]);
@@ -561,7 +563,7 @@ namespace PepperDash.Essentials.DM.Chassis
 
 					if (input < 1 || input > _Chassis.NumberOfInputs)
 					{
-						Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "LinkToApi: Input index {index} is out of range (1-{max}). Skipping.", this, input, _Chassis.NumberOfInputs);
+						this.LogWarning("LinkToApi: Input index {index} is out of range (1-{max}). Skipping.", input, _Chassis.NumberOfInputs);
 						continue;
 					}
 
@@ -572,7 +574,8 @@ namespace PepperDash.Essentials.DM.Chassis
 					var joinNumberDisableInputHdcp = joinMap.DisableInputHdcp.JoinNumber + joinIndex;
 					var joinNumberInputName = joinMap.InputName.JoinNumber + joinIndex;
 
-					Debug.LogInformation(this, $"LinkToApi: Input {input} | joinIndex = {joinIndex}, InputSyncJoin = {joinNumberInputSync}, EnableHdcpJoin = {joinNumberEnableInputHdcp}, DisableHdcpJoin = {joinNumberDisableInputHdcp}, InputNameJoin = {joinNumberInputName}");
+					this.LogInformation("LinkToApi: Input {input} | joinIndex = {joinIndex}, InputSyncJoin = {joinNumberInputSync}, EnableHdcpJoin = {joinNumberEnableInputHdcp}, DisableHdcpJoin = {joinNumberDisableInputHdcp}, InputNameJoin = {joinNumberInputName}",
+						input, joinIndex, joinNumberInputSync, joinNumberEnableInputHdcp, joinNumberDisableInputHdcp, joinNumberInputName);
 
 					//Digital
 					VideoInputSyncFeedbacks[inputName]?.LinkInputSig(trilist.BooleanInput[joinNumberInputSync]);
@@ -588,7 +591,7 @@ namespace PepperDash.Essentials.DM.Chassis
 			}
 			else
 			{
-				Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "LinkToApi: InputNames is null. Skipping input linking.", this);
+				this.LogWarning("LinkToApi: InputNames is null. Skipping input linking.");
 			}
 
 			if (OutputNames != null)
@@ -600,7 +603,7 @@ namespace PepperDash.Essentials.DM.Chassis
 
 					if (output < 1 || output > _Chassis.NumberOfOutputs)
 					{
-						Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "LinkToApi: Output index {index} is out of range (1-{max}). Skipping.", this, output, _Chassis.NumberOfOutputs);
+						this.LogWarning("LinkToApi: Output index {index} is out of range (1-{max}). Skipping.", output, _Chassis.NumberOfOutputs);
 						continue;
 					}
 
@@ -610,7 +613,8 @@ namespace PepperDash.Essentials.DM.Chassis
 					var joinNumberOutputName = joinMap.OutputName.JoinNumber + joinIndex;
 					var joinNumberOutputRouteName = joinMap.OutputRoutedName.JoinNumber + joinIndex;
 
-					Debug.LogInformation(this, $"LinkToApi: Output {output} | joinIndex = {joinIndex}, OutputRouteJoin = {joinNumberOutputRoute}, OutputNameJoin = {joinNumberOutputName}, OutputRouteNameJoin = {joinNumberOutputRouteName}");
+					this.LogInformation("LinkToApi: Output {output} | joinIndex = {joinIndex}, OutputRouteJoin = {joinNumberOutputRoute}, OutputNameJoin = {joinNumberOutputName}, OutputRouteNameJoin = {joinNumberOutputRouteName}",
+						output, joinIndex, joinNumberOutputRoute, joinNumberOutputName, joinNumberOutputRouteName);
 
 					//Analog
 					VideoOutputRouteFeedbacks[outputName]?.LinkInputSig(trilist.UShortInput[joinNumberOutputRoute]);
@@ -624,7 +628,7 @@ namespace PepperDash.Essentials.DM.Chassis
 			}
 			else
 			{
-				Debug.LogMessage(Serilog.Events.LogEventLevel.Warning, "LinkToApi: OutputNames is null. Skipping output linking.", this);
+				this.LogWarning("LinkToApi: OutputNames is null. Skipping output linking.");
 			}
 
 			_Chassis.OnlineStatusChange += Chassis_OnlineStatusChange;
@@ -641,53 +645,46 @@ namespace PepperDash.Essentials.DM.Chassis
 		/*
 		private void UpdateFeedbacks()
 		{
-			try
+			IsOnline?.FireUpdate();
+			DeviceNameFeedback?.FireUpdate();
+			AutoRouteFeedback?.FireUpdate();
+
+			foreach (var item in VideoInputSyncFeedbacks)
 			{
-				IsOnline.FireUpdate();
-				DeviceNameFeedback.FireUpdate();
-				AutoRouteFeedback.FireUpdate();
-
-				foreach (var item in VideoInputSyncFeedbacks)
-				{
-					item.FireUpdate();
-				}
-
-				foreach (var item in VideoOutputRouteFeedbacks)
-				{
-					item.FireUpdate();
-				}
-
-				foreach (var item in InputHdcpEnableFeedback)
-				{
-					item.FireUpdate();
-				}
-
-				foreach (var item in InputNameFeedbacks)
-				{
-					item.FireUpdate();
-				}
-
-				foreach (var item in OutputNameFeedbacks)
-				{
-					item.FireUpdate();
-				}
-
-				foreach (var item in OutputRouteNameFeedbacks)
-				{
-					item.FireUpdate();
-				}
-
-				foreach (var item in Feedbacks)
-				{
-					// TODO - Remove after testing
-					Debug.LogInformation(this, $"UpdateFeedbacks: Firing feedback for {item.Key}");
-					item.FireUpdate();
-				}
+				item.FireUpdate();
 			}
-			catch (Exception ex)
+
+			foreach (var item in VideoOutputRouteFeedbacks)
 			{
-				Debug.LogError(this, $"UpdateFeedbacks: Exception occurred while updating feedbacks: {ex.Message}");
+				item.FireUpdate();
 			}
+
+			foreach (var item in InputHdcpEnableFeedback)
+			{
+				item.FireUpdate();
+			}
+
+			foreach (var item in InputNameFeedbacks)
+			{
+				item.FireUpdate();
+			}
+
+			foreach (var item in OutputNameFeedbacks)
+			{
+				item.FireUpdate();
+			}
+
+			foreach (var item in OutputRouteNameFeedbacks)
+			{
+				item.FireUpdate();
+			}
+
+			foreach (var item in Feedbacks)
+			{
+				// TODO - Remove after testing
+				this.LogInformation("UpdateFeedbacks: Firing feedback for {itemKey}", item.Key);
+				item.FireUpdate();
+			}				
 		}
 		*/
 		#endregion
@@ -699,65 +696,37 @@ namespace PepperDash.Essentials.DM.Chassis
 			var eventName = typeof(BaseEventArgs)
 				.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
 				.FirstOrDefault(f => f.IsLiteral && (int)f.GetValue(null) == args.EventId)?.Name ?? args.EventId.ToString();
-			Debug.LogInformation(this, $"Chassis_BaseEvent: received {eventName} (id-{args.EventId}) received from device {device.GetType().Name}");
+			this.LogInformation("Chassis_BaseEvent: received {eventName} (id-{eventId}) received from device {deviceName}", eventName, args.EventId, device.GetType().Name);
 		}
 
 
 		void Chassis_OnlineStatusChange(Crestron.SimplSharpPro.GenericBase currentDevice, Crestron.SimplSharpPro.OnlineOfflineEventArgs args)
 		{
 			// TODO - Remove after testing
-			Debug.LogInformation(this, $"Chassis_OnlineStatusChange: DeviceOnline = {args.DeviceOnLine}");
+			this.LogInformation("Chassis_OnlineStatusChange: DeviceOnline = {deviceOnline}", args.DeviceOnLine);
 
-			try
-			{
-				IsOnline.FireUpdate();
-			}
-			catch (Exception ex)
-			{
-				Debug.LogError(this, $"Chassis_OnlineStatusChange: Exception occurred while updating IsOnline feedback: {ex.Message}");
-			}
+			IsOnline?.FireUpdate();
 
 			if (!args.DeviceOnLine) return;
 
 			// TODO - Remove after testing
-			Debug.LogInformation(this, $"Chassis_OnlineStatusChange: Feedbacks has {Feedbacks.Count} items in the collection");
+			this.LogInformation("Chassis_OnlineStatusChange: Feedbacks has {feedbackCount} items in the collection", Feedbacks.Count);
 
 			foreach (var feedback in Feedbacks)
 			{
-				try
-				{
-					// TODO - Remove after testing
-					Debug.LogInformation(this, $"Chassis_OnlineStatusChange: Firing update for {feedback.Key}");
-					feedback.FireUpdate();
-				}
-				catch (Exception ex)
-				{
-					Debug.LogError(this, $"Chassis_OnlineStatusChange: Exception occurred while updating feedback {feedback.Key}: {ex.Message}");
-				}
+				// TODO - Remove after testing
+				this.LogInformation("Chassis_OnlineStatusChange: Firing update for {feedbackKey}", feedback?.Key);
+				feedback?.FireUpdate();
 			}
 
 			if (_Chassis is HdMd4xX4kzE)
 			{
-				try
-				{
-					AutoRouteFeedback.FireUpdate();
-				}
-				catch (Exception ex)
-				{
-					Debug.LogError(this, $"Chassis_OnlineStatusChange: Exception occurred while updating AutoRouteFeedback: {ex.Message}");
-				}
+				AutoRouteFeedback?.FireUpdate();
 			}
 
-			if(_Chassis is HdMd4xX4kzE)
+			if (_Chassis is HdMd4xX4kzE)
 			{
-				try
-				{
-					PriorityRouteFeedback.FireUpdate();
-				}
-				catch (Exception ex)
-				{
-					Debug.LogError(this, $"Chassis_OnlineStatusChange: Exception occurred while updating PriorityRouteFeedback: {ex.Message}");
-				}
+				PriorityRouteFeedback?.FireUpdate();
 			}
 		}
 
@@ -767,7 +736,7 @@ namespace PepperDash.Essentials.DM.Chassis
 			var eventName = typeof(DMOutputEventIds)
 				.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
 				.FirstOrDefault(f => f.IsLiteral && (int)f.GetValue(null) == args.EventId)?.Name ?? args.EventId.ToString();
-			Debug.LogInformation(this, $"Chassis_DMOutputChange: received {eventName} (id-{args.EventId}); Index = {args.Index}; Number = {args.Number}; Stream = {args.Stream} ");
+			this.LogInformation("Chassis_DMOutputChange: received {eventName} (id-{eventId}); Index = {index}; Number = {number}; Stream = {stream} ", eventName, args.EventId, args.Index, args.Number, args.Stream);
 
 			switch (args.EventId)
 			{
@@ -791,62 +760,43 @@ namespace PepperDash.Essentials.DM.Chassis
 							}
 							catch (Exception ex)
 							{
-								Debug.LogError(this, $"Chassis_DMOutputChange: Exception occurred while updating {eventName} (id-{args.EventId}) {feedback.Key}: {ex.Message}");
+								this.LogError(ex, "Chassis_DMOutputChange: Exception occurred while updating {eventName} (id-{eventId}) {feedbackKey}", eventName, args.EventId, feedback.Key);
 							}
 						}
 						else
 						{
-							Debug.LogInformation(this, $"Chassis_DMOutputChange: {outputName} not found in VideoOutputRouteFeedbacks");
+							this.LogInformation("Chassis_DMOutputChange: {outputName} not found in VideoOutputRouteFeedbacks", outputName);
 						}
 						break;
 					}
 				case DMOutputEventIds.AutoModeOffEventId:
 				case DMOutputEventIds.AutoModeOnEventId:
 					{
-						Debug.LogDebug(this, $"Chassis_DMOutputChange: received {eventName} (id-{args.EventId}) | Updating AutoRouteFeedback");
-						try
-						{
-							AutoRouteFeedback?.FireUpdate();
-						}
-						catch (Exception ex)
-						{
-							Debug.LogError(this, $"Chassis_DMOutputChange: Exception occurred while updating {eventName} (id-{args.EventId}) AutoRouteFeedback: {ex.Message}");
-						}
+						this.LogInformation("Chassis_DMOutputChange: received {eventName} (id-{eventId}) | Updating AutoRouteFeedback", eventName, args.EventId);
+						AutoRouteFeedback?.FireUpdate();
+
 						break;
 					}
 				case DMOutputEventIds.InputPrioritiesFeedbackEventId:
 					{
-						Debug.LogDebug(this, $"Chassis_DMOutputChange: received {eventName} (id-{args.EventId}) | Updating PriorityRouteFeedback");
-						try
-						{
-							PriorityRouteFeedback?.FireUpdate();
-						}
-						catch (Exception ex)
-						{
-							Debug.LogError(this, $"Chassis_DMOutputChange: Exception occurred while updating {eventName} (id-{args.EventId}) PriorityRouteFeedback: {ex.Message}");
-						}
+						this.LogInformation("Chassis_DMOutputChange: received {eventName} (id-{eventId}) | Updating PriorityRouteFeedback", eventName, args.EventId);
+						PriorityRouteFeedback?.FireUpdate();
+
 						break;
 					}
 				case DMOutputEventIds.OutputNameEventId:
 				case DMOutputEventIds.NameFeedbackEventId:
 					{
-						Debug.LogDebug(this, $"Chassis_DMOutputChange: received {eventName} (id-{args.EventId}) | Output {args.Number} Name {_Chassis.HdmiOutputs[args.Number].NameFeedback.StringValue}, updating OutputNameFeedbacks and OutputRouteNameFeedbacks");
+						this.LogInformation("Chassis_DMOutputChange: received {eventName} (id-{eventId}) | Output {number} Name {name}, updating OutputNameFeedbacks and OutputRouteNameFeedbacks", eventName, args.EventId, args.Number, _Chassis.HdmiOutputs[args.Number].NameFeedback.StringValue);
 						foreach (var item in OutputNameFeedbacks)
 						{
-							try
-							{
-								item.FireUpdate();
-							}
-							catch (Exception ex)
-							{
-								Debug.LogError(this, $"Chassis_DMOutputChange: Exception occurred while updating {eventName} (id-{args.EventId}) {item.Key}: {ex.Message}");
-							}
+							item.FireUpdate();
 						}
 						break;
 					}
 				default:
 					{
-						Debug.LogDebug(this, $"Chassis_DMOutputChange: Unhandled DM Output Event {eventName} (id-{args.EventId}), ignoring.");
+						this.LogInformation("Chassis_DMOutputChange: Unhandled DM Output Event {eventName} (id-{eventId}), ignoring.", eventName, args.EventId);
 						break;
 					}
 			}
@@ -863,17 +813,10 @@ namespace PepperDash.Essentials.DM.Chassis
 				case DMInputEventIds.SourceSyncEventId:
 				case DMInputEventIds.VideoDetectedEventId:
 					{
-						Debug.LogDebug(this, $"Chassis_DMInputChange: received {eventName} (id-{args.EventId}) | Updating VideoInputSyncFeedbacks");
+						this.LogInformation("Chassis_DMInputChange: received {eventName} (id-{eventId}) | Updating VideoInputSyncFeedbacks", eventName, args.EventId);
 						foreach (var item in VideoInputSyncFeedbacks)
 						{
-							try
-							{
-								item.FireUpdate();
-							}
-							catch (Exception ex)
-							{
-								Debug.LogError(this, $"Chassis_DMInputChange: Exception occurred while updating {eventName} (id-{args.EventId}) {item.Key}: {ex.Message}");
-							}
+							item.FireUpdate();
 						}
 						break;
 					}
@@ -881,36 +824,24 @@ namespace PepperDash.Essentials.DM.Chassis
 				case DMInputEventIds.InputNameEventId:
 				case DMInputEventIds.NameFeedbackEventId:
 					{
-						Debug.LogDebug(this, $"Chassis_DMInputChange: received {eventName} (id-{args.EventId}) | Input {args.Number} Name {_Chassis.HdmiInputs[args.Number].NameFeedback.StringValue}, updating InputNameFeedbacks");
+						this.LogInformation("Chassis_DMInputChange: received {eventName} (id-{eventId}) | Input {number} Name {name}, updating InputNameFeedbacks", eventName, args.EventId, args.Number, _Chassis.HdmiInputs[args.Number].NameFeedback.StringValue);
 						foreach (var item in InputNameFeedbacks)
 						{
-							try
-							{
-								item.FireUpdate();
-							}
-							catch (Exception ex)
-							{
-								Debug.LogError(this, $"Chassis_DMInputChange: Exception occurred while updating {eventName} (id-{args.EventId}) {item.Key}: {ex.Message}");
-							}
+							item.FireUpdate();
 						}
 						break;
 					}
 				case DMInputEventIds.PriorityEventId:
 					{
-						Debug.LogDebug(this, $"Chassis_DMInputChange: received {eventName} (id-{args.EventId}) | Updating PriorityRouteFeedback");
-						try
-						{
-							PriorityRouteFeedback?.FireUpdate();
-						}
-						catch (Exception ex)
-						{
-							Debug.LogError(this, $"Chassis_DMInputChange: Exception occurred while updating {eventName} (id-{args.EventId}) PriorityRouteFeedback: {ex.Message}");
-						}
+						this.LogInformation("Chassis_DMInputChange: received {eventName} (id-{eventId}) | Updating PriorityRouteFeedback", eventName, args.EventId);
+
+						PriorityRouteFeedback?.FireUpdate();
+
 						break;
 					}
 				default:
 					{
-						Debug.LogDebug(this, $"Chassis_DMInputChange: Unhandled DM Input Event {eventName} (id-{args.EventId}), ignoring.");
+						this.LogInformation("Chassis_DMInputChange: Unhandled DM Input Event {eventName} (id-{eventId}), ignoring.", eventName, args.EventId);
 						break;
 					}
 			}
