@@ -188,8 +188,8 @@ namespace PepperDash.Essentials.DM.Chassis
 			for (uint i = 1; i <= _Chassis.Inputs.Count; i++)
 			{
 				var inputIndex = i;
-				var chassisInput = _Chassis.Inputs[inputIndex - 1];
-				var hdmiInput = _Chassis.HdmiInputs[inputIndex - 1];
+				var chassisInput = _Chassis.Inputs[inputIndex];
+				var hdmiInput = _Chassis.HdmiInputs[inputIndex];
 
 				var inputName = string.Format("Input{0}", inputIndex);
 				var inputFbKeyPrefix = inputName.Replace(" ", "").Trim();
@@ -220,7 +220,7 @@ namespace PepperDash.Essentials.DM.Chassis
 			for (uint i = 1; i <= _Chassis.Inputs.Count; i++)
 			{
 				var inputIndex = i;
-				var chassisInput = _Chassis.Inputs[inputIndex - 1];
+				var chassisInput = _Chassis.Inputs[inputIndex];
 
 				if (chassisInput == null)
 				{
@@ -310,7 +310,7 @@ namespace PepperDash.Essentials.DM.Chassis
 			for (uint i = 1; i <= _Chassis.Outputs.Count; i++)
 			{
 				var outputIndex = i;
-				var chassisOutput = _Chassis.Outputs[outputIndex - 1];
+				var chassisOutput = _Chassis.Outputs[outputIndex];
 
 				if (chassisOutput == null)
 				{
