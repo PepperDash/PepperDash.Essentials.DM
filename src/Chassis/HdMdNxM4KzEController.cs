@@ -121,7 +121,7 @@ namespace PepperDash.Essentials.DM.Chassis
 			}
 
 			SetupInputPortAndNameFeedbacks();
-			SetupInputHdcpFeedbacks();
+			SetupHdmiInputHdcpFeedbacks();
 			SetupInputVideoSyncFeedbacks();
 			SetupOutputPortsandNameFeedbacks();
 			SetupVideoOutputRouteFeedbacks();
@@ -160,13 +160,6 @@ namespace PepperDash.Essentials.DM.Chassis
 					continue;
 				}
 
-				var chassisInput = _Chassis.Inputs[index];
-				if (chassisInput == null)
-				{
-					this.LogError("SetupInputs: Chassis Input at index {index} is null. Skipping.", index);
-					continue;
-				}
-
 				hdmiInput.Name.StringValue = inputName;
 
 				InputPorts.Add(new RoutingInputPort(inputName, eRoutingSignalType.AudioVideo,
@@ -183,12 +176,11 @@ namespace PepperDash.Essentials.DM.Chassis
 			}
 		}
 
-		private void SetupInputHdcpFeedbacks()
+		private void SetupHdmiInputHdcpFeedbacks()
 		{
-			for (uint i = 1; i <= _Chassis.Inputs.Count; i++)
+			for (uint i = 1; i <= _Chassis.HdmiInputs.Count; i++)
 			{
 				var inputIndex = i;
-				var chassisInput = _Chassis.Inputs[inputIndex];
 				var hdmiInput = _Chassis.HdmiInputs[inputIndex];
 
 				var inputName = string.Format("Input{0}", inputIndex);
@@ -198,7 +190,7 @@ namespace PepperDash.Essentials.DM.Chassis
 				{
 					try
 					{
-						if (hdmiInput?.HdmiInputPort != null)
+						if (hdmiInput?.HdmiInputPort == null)
 						{
 							this.LogWarning("SetupInputHdcpFeedbacks: HdmiInputPort at index {index} is null. Cannot get HdcpEnableFeedback.", inputIndex);
 							return false;
@@ -217,14 +209,14 @@ namespace PepperDash.Essentials.DM.Chassis
 
 		private void SetupInputVideoSyncFeedbacks()
 		{
-			for (uint i = 1; i <= _Chassis.Inputs.Count; i++)
+			for (uint i = 1; i <= _Chassis.HdmiInputs.Count; i++)
 			{
 				var inputIndex = i;
-				var chassisInput = _Chassis.Inputs[inputIndex];
+				var chassisHdmiInput = _Chassis.HdmiInputs[inputIndex];
 
-				if (chassisInput == null)
+				if (chassisHdmiInput == null)
 				{
-					this.LogError("SetupInputVideoSyncFeedbacks: Chassis Input at index {index} is null. Skipping.", inputIndex);
+					this.LogError("SetupInputVideoSyncFeedbacks: Chassis HDMI input {index} is null. Skipping.", inputIndex);
 					continue;
 				}
 
@@ -235,17 +227,17 @@ namespace PepperDash.Essentials.DM.Chassis
 				{
 					try
 					{
-						if (chassisInput?.VideoDetectedFeedback == null)
+						if (chassisHdmiInput?.VideoDetectedFeedback == null)
 						{
-							this.LogError("SetupInputVideoSyncFeedbacks: Chassis Input at index {index} VideoDetectedFeedback is null. Cannot get VideoDetectedFeedback.", inputIndex);
+							this.LogError("SetupInputVideoSyncFeedbacks: Chassis HDMI input {index} VideoDetectedFeedback is null. Cannot get VideoDetectedFeedback.", inputIndex);
 							return false;
 						}
 
-						return chassisInput?.VideoDetectedFeedback?.BoolValue ?? false;
+						return chassisHdmiInput?.VideoDetectedFeedback?.BoolValue ?? false;
 					}
 					catch
 					{
-						this.LogError($"SetupInputVideoSyncFeedbacks: Error getting VideoDetectedFeedback for input {inputName}");
+						this.LogError($"SetupInputVideoSyncFeedbacks: Error getting VideoDetectedFeedback for {inputName}");
 						return false;
 					}
 				}));
