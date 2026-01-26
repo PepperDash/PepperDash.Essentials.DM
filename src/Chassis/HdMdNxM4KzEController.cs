@@ -12,6 +12,7 @@ using PepperDash.Essentials.Core.Bridges;
 using PepperDash.Essentials.Core.Config;
 using Crestron.SimplSharpPro;
 using PepperDash.Core.Logging;
+using System.Runtime.CompilerServices;
 
 
 namespace PepperDash.Essentials.DM.Chassis
@@ -119,8 +120,11 @@ namespace PepperDash.Essentials.DM.Chassis
 				});
 			}
 
-			SetupInputs();
-			SetupOutputs();
+			SetupInputPortAndNameFeedbacks();
+			SetupInputHdcpFeedbacks();
+			SetupInputVideoSyncFeedbacks();
+			SetupOutputPortsandNameFeedbacks();
+			SetupVideoOutputRouteFeedbacks();
 
 			_Chassis.DMInputChange += Chassis_DMInputChange;
 			_Chassis.DMOutputChange += Chassis_DMOutputChange;
@@ -129,7 +133,7 @@ namespace PepperDash.Essentials.DM.Chassis
 			AddPostActivationAction(AddFeedbackCollections);
 		}
 
-		private void SetupInputs()
+		private void SetupInputPortAndNameFeedbacks()
 		{
 			if (InputNames == null)
 			{
@@ -171,31 +175,84 @@ namespace PepperDash.Essentials.DM.Chassis
 					FeedbackMatchObject = hdmiInput
 				});
 
-				VideoInputSyncFeedbacks.Add(new BoolFeedback(string.Format($"{inputFbKeyPrefix}VideoInputSyncFeedback"), () =>
-				{
-					try { return chassisInput?.VideoDetectedFeedback?.BoolValue ?? false; }
-					catch { this.LogError($"Error getting VideoInputSyncFeedback for input {inputName}"); return false; }
-				}));
 				InputNameFeedbacks.Add(new StringFeedback(string.Format($"{inputFbKeyPrefix}InputNameFeedback"), () =>
 				{
 					try { return InputNames[index]; }
 					catch { this.LogError($"Error getting InputNameFeedback for input {inputName}"); return ""; }
 				}));
+			}
+		}
 
-				if (hdmiInput.HdmiInputPort == null)
-				{
-					this.LogWarning("HdmiInputPort at index {index} is null. HDCP feedback will default to false.", index);
-				}
+		private void SetupInputHdcpFeedbacks()
+		{
+			for (uint i = 1; i <= _Chassis.Inputs.Count; i++)
+			{
+				var inputIndex = i;
+				var chassisInput = _Chassis.Inputs[inputIndex - 1];
+				var hdmiInput = _Chassis.HdmiInputs[inputIndex - 1];
+
+				var inputName = string.Format("Input{0}", inputIndex);
+				var inputFbKeyPrefix = inputName.Replace(" ", "").Trim();
 
 				InputHdcpEnableFeedback.Add(new BoolFeedback(string.Format($"{inputFbKeyPrefix}HdcpEnableFeedback"), () =>
 				{
-					try { return hdmiInput?.HdmiInputPort?.HdcpSupportOnFeedback?.BoolValue ?? false; }
-					catch { this.LogError($"Error getting HdcpEnableFeedback for input {inputName}"); return false; }
+					try
+					{
+						if (hdmiInput?.HdmiInputPort != null)
+						{
+							this.LogWarning("SetupInputHdcpFeedbacks: HdmiInputPort at index {index} is null. Cannot get HdcpEnableFeedback.", inputIndex);
+							return false;
+						}
+
+						return hdmiInput?.HdmiInputPort?.HdcpSupportOnFeedback?.BoolValue ?? false;
+					}
+					catch
+					{
+						this.LogError($"SetupInputHdcpFeedbacks: Error getting HdcpEnableFeedback for input {inputName}");
+						return false;
+					}
 				}));
 			}
 		}
 
-		private void SetupOutputs()
+		private void SetupInputVideoSyncFeedbacks()
+		{
+			for (uint i = 1; i <= _Chassis.Inputs.Count; i++)
+			{
+				var inputIndex = i;
+				var chassisInput = _Chassis.Inputs[inputIndex - 1];
+
+				if (chassisInput == null)
+				{
+					this.LogError("SetupInputVideoSyncFeedbacks: Chassis Input at index {index} is null. Skipping.", inputIndex);
+					continue;
+				}
+
+				var inputName = string.Format("Input{0}", inputIndex);
+				var inputFbKeyPrefix = inputName.Replace(" ", "").Trim();
+
+				VideoInputSyncFeedbacks.Add(new BoolFeedback(string.Format($"{inputFbKeyPrefix}VideoDetectedFeedback"), () =>
+				{
+					try
+					{
+						if (chassisInput?.VideoDetectedFeedback == null)
+						{
+							this.LogError("SetupInputVideoSyncFeedbacks: Chassis Input at index {index} VideoDetectedFeedback is null. Cannot get VideoDetectedFeedback.", inputIndex);
+							return false;
+						}
+
+						return chassisInput?.VideoDetectedFeedback?.BoolValue ?? false;
+					}
+					catch
+					{
+						this.LogError($"SetupInputVideoSyncFeedbacks: Error getting VideoDetectedFeedback for input {inputName}");
+						return false;
+					}
+				}));
+			}
+		}
+
+		private void SetupOutputPortsandNameFeedbacks()
 		{
 			if (OutputNames == null)
 			{
@@ -235,11 +292,6 @@ namespace PepperDash.Essentials.DM.Chassis
 					FeedbackMatchObject = hdmiOutput
 				});
 
-				VideoOutputRouteFeedbacks.Add(new IntFeedback(string.Format($"{outputFbKeyPrefix}VideoOutputRouteFeedback"), () =>
-				{
-					try { return chassisOutput.VideoOutFeedback == null ? 0 : (int)chassisOutput.VideoOutFeedback.Number; }
-					catch { this.LogError($"Error getting VideoOutputRouteFeedback for output {outputName}"); return 0; }
-				}));
 				OutputNameFeedbacks.Add(new StringFeedback(string.Format($"{outputFbKeyPrefix}OutputNameFeedback"), () =>
 				{
 					try { return OutputNames[index]; }
@@ -249,6 +301,43 @@ namespace PepperDash.Essentials.DM.Chassis
 				{
 					try { return chassisOutput.VideoOutFeedback == null ? NoRouteText : chassisOutput.VideoOutFeedback.NameFeedback.StringValue; }
 					catch { this.LogError($"Error getting OutputRouteNameFeedback for output {outputName}"); return NoRouteText; }
+				}));
+			}
+		}
+
+		private void SetupVideoOutputRouteFeedbacks()
+		{
+			for (uint i = 1; i <= _Chassis.Outputs.Count; i++)
+			{
+				var outputIndex = i;
+				var chassisOutput = _Chassis.Outputs[outputIndex - 1];
+
+				if (chassisOutput == null)
+				{
+					this.LogError("SetupVideoOutputRouteFeedbacks: Chassis Output at index {index} is null. Skipping.", outputIndex);
+					continue;
+				}
+
+				var outputName = string.Format("Output{0}", outputIndex);
+				var outputFbKeyPrefix = outputName.Replace(" ", "").Trim();
+
+				VideoOutputRouteFeedbacks.Add(new IntFeedback(string.Format($"{outputFbKeyPrefix}VideoOutputRouteFeedback"), () =>
+				{
+					try
+					{
+						if (chassisOutput?.VideoOutFeedback == null)
+						{
+							this.LogError("SetupVideoOutputRouteFeedbacks: Chassis Output at index {index} VideoOutFeedback is null. Cannot get VideoOutputRouteFeedback.", outputIndex);
+							return 0;
+						}
+
+						return (int)chassisOutput.VideoOutFeedback.Number;
+					}
+					catch
+					{
+						this.LogError($"SetupVideoOutputRouteFeedbacks: Error getting VideoOutputRouteFeedback for output {outputName}");
+						return 0;
+					}
 				}));
 			}
 		}
@@ -315,10 +404,9 @@ namespace PepperDash.Essentials.DM.Chassis
 
 			hdmiInput.HdmiInputPort.HdcpSupportOff();
 
-			if (InputNames.ContainsKey(port))
+			if (InputNames.TryGetValue(port, out var inputName))
 			{
-				var inputName = InputNames[port];
-				var feedback = InputHdcpEnableFeedback.FirstOrDefault(f => f.Key == inputName);
+                var feedback = InputHdcpEnableFeedback.FirstOrDefault(f => f.Key == inputName);
 				if (feedback == null)
 				{
 					return;
@@ -729,6 +817,7 @@ namespace PepperDash.Essentials.DM.Chassis
 				PriorityRouteFeedback?.FireUpdate();
 			}
 		}
+
 
 		void Chassis_DMOutputChange(Switch device, DMOutputEventArgs args)
 		{
