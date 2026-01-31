@@ -217,13 +217,13 @@ namespace PepperDash.Essentials.DM.Chassis
 				this.LogError("SetupOutputs: Chassis is null. Cannot setup VideoSync feedbacks.");
 				return;
 			}
-
+			
 			//var outputCount = _Chassis.Outputs.Count;
-			var outputCount = _Chassis.NumberOfOutputs;
+            var outputCount = _Chassis.NumberOfOutputs;
 			this.LogError("SetupOutputs: Chassis has {outputCount} outputs", outputCount);
 			for (uint i = 1; i <= outputCount; i++)
 			{
-                var index = i - 1;
+				var index = i;
 				if (index > outputCount)
 				{
 					this.LogError("SetupOutputs: index {index} is greater than _Chassis.NumberOfOutputs {outputCount}, breaking loop", index, outputCount);
@@ -266,97 +266,49 @@ namespace PepperDash.Essentials.DM.Chassis
 				});
 
 				// Chassis.Outputs[index].VideoOutFeedback
-				try
+				this.LogError("SetupOutputs: _Chassis.Outputs[{index}].VideoOutputFeedback is {outputVideoFb}", index, chassisOutput.VideoOutFeedback == null ? "NULL" : "NOT NULL");
+				VideoOutputRouteFeedbacks.Add(new IntFeedback(string.Format($"{outputName}Route"), () =>
 				{
-					this.LogError("SetupOutputs: _Chassis.Outputs[{index}].VideoOutputFeedback is {outputVideoFb}", index, chassisOutput.VideoOutFeedback == null ? "NULL" : "NOT NULL");
-					VideoOutputRouteFeedbacks.Add(new IntFeedback(string.Format($"{outputName}Route"), () =>
+					try
 					{
-						try
-						{
-							return (int)chassisOutput.VideoOutFeedback.Number;
-						}
-						catch
-						{
-							this.LogError("SetupOutputs: Error getting _Chassis.Outputs[{index}].VideoOutFeedback", index);
-							return 0;
-						}
-					}));
-
-				}
-				catch (Exception ex)
-				{
-					this.LogError("SetupOutputs: Exception occurred while setting _Chassis.Outputs[{index}].VideoOutFeedback: {exceptionMessage}", index, ex.Message);
-					this.LogError(ex, "SetupOutputs: Stack trace for exception");
-				}
-
-				// Chassis.HdmiOutputs[index].VideoOutFeedback
-				try
-				{
-					this.LogError("SetupOutputs: _Chassis.HdmiOutputs[{index}].VideoOutputFeedback is {outputVideoFb}", index, chassisHdmiOutput.VideoOutFeedback == null ? "NULL" : "NOT NULL");
-					VideoOutputRouteFeedbacks.Add(new IntFeedback(string.Format($"{outputName}Route"), () =>
+                        return (int)(chassisOutput.VideoOutFeedback == null ? 0 : chassisOutput.VideoOutFeedback.Number);
+                    }
+					catch
 					{
-						try
-						{
-							return (int)chassisHdmiOutput.VideoOutFeedback.Number;
-						}
-						catch
-						{
-							this.LogError("SetupOutputs: Error getting _Chassis.HdmiOutputs[{index}].VideoOutFeedback", index);
-							return 0;
-						}
-					}));
-				}
-				catch (Exception ex)
-				{
-					this.LogError("SetupOutputs: Exception occurred while preparing to set _Chassis.HdmiOutputs[{index}].VideoOutFeedback: {exceptionMessage}", index, ex.Message);
-					this.LogError(ex, "SetupOutputs: Stack trace for exception");
-				}
+						this.LogError("SetupOutputs: Error getting _Chassis.Outputs[{index}].VideoOutFeedback", index);
+						return 0;
+					}
+				}));
 
 				// _Chassis.Outputs[index].VideoOutFeedback.NameFeedback
-				try
+				this.LogError("SetupOutputs: _Chassis.Outputs[{index}].VideoOutFeedback.NameFeedback is {outputVideoNameFb}", index, chassisOutput.VideoOutFeedback.NameFeedback == null ? "NULL" : "NOT NULL");
+				OutputRouteNameFeedbacks.Add(new StringFeedback(string.Format($"{outputName}RoutedName"), () =>
 				{
-					this.LogError("SetupOutputs: _Chassis.Outputs[{index}].VideoOutFeedback.NameFeedback is {outputVideoNameFb}", index, chassisOutput.VideoOutFeedback.NameFeedback == null ? "NULL" : "NOT NULL");
-					OutputRouteNameFeedbacks.Add(new StringFeedback(string.Format($"{outputName}RoutedName"), () =>
+					try
 					{
-						try
-						{
-							return chassisOutput.VideoOutFeedback.NameFeedback.StringValue;
-						}
-						catch
-						{
-							this.LogError("SetupOutputs: Error getting _Chassis.Outputs[{index}].VideoOutFeedback.NameFeedback", index);
-							return "";
-						}
-					}));
-				}
-				catch (Exception ex)
-				{
-					this.LogError("SetupOutputs: Exception occurred while preparing to set _Chassis.Outputs[{index}].VideoOutFeedback.NameFeedback", index);
-					this.LogError(ex, "SetupOutputs: Stack trace for exception");
-				}
+						return chassisOutput.VideoOutFeedback.NameFeedback.StringValue;
+					}
+					catch
+					{
+						this.LogError("SetupOutputs: Error getting _Chassis.Outputs[{index}].VideoOutFeedback.NameFeedback", index);
+						return "";
+					}
+				}));
 
 				// _Chassis.HdmiOutputs[index].VideoOutFeedback.NameFeedback
-				try
+				this.LogError("SetupOutputs: _Chassis.HdmiOutputs[{index}].VideoOutFeedback.NameFeedback is {outputVideoNameFb}", index, chassisHdmiOutput.VideoOutFeedback.NameFeedback == null ? "NULL" : "NOT NULL");
+				OutputRouteNameFeedbacks.Add(new StringFeedback(string.Format($"{outputName}RoutedName"), () =>
 				{
-					this.LogError("SetupOutputs: _Chassis.HdmiOutputs[{index}].VideoOutFeedback.NameFeedback is {outputVideoNameFb}", index, chassisHdmiOutput.VideoOutFeedback.NameFeedback == null ? "NULL" : "NOT NULL");
-					OutputRouteNameFeedbacks.Add(new StringFeedback(string.Format($"{outputName}RoutedName"), () =>
+					try
 					{
-						try
-						{
-							return chassisHdmiOutput.VideoOutFeedback.NameFeedback.StringValue;
-						}
-						catch
-						{
-							this.LogError("SetupOutputs: Error getting _Chassis.HdmiOutputs[{index}].VideoOutFeedback.NameFeedback", index);
-							return "";
-						}
-					}));
-				}
-				catch (Exception ex)
-				{
-					this.LogError("SetupOutputs: Exception occurred while preparing to set _Chassis.HdmiOutputs[{index}].VideoOutFeedback.NameFeedback", index);
-					this.LogError(ex, "SetupOutputs: Stack trace for exception");
-				}
+						return chassisHdmiOutput.VideoOutFeedback.NameFeedback.StringValue;
+					}
+					catch
+					{
+						this.LogError("SetupOutputs: Error getting _Chassis.HdmiOutputs[{index}].VideoOutFeedback.NameFeedback", index);
+						return "";
+					}
+				}));
 			}
 		}
 
