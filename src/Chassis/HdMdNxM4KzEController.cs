@@ -144,7 +144,7 @@ namespace PepperDash.Essentials.DM.Chassis
 			for (uint i = 1; i <= inputCount; i++)
 			{
 				var index = i;
-				if(index > inputCount)
+				if (index > inputCount)
 				{
 					this.LogError("SetupInputs: index {index} is greater than _Chassis.NumberOfInputs {inputCount}, breaking loop", index, inputCount);
 					break;
@@ -156,19 +156,19 @@ namespace PepperDash.Essentials.DM.Chassis
 				var inputName = string.Format("input{0}", index);
 				var inputFriendlyName = InputNames[index] ?? inputName;
 
-				var input = _Chassis.Inputs[index];
-				this.LogError("SetupInputs: _Chassis.Inputs[{index}] is {input}", index, input == null ? "NULL" : "NOT NULL");
+				var chassisInput = _Chassis.Inputs[index];
+				this.LogError("SetupInputs: _Chassis.Inputs[{index}] is {input}", index, chassisInput == null ? "NULL" : "NOT NULL");
 
-				var hdmiInput = _Chassis.HdmiInputs[index];
-				this.LogError("SetupInputs: _Chassis.HdmiInputs[{index}] is {hdmiInput}", index, hdmiInput == null ? "NULL" : "NOT NULL");
+				var chassisHdmiInput = _Chassis.HdmiInputs[index];
+				this.LogError("SetupInputs: _Chassis.HdmiInputs[{index}] is {hdmiInput}", index, chassisHdmiInput == null ? "NULL" : "NOT NULL");
 
 				// Name Feedback
-				this.LogError("SetupInputs: _Chassis.Inputs[{index}].NameFeedback is {inputNameFb}", index, input.NameFeedback == null ? "NULL" : "NOT NULL");
+				this.LogError("SetupInputs: _Chassis.Inputs[{index}].NameFeedback is {inputNameFb}", index, chassisInput.NameFeedback == null ? "NULL" : "NOT NULL");
 				InputNameFeedbacks.Add(new StringFeedback(string.Format($"{inputName}Name"), () =>
 				{
 					try
 					{
-						return input.NameFeedback.StringValue;
+						return chassisInput.NameFeedback.StringValue;
 					}
 					catch
 					{
@@ -178,24 +178,24 @@ namespace PepperDash.Essentials.DM.Chassis
 				}));
 
 				// Set Input Name from config
-				input.Name.StringValue = inputFriendlyName;
+				chassisInput.Name.StringValue = inputFriendlyName;
 				// hdmiInput.Name.StringValue = inputFriendlyName;
 
 				// Routing Input Port
 				InputPorts.Add(new RoutingInputPort(inputName, eRoutingSignalType.AudioVideo,
-					eRoutingPortConnectionType.Hdmi, hdmiInput, this)
+					eRoutingPortConnectionType.Hdmi, chassisHdmiInput, this)
 				{
-					FeedbackMatchObject = hdmiInput
+					FeedbackMatchObject = chassisHdmiInput
 				});
 
 				// Video Detected Feedback
-				this.LogError("SetupInputs: _Chassis.Inputs[{index}].VideoDetectedFeedback is {inputSyncFb}", index, input.VideoDetectedFeedback == null ? "NULL" : "NOT NULL");
+				this.LogError("SetupInputs: _Chassis.Inputs[{index}].VideoDetectedFeedback is {inputSyncFb}", index, chassisInput.VideoDetectedFeedback == null ? "NULL" : "NOT NULL");
 				var inputSyncFbKey = string.Format("{0}VideoDetected", inputName);
 				VideoInputSyncFeedbacks.Add(new BoolFeedback(inputSyncFbKey, () =>
 				{
 					try
 					{
-						return input.VideoDetectedFeedback.BoolValue;
+						return chassisInput.VideoDetectedFeedback.BoolValue;
 					}
 					catch
 					{
@@ -205,13 +205,13 @@ namespace PepperDash.Essentials.DM.Chassis
 				}));
 
 				// HDCP Enable Feedback
-				this.LogError("SetupInputs: _Chassis.HdmiInputs[{index}].HdmiInputPort.HdcpSupportOnFeedback is {inputHdcpFb}", index, hdmiInput.HdmiInputPort.HdcpSupportOnFeedback == null ? "NULL" : "NOT NULL");
+				this.LogError("SetupInputs: _Chassis.HdmiInputs[{index}].HdmiInputPort.HdcpSupportOnFeedback is {inputHdcpFb}", index, chassisHdmiInput.HdmiInputPort.HdcpSupportOnFeedback == null ? "NULL" : "NOT NULL");
 				var inputHdcpFbKey = string.Format("{0}HdcpSupportOn", inputName);
 				InputHdcpEnableFeedback.Add(new BoolFeedback(inputHdcpFbKey, () =>
 				{
 					try
 					{
-						return hdmiInput.HdmiInputPort.HdcpSupportOnFeedback.BoolValue;
+						return chassisHdmiInput.HdmiInputPort.HdcpSupportOnFeedback.BoolValue;
 					}
 					catch
 					{
@@ -236,7 +236,7 @@ namespace PepperDash.Essentials.DM.Chassis
 			for (uint i = 1; i <= outputCount; i++)
 			{
 				var index = i;
-				if(index > outputCount)
+				if (index > outputCount)
 				{
 					this.LogError("SetupOutputs: index {index} is greater than _Chassis.NumberOfOutputs {outputCount}, breaking loop", index, outputCount);
 					break;
@@ -244,20 +244,20 @@ namespace PepperDash.Essentials.DM.Chassis
 
 				var outputName = string.Format("output{0}", index);
 				var outputFriendlyName = OutputNames[index] ?? outputName;
-				
-				var output = _Chassis.Outputs[index];
-				this.LogError("SetupOutputs: _Chassis.Outputs[{index}] is {output}", index, output == null ? "NULL" : "NOT NULL");
 
-				var hdmiOutput = _Chassis.HdmiOutputs[index];
-				this.LogError("SetupOutputs: _Chassis.HdmiOutputs[{index}] is {hdmiOutput}", index, hdmiOutput == null ? "NULL" : "NOT NULL");
+				var chassisOutput = _Chassis.Outputs[index];
+				this.LogError("SetupOutputs: _Chassis.Outputs[{index}] is {output}", index, chassisOutput == null ? "NULL" : "NOT NULL");
+
+				var chassisHdmiOutput = _Chassis.HdmiOutputs[index];
+				this.LogError("SetupOutputs: _Chassis.HdmiOutputs[{index}] is {hdmiOutput}", index, chassisHdmiOutput == null ? "NULL" : "NOT NULL");
 
 				// Name Feedback
-				this.LogError("SetupOutputs: _Chassis.Outputs[{index}].NameFeedback is {outputNameFb}", index, output.NameFeedback == null ? "NULL" : "NOT NULL");
+				this.LogError("SetupOutputs: _Chassis.Outputs[{index}].NameFeedback is {outputNameFb}", index, chassisOutput.NameFeedback == null ? "NULL" : "NOT NULL");
 				OutputNameFeedbacks.Add(new StringFeedback(string.Format($"{outputName}Name"), () =>
 				{
 					try
 					{
-						return output.NameFeedback.StringValue;
+						return chassisOutput.NameFeedback.StringValue;
 					}
 					catch
 					{
@@ -267,54 +267,110 @@ namespace PepperDash.Essentials.DM.Chassis
 				}));
 
 				// Set Output Name from config
-				output.Name.StringValue = outputFriendlyName;
+				chassisOutput.Name.StringValue = outputFriendlyName;
 				// hdmiOutput.Name.StringValue = outputFriendlyName;
 
 				// Routing Output Port
 				OutputPorts.Add(new RoutingOutputPort(outputName, eRoutingSignalType.AudioVideo,
-					eRoutingPortConnectionType.Hdmi, hdmiOutput, this)
+					eRoutingPortConnectionType.Hdmi, chassisHdmiOutput, this)
 				{
-					FeedbackMatchObject = hdmiOutput
+					FeedbackMatchObject = chassisHdmiOutput
 				});
 
-				// Video Output Route Feedback
-				//this.LogError("SetupOutputs: _Chassis.Outputs[{index}].VideoOutputFeedback is {outputVideoFb}", index, output.VideoOutFeedback == null ? "NULL" : "NOT NULL");
-				this.LogError("SetupOutputs: _Chassis.HdmiOutputs[{index}].VideoOutputFeedback is {outputVideoFb}", index, hdmiOutput.VideoOutFeedback == null ? "NULL" : "NOT NULL");
-				VideoOutputRouteFeedbacks.Add(new IntFeedback(string.Format($"{outputName}Route"), () =>
+				// Chassis.Outputs[index].VideoOutFeedback
+				try
 				{
-					try
+					this.LogError("SetupOutputs: _Chassis.Outputs[{index}].VideoOutputFeedback is {outputVideoFb}", index, chassisOutput.VideoOutFeedback == null ? "NULL" : "NOT NULL");
+					VideoOutputRouteFeedbacks.Add(new IntFeedback(string.Format($"{outputName}Route"), () =>
 					{
-						//return (int)output.VideoOutFeedback.Number;
-						return (int)hdmiOutput.VideoOutFeedback.Number;
-					}
-					catch
-					{
-						//this.LogError("SetupOutputs: Error getting _Chassis.Outputs[{index}].VideoOutFeedback", index);
-						this.LogError("SetupOutputs: Error getting _Chassis.HdmiOutputs[{index}].VideoOutFeedback", index);
-						return 0;
-					}
-				}));
+						try
+						{
+							return (int)chassisOutput.VideoOutFeedback.Number;
+						}
+						catch
+						{
+							this.LogError("SetupOutputs: Error getting _Chassis.Outputs[{index}].VideoOutFeedback", index);
+							return 0;
+						}
+					}));
 
-				// Output Route Name Feedback
-				//this.LogError("SetupOutputs: _Chassis.Outputs[{index}].VideoOutFeedback.NameFeedback is {outputVideoNameFb}", index, output.VideoOutFeedback.NameFeedback == null ? "NULL" : "NOT NULL");
-				this.LogError("SetupOutputs: _Chassis.HdmiOutputs[{index}].VideoOutFeedback.NameFeedback is {outputVideoNameFb}", index, hdmiOutput.VideoOutFeedback.NameFeedback == null ? "NULL" : "NOT NULL");
-				OutputRouteNameFeedbacks.Add(new StringFeedback(string.Format($"{outputName}RoutedName"), () =>
+				}
+				catch (Exception ex)
 				{
-					try
+					this.LogError("SetupOutputs: Exception occurred while setting _Chassis.Outputs[{index}].VideoOutFeedback: {exceptionMessage}", index, ex.Message);
+					this.LogError(ex, "SetupOutputs: Stack trace for exception");
+				}
+
+				// Chassis.HdmiOutputs[index].VideoOutFeedback
+				try
+				{
+					this.LogError("SetupOutputs: _Chassis.HdmiOutputs[{index}].VideoOutputFeedback is {outputVideoFb}", index, chassisHdmiOutput.VideoOutFeedback == null ? "NULL" : "NOT NULL");
+					VideoOutputRouteFeedbacks.Add(new IntFeedback(string.Format($"{outputName}Route"), () =>
 					{
-						//return output.VideoOutFeedback.NameFeedback.StringValue;
-						return hdmiOutput.VideoOutFeedback.NameFeedback.StringValue;
-					}
-					catch
+						try
+						{
+							return (int)chassisHdmiOutput.VideoOutFeedback.Number;
+						}
+						catch
+						{
+							this.LogError("SetupOutputs: Error getting _Chassis.HdmiOutputs[{index}].VideoOutFeedback", index);
+							return 0;
+						}
+					}));
+				}
+				catch (Exception ex)
+				{
+					this.LogError("SetupOutputs: Exception occurred while preparing to set _Chassis.HdmiOutputs[{index}].VideoOutFeedback: {exceptionMessage}", index, ex.Message);
+					this.LogError(ex, "SetupOutputs: Stack trace for exception");
+				}
+
+				// _Chassis.Outputs[index].VideoOutFeedback.NameFeedback
+				try
+				{
+					this.LogError("SetupOutputs: _Chassis.Outputs[{index}].VideoOutFeedback.NameFeedback is {outputVideoNameFb}", index, output.VideoOutFeedback.NameFeedback == null ? "NULL" : "NOT NULL");
+					OutputRouteNameFeedbacks.Add(new StringFeedback(string.Format($"{outputName}RoutedName"), () =>
 					{
-						//this.LogError("SetupOutputs: Error getting _Chassis.Outputs[{index}].VideoOutFeedback.NameFeedback", index);
-						this.LogError("SetupOutputs: Error getting _Chassis.HdmiOutputs[{index}].VideoOutFeedback.NameFeedback", index);
-						return "";
-					}
-				}));
+						try
+						{
+							return chassisOutput.VideoOutFeedback.NameFeedback.StringValue;
+						}
+						catch
+						{
+							this.LogError("SetupOutputs: Error getting _Chassis.Outputs[{index}].VideoOutFeedback.NameFeedback", index);
+							return "";
+						}
+					}));
+				}
+				catch (Exception ex)
+				{
+					this.LogError("SetupOutputs: Exception occurred while preparing to set _Chassis.Outputs[{index}].VideoOutFeedback.NameFeedback", index);
+					this.LogError(ex, "SetupOutputs: Stack trace for exception");
+				}
+
+				// _Chassis.HdmiOutputs[index].VideoOutFeedback.NameFeedback
+				try
+				{
+					this.LogError("SetupOutputs: _Chassis.HdmiOutputs[{index}].VideoOutFeedback.NameFeedback is {outputVideoNameFb}", index, chassisHdmiOutput.VideoOutFeedback.NameFeedback == null ? "NULL" : "NOT NULL");
+					OutputRouteNameFeedbacks.Add(new StringFeedback(string.Format($"{outputName}RoutedName"), () =>
+					{
+						try
+						{
+							return chassisHdmiOutput.VideoOutFeedback.NameFeedback.StringValue;
+						}
+						catch
+						{
+							this.LogError("SetupOutputs: Error getting _Chassis.HdmiOutputs[{index}].VideoOutFeedback.NameFeedback", index);
+							return "";
+						}
+					}));
+				}
+				catch (Exception ex)
+				{
+					this.LogError("SetupOutputs: Exception occurred while preparing to set _Chassis.HdmiOutputs[{index}].VideoOutFeedback.NameFeedback", index);
+					this.LogError(ex, "SetupOutputs: Stack trace for exception");
+				}
 			}
 		}
-
 
 		#endregion
 
@@ -466,7 +522,6 @@ namespace PepperDash.Essentials.DM.Chassis
 
 			foreach (var fb in VideoInputSyncFeedbacks)
 			{
-				this.LogInformation("AddFeedbackCollections: Adding VideoInputSyncFeedback {feedbackKey} to Feedbacks collection", fb.Key);
 				AddFeedbackToList(fb);
 			}
 			foreach (var fb in InputHdcpEnableFeedback)
