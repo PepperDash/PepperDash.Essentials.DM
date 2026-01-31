@@ -120,11 +120,8 @@ namespace PepperDash.Essentials.DM.Chassis
 				});
 			}
 
-			SetupInputPortAndNameFeedbacks();
-			SetupHdmiInputHdcpFeedbacks();
-			SetupInputVideoSyncFeedbacks();
-			SetupOutputPortsandNameFeedbacks();
-			SetupVideoOutputRouteFeedbacks();
+			SetupInputs();
+			SetupOutputs();
 
 			_Chassis.DMInputChange += Chassis_DMInputChange;
 			_Chassis.DMOutputChange += Chassis_DMOutputChange;
@@ -133,253 +130,170 @@ namespace PepperDash.Essentials.DM.Chassis
 			AddPostActivationAction(AddFeedbackCollections);
 		}
 
-		private void SetupInputPortAndNameFeedbacks()
+		private void SetupInputs()
 		{
-			if (InputNames == null)
+			if (_Chassis == null)
 			{
-				this.LogError("SetupInputs: InputNames is null. Ensure 'inputs' is defined in the device configuration.");
+				this.LogError("SetupInputs: Chassis is null. Cannot setup VideoSync feedbacks.");
 				return;
 			}
 
-			foreach (var kvp in InputNames)
+			//var inputCount = _Chassis.Inputs.Count;
+			var inputCount = _Chassis.NumberOfInputs;
+			this.LogError("SetupInputs: Chassis has {index} inputs", inputCount);
+			for (uint index = 1; index < inputCount; index++)
 			{
-				var index = kvp.Key;
-				var inputKey = string.Format("input{0}", index);
-				var inputName = kvp.Value;
+				// for reference only
+				//InputNameFeedbacks.Add(new StringFeedback(inputName, () => _Chassis.Inputs[index].NameFeedback.StringValue));
+				//InputNameFeedbacks.Add(new StringFeedback(inputName, () => InputNames[index]));
 
-				if (index < 1 || index > _Chassis.NumberOfInputs)
-				{
-					this.LogWarning("SetupInputs: Input index {index} is out of range (1-{max}). Skipping.", index, _Chassis.NumberOfInputs);
-					continue;
-				}
+				var input = _Chassis.Inputs[index];
+				var inputName = string.Format("input{0}", index);
+				this.LogError("SetupInputs: _Chassis.Inputs[{index}] is {input}", index, input == null ? "NULL" : "NOT NULL");
 
 				var hdmiInput = _Chassis.HdmiInputs[index];
-				if (hdmiInput == null)
+				this.LogError("SetupInputs: _Chassis.HdmiInputs[{index}] is {hdmiInput}", index, hdmiInput == null ? "NULL" : "NOT NULL");
+
+				// Name Feedback
+				this.LogError("SetupInputs: _Chassis.Inputs[{index}].NameFeedback is {inputNameFb}", index, input.NameFeedback == null ? "NULL" : "NOT NULL");
+				InputNameFeedbacks.Add(new StringFeedback(string.Format($"{inputName}Name"), () =>
 				{
-					this.LogError("SetupInputs: HdmiInput at index {index} is null. Skipping.", index);
-					continue;
-				}
+					try
+					{
+						return input.NameFeedback.StringValue;
+					}
+					catch
+					{
+						this.LogError("SetupInputs: Error getting _Chassis.Inputs[{index}].NameFeedback", index);
+						return "";
+					}
+				}));
 
-				hdmiInput.Name.StringValue = inputName;
+				// Set Input Name from config
+				var inputFriendlyName = InputNames[index] ?? inputName;
+				input.Name.StringValue = inputFriendlyName;
+				// hdmiInput.Name.StringValue = inputFriendlyName;
 
-				InputPorts.Add(new RoutingInputPort(inputKey, eRoutingSignalType.AudioVideo,
+				// Routing Input Port
+				InputPorts.Add(new RoutingInputPort(inputName, eRoutingSignalType.AudioVideo,
 					eRoutingPortConnectionType.Hdmi, hdmiInput, this)
 				{
 					FeedbackMatchObject = hdmiInput
 				});
 
-				InputNameFeedbacks.Add(new StringFeedback(string.Format($"{inputKey}Name"), () =>
-				{
-					try { return InputNames[index]; }
-					catch { this.LogError($"Error getting InputNameFeedback for input {inputKey}"); return ""; }
-				}));
-			}
-		}
-
-		private void SetupHdmiInputHdcpFeedbacks()
-		{
-			for (uint i = 1; i <= _Chassis.HdmiInputs.Count; i++)
-			{
-				var inputIndex = i;
-				var hdmiInput = _Chassis.HdmiInputs[inputIndex];
-
-				var inputName = string.Format("input{0}", inputIndex);
-				
-				InputHdcpEnableFeedback.Add(new BoolFeedback(string.Format($"{inputName}HdcpEnable"), () =>
+				// Video Detected Feedback
+				this.LogError("SetupInputs: _Chassis.Inputs[{index}].VideoDetectedFeedback is {inputSyncFb}", index, input.VideoDetectedFeedback == null ? "NULL" : "NOT NULL");
+				var inputSyncFbKey = string.Format("{0}VideoDetected", inputName);
+				VideoInputSyncFeedbacks.Add(new BoolFeedback(inputSyncFbKey, () =>
 				{
 					try
 					{
-						if (hdmiInput?.HdmiInputPort == null)
-						{
-							this.LogWarning("SetupInputHdcpFeedbacks: HdmiInputPort at index {index} is null. Cannot get HdcpEnableFeedback.", inputIndex);
-							return false;
-						}
-
-						return hdmiInput?.HdmiInputPort?.HdcpSupportOnFeedback?.BoolValue ?? false;
+						return input.VideoDetectedFeedback.BoolValue;
 					}
 					catch
 					{
-						this.LogError($"SetupInputHdcpFeedbacks: Error getting HdcpEnableFeedback for input {inputName}");
+						this.LogError("SetupInputs: Error getting _Chassis.Inputs[{index}].VideoDetectedFeedback", index);
+						return false;
+					}
+				}));
+
+				// HDCP Enable Feedback
+				this.LogError("SetupInputs: _Chassis.HdmiInputs[{index}].HdmiInputPort.HdcpSupportOnFeedback is {inputHdcpFb}", index, hdmiInput.HdmiInputPort.HdcpSupportOnFeedback == null ? "NULL" : "NOT NULL");
+				var inputHdcpFbKey = string.Format("{0}HdcpSupportOn", inputName);
+				InputHdcpEnableFeedback.Add(new BoolFeedback(inputHdcpFbKey, () =>
+				{
+					try
+					{
+						return hdmiInput.HdmiInputPort.HdcpSupportOnFeedback.BoolValue;
+					}
+					catch
+					{
+						this.LogError("SetupInputs: Error getting _Chassis.HdmiInputs[{index}].HdmiInputPort.HdcpSupportOnFeedback", index);
 						return false;
 					}
 				}));
 			}
 		}
 
-		private void SetupInputVideoSyncFeedbacks()
+		private void SetupOutputs()
 		{
-			if(VideoInputSyncFeedbacks == null)
+			if (_Chassis == null)
 			{
-				this.LogError("SetupInputVideoSyncFeedbacks: VideoInputSyncFeedbacks collection is null initializing.");
-				VideoInputSyncFeedbacks = new FeedbackCollection<BoolFeedback>();
-			}
-
-			if(_Chassis == null || _Chassis.HdmiInputs == null)
-			{
-				this.LogError("SetupInputVideoSyncFeedbacks: Chassis or Chassis HDMI inputs is null. Cannot setup VideoSync feedbacks.");
+				this.LogError("SetupOutputs: Chassis is null. Cannot setup VideoSync feedbacks.");
 				return;
 			}
 
-			for (var i = 0; i < _Chassis.HdmiInputs.Count; i++)
+			//var outputCount = _Chassis.Outputs.Count;
+			var outputCount = _Chassis.NumberOfOutputs;
+			this.LogError("SetupOutputs: Chassis has {index} outputs", outputCount);
+			for (uint index = 1; index < outputCount; index++)
 			{
-				var inputIndex = i + 1;
-				var input = _Chassis.HdmiInputs[(uint)inputIndex];
-
-				if(input == null)
-				{
-					this.LogError("SetupInputVideoSyncFeedbacks: Chassis HDMI {input} is null. Skipping.", inputIndex);
-					continue;
-				}
-
-				var inputSync = input.VideoDetectedFeedback;
-				if(inputSync == null)
-				{
-					this.LogError("SetupInputVideoSyncFeedbacks: Chassis HDMI input VideoDetectedFeedback is null. Skipping.");
-					continue;
-				}
-
-				var inputName = string.Format("Input{0}", inputIndex);
-				var inputFbKeyPrefix = inputName.Replace(" ", "").Trim();
-
-				VideoInputSyncFeedbacks.Add(new BoolFeedback(string.Format($"{inputFbKeyPrefix}VideoDetected"), () =>
-				{
-					try
-					{
-						this.LogInformation("SetupInputVideoSyncFeedbacks: Getting VideoDetectedFeedback for HDMI {inputSync}", inputSync.ToString());
-						return inputSync.BoolValue;
-					}
-					catch
-					{
-						this.LogError($"SetupInputVideoSyncFeedbacks: Error getting VideoDetectedFeedback for HDMI {inputSync}");
-						return false;
-					}
-				}));
-			}
-
-			// for (uint i = 1; i <= _Chassis.HdmiInputs.Count; i++)
-			// {
-			// 	var inputIndex = i;
-			// 	var chassisHdmiInput = _Chassis.HdmiInputs[inputIndex];
-
-			// 	if (chassisHdmiInput == null)
-			// 	{
-			// 		this.LogError("SetupInputVideoSyncFeedbacks: Chassis HDMI input {index} is null. Skipping.", inputIndex);
-			// 		continue;
-			// 	}
-
-			// 	var inputName = string.Format("Input{0}", inputIndex);
-			// 	var inputFbKeyPrefix = inputName.Replace(" ", "").Trim();
-
-			// 	VideoInputSyncFeedbacks.Add(new BoolFeedback(string.Format($"{inputFbKeyPrefix}VideoDetectedFeedback"), () =>
-			// 	{
-			// 		try
-			// 		{
-			// 			if (chassisHdmiInput?.VideoDetectedFeedback == null)
-			// 			{
-			// 				this.LogError("SetupInputVideoSyncFeedbacks: Chassis HDMI input {index} VideoDetectedFeedback is null. Cannot get VideoDetectedFeedback.", inputIndex);
-			// 				return false;
-			// 			}
-
-			// 			return chassisHdmiInput?.VideoDetectedFeedback?.BoolValue ?? false;
-			// 		}
-			// 		catch
-			// 		{
-			// 			this.LogError($"SetupInputVideoSyncFeedbacks: Error getting VideoDetectedFeedback for {inputName}");
-			// 			return false;
-			// 		}
-			// 	}));
-			// }
-		}
-
-		private void SetupOutputPortsandNameFeedbacks()
-		{
-			if (OutputNames == null)
-			{
-				this.LogWarning("SetupOutputs: OutputNames is null. Ensure 'outputs' is defined in the device configuration.");
-				return;
-			}
-
-			foreach (var kvp in OutputNames)
-			{
-				var index = kvp.Key;
-				var outputKey = string.Format("output{0}", index);
-				var outputName = kvp.Value;
-
-				if (index < 1 || index > _Chassis.NumberOfOutputs)
-				{
-					this.LogWarning("SetupOutputs: Output index {index} is out of range (1-{max}). Skipping.", index, _Chassis.NumberOfOutputs);
-					continue;
-				}
+				var output = _Chassis.Outputs[index];
+				var outputName = string.Format("output{0}", index);
+				this.LogError("SetupOutputs: _Chassis.Outputs[{index}] is {output}", index, output == null ? "NULL" : "NOT NULL");
 
 				var hdmiOutput = _Chassis.HdmiOutputs[index];
-				if (hdmiOutput == null)
-				{
-					this.LogWarning("SetupOutputs: HdmiOutput at index {index} is null. Skipping.", index);
-					continue;
-				}
+				this.LogError("SetupOutputs: _Chassis.HdmiOutputs[{index}] is {hdmiOutput}", index, hdmiOutput == null ? "NULL" : "NOT NULL");
 
-				var chassisOutput = _Chassis.Outputs[index];
-				if (chassisOutput == null)
+				// Name Feedback
+				this.LogError("SetupOutputs: _Chassis.Outputs[{index}].NameFeedback is {outputNameFb}", index, output.NameFeedback == null ? "NULL" : "NOT NULL");
+				OutputNameFeedbacks.Add(new StringFeedback(string.Format($"{outputName}Name"), () =>
 				{
-					this.LogError("SetupOutputs: Chassis Output at index {index} is null. Skipping.", index);
-					continue;
-				}
+					try
+					{
+						return output.NameFeedback.StringValue;
+					}
+					catch
+					{
+						this.LogError("SetupOutputs: Error getting _Chassis.Outputs[{index}].NameFeedback", index);
+						return "";
+					}
+				}));
 
+				// Set Output Name from config
+				var outputFriendlyName = OutputNames[index] ?? outputName;
+				output.Name.StringValue = outputFriendlyName;
+				// hdmiOutput.Name.StringValue = outputFriendlyName;
+
+				// Routing Output Port
 				OutputPorts.Add(new RoutingOutputPort(outputName, eRoutingSignalType.AudioVideo,
 					eRoutingPortConnectionType.Hdmi, hdmiOutput, this)
 				{
 					FeedbackMatchObject = hdmiOutput
 				});
 
-				OutputNameFeedbacks.Add(new StringFeedback(string.Format($"{outputKey}Name"), () =>
-				{
-					try { return OutputNames[index]; }
-					catch { this.LogError($"Error getting OutputNameFeedback for output {outputName}"); return ""; }
-				}));
-				OutputRouteNameFeedbacks.Add(new StringFeedback(string.Format($"{outputKey}RouteName"), () =>
-				{
-					try { return chassisOutput.VideoOutFeedback == null ? NoRouteText : chassisOutput.VideoOutFeedback.NameFeedback.StringValue; }
-					catch { this.LogError($"Error getting OutputRouteNameFeedback for output {outputName}"); return NoRouteText; }
-				}));
-			}
-		}
-
-		private void SetupVideoOutputRouteFeedbacks()
-		{
-			for (uint i = 1; i <= _Chassis.Outputs.Count; i++)
-			{
-				var outputIndex = i;
-				var chassisOutput = _Chassis.Outputs[outputIndex];
-
-				if (chassisOutput == null)
-				{
-					this.LogError("SetupVideoOutputRouteFeedbacks: Chassis Output at index {index} is null. Skipping.", outputIndex);
-					continue;
-				}
-
-				var outputName = string.Format("output{0}", outputIndex);
-				var outputFbKeyPrefix = outputName.Replace(" ", "").Trim();
-
+				// Video Output Route Feedback
+				this.LogError("SetupOutputs: _Chassis.Outputs[{index}].VideoOutputFeedback is {outputVideoFb}", index, output.VideoOutFeedback == null ? "NULL" : "NOT NULL");
 				VideoOutputRouteFeedbacks.Add(new IntFeedback(string.Format($"{outputName}Route"), () =>
 				{
 					try
 					{
-						if (chassisOutput?.VideoOutFeedback == null)
-						{
-							this.LogError("SetupVideoOutputRouteFeedbacks: Chassis Output at index {index} VideoOutFeedback is null. Cannot get VideoOutputRouteFeedback.", outputIndex);
-							return 0;
-						}
-
-						return (int)chassisOutput.VideoOutFeedback.Number;
+						return (int)output.VideoOutFeedback.Number;
 					}
 					catch
 					{
-						this.LogError($"SetupVideoOutputRouteFeedbacks: Error getting VideoOutputRouteFeedback for output {outputName}");
+						this.LogError("SetupOutputs: Error getting _Chassis.Outputs[{index}].VideoOutFeedback", index);
 						return 0;
+					}
+				}));
+
+				// Output Route Name Feedback
+				this.LogError("SetupOutputs: _Chassis.Outputs[{index}].VideoOutFeedback.NameFeedback is {outputVideoNameFb}", index, output.VideoOutFeedback.NameFeedback == null ? "NULL" : "NOT NULL");
+				OutputRouteNameFeedbacks.Add(new StringFeedback(string.Format($"{outputName}RoutedName"), () =>
+				{
+					try
+					{
+						return output.VideoOutFeedback.NameFeedback.StringValue;
+					}
+					catch
+					{
+						this.LogError("SetupOutputs: Error getting _Chassis.Outputs[{index}].VideoOutFeedback.NameFeedback", index);
+						return "";
 					}
 				}));
 			}
 		}
+
 
 		#endregion
 
@@ -445,7 +359,7 @@ namespace PepperDash.Essentials.DM.Chassis
 
 			if (InputNames.TryGetValue(port, out var inputName))
 			{
-                var feedback = InputHdcpEnableFeedback.FirstOrDefault(f => f.Key == inputName);
+				var feedback = InputHdcpEnableFeedback.FirstOrDefault(f => f.Key == inputName);
 				if (feedback == null)
 				{
 					return;
