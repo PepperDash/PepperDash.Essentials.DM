@@ -97,19 +97,17 @@ namespace PepperDash.Essentials.DM.Chassis
             VideoOutputRouteFeedbacks = new FeedbackCollection<IntFeedback>();
 			OutputRouteNameFeedbacks = new FeedbackCollection<StringFeedback>();
 
-			if (_Chassis is HdMdNxM4kzE _chassis_M4kzE)
+			AutoRouteFeedback = new BoolFeedback("AutoRoute", () =>
 			{
-				AutoRouteFeedback = new BoolFeedback("AutoRoute", () =>
-				{
-					try { return _chassis_M4kzE.AutoRouteOnFeedback?.BoolValue ?? false; }
-					catch { this.LogError("Error getting AutoRouteFeedback"); return false; }
-				});
-			}
-			if (_Chassis is HdMd4xX4kzE _chassis_X4kzE)
+				try { return _chassis_M4kzE.AutoRouteOnFeedback?.BoolValue ?? false; }
+				catch { this.LogError("Error getting AutoRouteFeedback"); return false; }
+			});
+
+			if (_Chassis is HdMd4xX4kzE _chassis)
 			{
 				PriorityRouteFeedback = new BoolFeedback("PriorityRoute", () =>
 				{
-					try { return _chassis_X4kzE.PriorityRouteOnFeedback?.BoolValue ?? false; }
+					try { return _chassis.PriorityRouteOnFeedback?.BoolValue ?? false; }
 					catch { this.LogError("Error getting PriorityRouteFeedback"); return false; }
 				});
 			}
@@ -519,52 +517,7 @@ namespace PepperDash.Essentials.DM.Chassis
 				// due to the amount of time it takes for the device to come online                
 			};
 		}
-
-		/*
-		private void UpdateFeedbacks()
-		{
-			IsOnline?.FireUpdate();
-			DeviceNameFeedback?.FireUpdate();
-			AutoRouteFeedback?.FireUpdate();
-
-			foreach (var item in VideoInputSyncFeedbacks)
-			{
-				item.FireUpdate();
-			}
-
-			foreach (var item in VideoOutputRouteFeedbacks)
-			{
-				item.FireUpdate();
-			}
-
-			foreach (var item in InputHdcpEnableFeedback)
-			{
-				item.FireUpdate();
-			}
-
-			foreach (var item in InputNameFeedbacks)
-			{
-				item.FireUpdate();
-			}
-
-			foreach (var item in OutputNameFeedbacks)
-			{
-				item.FireUpdate();
-			}
-
-			foreach (var item in OutputRouteNameFeedbacks)
-			{
-				item.FireUpdate();
-			}
-
-			foreach (var item in Feedbacks)
-			{
-				// TODO - Remove after testing
-				this.LogInformation("UpdateFeedbacks: Firing feedback for {itemKey}", item.Key);
-				item.FireUpdate();
-			}				
-		}
-		*/
+		
 		#endregion
 
 		#region Events
@@ -598,11 +551,8 @@ namespace PepperDash.Essentials.DM.Chassis
 				feedback?.FireUpdate();
 			}
 
-			if (_Chassis is HdMdNxM4kzE)
-			{
-				AutoRouteFeedback?.FireUpdate();
-			}
-
+			AutoRouteFeedback?.FireUpdate();
+			
 			if (_Chassis is HdMd4xX4kzE)
 			{
 				PriorityRouteFeedback?.FireUpdate();
