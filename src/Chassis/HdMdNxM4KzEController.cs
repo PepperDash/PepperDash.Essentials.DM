@@ -97,11 +97,7 @@ namespace PepperDash.Essentials.DM.Chassis
             VideoOutputRouteFeedbacks = new FeedbackCollection<IntFeedback>();
 			OutputRouteNameFeedbacks = new FeedbackCollection<StringFeedback>();
 
-			AutoRouteFeedback = new BoolFeedback("AutoRoute", () =>
-			{
-				try { return _chassis_M4kzE.AutoRouteOnFeedback?.BoolValue ?? false; }
-				catch { this.LogError("Error getting AutoRouteFeedback"); return false; }
-			});
+			AutoRouteFeedback = new BoolFeedback("AutoRoute", () =>_Chassis.AutoRouteOnFeedback?.BoolValue ?? false);
 
 			if (_Chassis is HdMd4xX4kzE _chassis)
 			{
