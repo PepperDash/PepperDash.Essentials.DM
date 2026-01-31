@@ -141,8 +141,9 @@ namespace PepperDash.Essentials.DM.Chassis
 			//var inputCount = _Chassis.Inputs.Count;
 			var inputCount = _Chassis.NumberOfInputs;
 			this.LogError("SetupInputs: Chassis has {inputCount} inputs", inputCount);
-			for (uint index = 1; index <= inputCount; index++)
+			for (uint i = 1; i <= inputCount; i++)
 			{
+				var index = i;
 				if(index > inputCount)
 				{
 					this.LogError("SetupInputs: index {index} is greater than _Chassis.NumberOfInputs {inputCount}, breaking loop", index, inputCount);
@@ -152,8 +153,10 @@ namespace PepperDash.Essentials.DM.Chassis
 				//InputNameFeedbacks.Add(new StringFeedback(inputName, () => _Chassis.Inputs[index].NameFeedback.StringValue));
 				//InputNameFeedbacks.Add(new StringFeedback(inputName, () => InputNames[index]));
 
-				var input = _Chassis.Inputs[index];
 				var inputName = string.Format("input{0}", index);
+				var inputFriendlyName = InputNames[index] ?? inputName;
+
+				var input = _Chassis.Inputs[index];
 				this.LogError("SetupInputs: _Chassis.Inputs[{index}] is {input}", index, input == null ? "NULL" : "NOT NULL");
 
 				var hdmiInput = _Chassis.HdmiInputs[index];
@@ -175,7 +178,6 @@ namespace PepperDash.Essentials.DM.Chassis
 				}));
 
 				// Set Input Name from config
-				var inputFriendlyName = InputNames[index] ?? inputName;
 				input.Name.StringValue = inputFriendlyName;
 				// hdmiInput.Name.StringValue = inputFriendlyName;
 
@@ -231,16 +233,19 @@ namespace PepperDash.Essentials.DM.Chassis
 			//var outputCount = _Chassis.Outputs.Count;
 			var outputCount = _Chassis.NumberOfOutputs;
 			this.LogError("SetupOutputs: Chassis has {outputCount} outputs", outputCount);
-			for (uint index = 1; index <= outputCount; index++)
+			for (uint i = 1; i <= outputCount; i++)
 			{
+				var index = i;
 				if(index > outputCount)
 				{
 					this.LogError("SetupOutputs: index {index} is greater than _Chassis.NumberOfOutputs {outputCount}, breaking loop", index, outputCount);
 					break;
 				}
+
+				var outputName = string.Format("output{0}", index);
+				var outputFriendlyName = OutputNames[index] ?? outputName;
 				
 				var output = _Chassis.Outputs[index];
-				var outputName = string.Format("output{0}", index);
 				this.LogError("SetupOutputs: _Chassis.Outputs[{index}] is {output}", index, output == null ? "NULL" : "NOT NULL");
 
 				var hdmiOutput = _Chassis.HdmiOutputs[index];
@@ -262,7 +267,6 @@ namespace PepperDash.Essentials.DM.Chassis
 				}));
 
 				// Set Output Name from config
-				var outputFriendlyName = OutputNames[index] ?? outputName;
 				output.Name.StringValue = outputFriendlyName;
 				// hdmiOutput.Name.StringValue = outputFriendlyName;
 
@@ -274,31 +278,37 @@ namespace PepperDash.Essentials.DM.Chassis
 				});
 
 				// Video Output Route Feedback
-				this.LogError("SetupOutputs: _Chassis.Outputs[{index}].VideoOutputFeedback is {outputVideoFb}", index, output.VideoOutFeedback == null ? "NULL" : "NOT NULL");
+				//this.LogError("SetupOutputs: _Chassis.Outputs[{index}].VideoOutputFeedback is {outputVideoFb}", index, output.VideoOutFeedback == null ? "NULL" : "NOT NULL");
+				this.LogError("SetupOutputs: _Chassis.HdmiOutputs[{index}].VideoOutputFeedback is {outputVideoFb}", index, hdmiOutput.VideoOutFeedback == null ? "NULL" : "NOT NULL");
 				VideoOutputRouteFeedbacks.Add(new IntFeedback(string.Format($"{outputName}Route"), () =>
 				{
 					try
 					{
-						return (int)output.VideoOutFeedback.Number;
+						//return (int)output.VideoOutFeedback.Number;
+						return (int)hdmiOutput.VideoOutFeedback.Number;
 					}
 					catch
 					{
-						this.LogError("SetupOutputs: Error getting _Chassis.Outputs[{index}].VideoOutFeedback", index);
+						//this.LogError("SetupOutputs: Error getting _Chassis.Outputs[{index}].VideoOutFeedback", index);
+						this.LogError("SetupOutputs: Error getting _Chassis.HdmiOutputs[{index}].VideoOutFeedback", index);
 						return 0;
 					}
 				}));
 
 				// Output Route Name Feedback
-				this.LogError("SetupOutputs: _Chassis.Outputs[{index}].VideoOutFeedback.NameFeedback is {outputVideoNameFb}", index, output.VideoOutFeedback.NameFeedback == null ? "NULL" : "NOT NULL");
+				//this.LogError("SetupOutputs: _Chassis.Outputs[{index}].VideoOutFeedback.NameFeedback is {outputVideoNameFb}", index, output.VideoOutFeedback.NameFeedback == null ? "NULL" : "NOT NULL");
+				this.LogError("SetupOutputs: _Chassis.HdmiOutputs[{index}].VideoOutFeedback.NameFeedback is {outputVideoNameFb}", index, hdmiOutput.VideoOutFeedback.NameFeedback == null ? "NULL" : "NOT NULL");
 				OutputRouteNameFeedbacks.Add(new StringFeedback(string.Format($"{outputName}RoutedName"), () =>
 				{
 					try
 					{
-						return output.VideoOutFeedback.NameFeedback.StringValue;
+						//return output.VideoOutFeedback.NameFeedback.StringValue;
+						return hdmiOutput.VideoOutFeedback.NameFeedback.StringValue;
 					}
 					catch
 					{
-						this.LogError("SetupOutputs: Error getting _Chassis.Outputs[{index}].VideoOutFeedback.NameFeedback", index);
+						//this.LogError("SetupOutputs: Error getting _Chassis.Outputs[{index}].VideoOutFeedback.NameFeedback", index);
+						this.LogError("SetupOutputs: Error getting _Chassis.HdmiOutputs[{index}].VideoOutFeedback.NameFeedback", index);
 						return "";
 					}
 				}));
@@ -325,8 +335,7 @@ namespace PepperDash.Essentials.DM.Chassis
 		/// <param name="port">The input port number to enable HDCP on.</param>
 		public void EnableHdcp(uint port)
 		{
-			if (port > _Chassis.NumberOfInputs) return;
-			if (port <= 0) return;
+			if (port <= 0 || port > _Chassis.NumberOfInputs) return;
 
 			var hdmiInput = _Chassis.HdmiInputs[port];
 			if (hdmiInput?.HdmiInputPort == null)
@@ -356,8 +365,7 @@ namespace PepperDash.Essentials.DM.Chassis
 		/// <param name="port">The input port number to disable HDCP on.</param>
 		public void DisableHdcp(uint port)
 		{
-			if (port > _Chassis.NumberOfInputs) return;
-			if (port <= 0) return;
+			if (port <= 0 || port > _Chassis.NumberOfInputs) return;
 
 			var hdmiInput = _Chassis.HdmiInputs[port];
 			if (hdmiInput?.HdmiInputPort == null)
