@@ -69,10 +69,16 @@ namespace PepperDash.Essentials.DM.Chassis
 			NoRouteText = props.NoRouteText ?? "None";
 
 			InputNames = new Dictionary<uint, string>();
-            InputNames = props.Inputs ?? new Dictionary<uint, string>();
+            foreach(var inputNames in props.Inputs)
+			{
+				InputNames.Add(inputNames.Key, inputNames.Value ?? string.Format("Input {0}", inputNames.Key));
+			}
             
             OutputNames = new Dictionary<uint, string>();
-            OutputNames = props.Outputs ?? new Dictionary<uint, string>();
+			foreach(var outputName in props.Outputs)
+			{
+				OutputNames.Add(outputName.Key, outputName.Value ?? string.Format("Output {0}", outputName.Key));
+			}
 
             InputPorts = new RoutingPortCollection<RoutingInputPort>();
             OutputPorts = new RoutingPortCollection<RoutingOutputPort>();
@@ -93,7 +99,7 @@ namespace PepperDash.Essentials.DM.Chassis
 
 			if (_Chassis is HdMdNxM4kzE _chassis_M4kzE)
 			{
-				AutoRouteFeedback = new BoolFeedback("AutoRouteFeedback", () =>
+				AutoRouteFeedback = new BoolFeedback("AutoRoute", () =>
 				{
 					try { return _chassis_M4kzE.AutoRouteOnFeedback?.BoolValue ?? false; }
 					catch { this.LogError("Error getting AutoRouteFeedback"); return false; }
@@ -101,7 +107,7 @@ namespace PepperDash.Essentials.DM.Chassis
 			}
 			if (_Chassis is HdMd4xX4kzE _chassis_X4kzE)
 			{
-				PriorityRouteFeedback = new BoolFeedback("PriorityRouteFeedback", () =>
+				PriorityRouteFeedback = new BoolFeedback("PriorityRoute", () =>
 				{
 					try { return _chassis_X4kzE.PriorityRouteOnFeedback?.BoolValue ?? false; }
 					catch { this.LogError("Error getting PriorityRouteFeedback"); return false; }
@@ -131,15 +137,14 @@ namespace PepperDash.Essentials.DM.Chassis
 				var inputNumber = input.Number;
 				this.LogError("SetupInputs: _Chassis.Inputs[{inputNumber}]", inputNumber);
 
-				var inputName = string.Format("input{0}", inputNumber);
-				var inputFriendlyName = InputNames[inputNumber] ?? inputName;
+				var inputFriendlyName = InputNames[inputNumber];
 
 				// Set Input Name from config
 				input.Name.StringValue = inputFriendlyName;
 
 				// Feedbacks
-				InputNameFeedbacks.Add(new StringFeedback(string.Format($"{inputName}Name"), () => input.NameFeedback.StringValue));
-				VideoInputSyncFeedbacks.Add(new BoolFeedback(string.Format($"{inputName}VideoDetected"), () => input.VideoDetectedFeedback.BoolValue));
+				InputNameFeedbacks.Add(new StringFeedback(inputFriendlyName, () => input.NameFeedback.StringValue));
+				VideoInputSyncFeedbacks.Add(new BoolFeedback(inputFriendlyName, () => input.VideoDetectedFeedback.BoolValue));
 			}
 
 			foreach(var hdmiInput in _Chassis.HdmiInputs)
@@ -158,7 +163,7 @@ namespace PepperDash.Essentials.DM.Chassis
 				});
 
 				// Feedbacks
-				InputHdcpEnableFeedback.Add(new BoolFeedback(hdmiInputName, () => hdmiInput.HdmiInputPort.HdcpSupportOnFeedback.BoolValue));
+				InputHdcpEnableFeedback.Add(new BoolFeedback(hdmiInputFriendlyName, () => hdmiInput.HdmiInputPort.HdcpSupportOnFeedback.BoolValue));
 			}
 		}
 
@@ -175,16 +180,15 @@ namespace PepperDash.Essentials.DM.Chassis
 				var outputNumber = output.Number;
 				this.LogError("SetupOutputs: _Chassis.Outputs[{outputNumber}]", outputNumber);
 
-				var outputName = string.Format("output{0}", outputNumber);
-				var outputFriendlyName = OutputNames[outputNumber] ?? outputName;
+				var outputFriendlyName = OutputNames[outputNumber];
 
 				// Set Output Name from config
 				output.Name.StringValue = outputFriendlyName;
 
 				// Feedbacks
-				OutputNameFeedbacks.Add(new StringFeedback(string.Format($"{outputName}Name"), () => output.NameFeedback.StringValue));
-				VideoOutputRouteFeedbacks.Add(new IntFeedback(string.Format($"{outputName}Route"), () => (int)(output.VideoOutFeedback == null ? 0 : output.VideoOutFeedback.Number)));
-				OutputRouteNameFeedbacks.Add(new StringFeedback(string.Format($"{outputName}RoutedName"), () => output.VideoOutFeedback?.NameFeedback.StringValue ?? NoRouteText));
+				OutputNameFeedbacks.Add(new StringFeedback(outputFriendlyName, () => output.NameFeedback.StringValue));
+				VideoOutputRouteFeedbacks.Add(new IntFeedback(outputFriendlyName, () => (int)(output.VideoOutFeedback == null ? 0 : output.VideoOutFeedback.Number)));
+				OutputRouteNameFeedbacks.Add(new StringFeedback(outputFriendlyName, () => output.VideoOutFeedback?.NameFeedback.StringValue ?? NoRouteText));
 			}
 
 			foreach(var hdmiOutput in _Chassis.HdmiOutputs)
@@ -193,7 +197,7 @@ namespace PepperDash.Essentials.DM.Chassis
 				this.LogError("SetupOutputs: _Chassis.HdmiOutputs[{hdmiOutputNumber}]", hdmiOutputNumber);
 
 				var hdmiOutputName = string.Format("hdmiOutput{0}", hdmiOutputNumber);
-				var hdmiOutputFriendlyName = OutputNames[hdmiOutputNumber] ?? hdmiOutputName;
+				var hdmiOutputFriendlyName = OutputNames[hdmiOutputNumber];
 
 				// Set Output Name from config
 				hdmiOutput.Name.StringValue = hdmiOutputFriendlyName;
@@ -228,26 +232,8 @@ namespace PepperDash.Essentials.DM.Chassis
 		{
 			if (port <= 0 || port > _Chassis.NumberOfInputs) return;
 
-			var hdmiInput = _Chassis.HdmiInputs[port];
-			if (hdmiInput?.HdmiInputPort == null)
-			{
-				this.LogWarning("EnableHdcp: HdmiInputPort at index {port} is null. Cannot enable HDCP.", port);
-				return;
-			}
-
-			hdmiInput.HdmiInputPort.HdcpSupportOn();
-
-			if (InputNames.ContainsKey(port))
-			{
-				var inputName = InputNames[port];
-				var feedback = InputHdcpEnableFeedback.FirstOrDefault(f => f.Key == inputName);
-				if (feedback == null)
-				{
-					return;
-				}
-
-				feedback.FireUpdate();
-			}
+			_Chassis.HdmiInputs[port].HdmiInputPort.HdcpSupportOn();
+			InputHdcpEnableFeedback[InputNames[port]]?.FireUpdate();
 		}
 
 		/// <summary>
@@ -258,24 +244,8 @@ namespace PepperDash.Essentials.DM.Chassis
 		{
 			if (port <= 0 || port > _Chassis.NumberOfInputs) return;
 
-			var hdmiInput = _Chassis.HdmiInputs[port];
-			if (hdmiInput?.HdmiInputPort == null)
-			{
-				this.LogWarning("DisableHdcp: HdmiInputPort at index {port} is null. Cannot disable HDCP.", port);
-				return;
-			}
-
-			hdmiInput.HdmiInputPort.HdcpSupportOff();
-
-			if (InputNames.TryGetValue(port, out var inputName))
-			{
-				var feedback = InputHdcpEnableFeedback.FirstOrDefault(f => f.Key == inputName);
-				if (feedback == null)
-				{
-					return;
-				}
-				feedback.FireUpdate();
-			}
+			_Chassis.HdmiInputs[port].HdmiInputPort.HdcpSupportOff();
+			InputHdcpEnableFeedback[InputNames[port]]?.FireUpdate();
 		}
 
 		/// <summary>
@@ -284,13 +254,13 @@ namespace PepperDash.Essentials.DM.Chassis
 		public void EnableAutoRoute()
 		{
 			if (_Chassis.NumberOfOutputs > 1) return;
-			if (_Chassis is HdMdNxM4kzE _chassis_M4kzE)
+			if (!(_Chassis is HdMdNxM4kzE _chassis)) 
 			{
-				_chassis_M4kzE.AutoRouteOn();
+				this.LogVerbose("EnableAutoRoute: AutoRoute is not supported on this chassis.");
 				return;
 			}
-
-			this.LogVerbose("EnableAutoRoute: AutoRoute is not supported on this chassis.");
+			
+			_chassis.AutoRouteOn();
 		}
 
 		/// <summary>
@@ -299,13 +269,13 @@ namespace PepperDash.Essentials.DM.Chassis
 		public void DisableAutoRoute()
 		{
 			if (_Chassis.NumberOfOutputs > 1) return;
-			if (_Chassis is HdMdNxM4kzE _chassis_M4kzE)
+			if (!(_Chassis is HdMdNxM4kzE _chassis)) 
 			{
-				_chassis_M4kzE.AutoRouteOff();
+				this.LogVerbose("DisableAutoRoute: AutoRoute is not supported on this chassis.");
 				return;
 			}
-
-			this.LogVerbose("DisableAutoRoute: AutoRoute is not supported on this chassis.");
+			
+			_chassis.AutoRouteOff();
 		}
 
 		/// <summary>
@@ -313,13 +283,14 @@ namespace PepperDash.Essentials.DM.Chassis
 		/// </summary>
 		public void EnablePriorityRoute()
 		{
-			if (_Chassis is HdMd4xX4kzE _chassis_X4kzE)
+			//if (!(_Chassis is HdMd4xX4kzE _chassis)) 
+			if(!(_Chassis is HdMd4xX4kzE _chassis))
 			{
-				_chassis_X4kzE.PriorityRouteOn();
+				this.LogVerbose("EnablePriorityRoute: Priority Route is not supported on {key}.", Key);
 				return;
 			}
-
-			this.LogVerbose("EnablePriorityRoute: Priority Route is not supported on this chassis.");
+			
+			_chassis.PriorityRouteOn();
 		}
 
 		/// <summary>
@@ -392,11 +363,11 @@ namespace PepperDash.Essentials.DM.Chassis
 		/// <summary>
 		/// Adds a feedback to the Feedbacks collection if it does not already exist.
 		/// </summary>
-		public void AddFeedbackToList(Essentials.Core.Feedback newFb)
+		public void AddFeedbackToList(Core.Feedback newFb)
 		{
 			if (newFb == null) return;
 
-			if (Feedbacks.Any(f => f.Key == newFb.Key)) return;
+			//if (Feedbacks.Any(f => f.Key == newFb.Key)) return;
 
 			// TODO - Remove after testing
 			this.LogVerbose("AddFeedbackToList: adding {feedbackKey} to Feedbacks collection", newFb.Key);
@@ -417,7 +388,7 @@ namespace PepperDash.Essentials.DM.Chassis
 		{
 			var input = inputSelector as HdMdNxM4kzEHdmiInput;
 			var output = outputSelector as HdMdNxM4kzEHdmiOutput;
-			this.LogVerbose("ExecuteSwitch: input={0} output={1}", input, output);
+			this.LogVerbose("ExecuteSwitch: input={input} output={output}", input, output);
 
 			if (output == null)
 			{
@@ -443,8 +414,6 @@ namespace PepperDash.Essentials.DM.Chassis
 		/// <param name="signalType">The type of signal to switch.</param>
 		public void ExecuteNumericSwitch(ushort inputSelector, ushort outputSelector, eRoutingSignalType signalType)
 		{
-			this.LogInformation("ExecuteNumericSwitch: inputSelector={inputSelector} outputSelector={outputSelector}", inputSelector, outputSelector);
-
 			var input = inputSelector == 0 ? null : _Chassis.HdmiInputs[inputSelector];
 			var output = _Chassis.HdmiOutputs[outputSelector];
 
@@ -484,10 +453,9 @@ namespace PepperDash.Essentials.DM.Chassis
 				this.LogInformation("Please update config to use 'eiscapiadvanced' to get all join map features for this device.");
 			}
 
-			if (IsOnline != null) IsOnline?.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
-
 			DeviceNameFeedback?.LinkInputSig(trilist.StringInput[joinMap.Name.JoinNumber]);
-
+			IsOnline?.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
+			
 			if (_Chassis is HdMdNxM4kzE _chassis_M4kzE)
 			{
 				this.LogInformation("LinkToApi: _Chassis is HdMdNxM4kzE, setting up AutoRoute links");
@@ -505,81 +473,37 @@ namespace PepperDash.Essentials.DM.Chassis
 				// PriorityRouteFeedback?.LinkInputSig(trilist.BooleanInput[joinMap.EnablePriorityRoute.JoinNumber]);
 			}
 
-			if (InputNames != null)
+			foreach(var input in _Chassis.Inputs)
 			{
-				foreach (var kvp in InputNames)
-				{
-					var input = kvp.Key;
-					var inputName = kvp.Value;
+				uint inputNumber = input.Number;
+				var joinOffset = inputNumber - 1;
 
-					if (input < 1 || input > _Chassis.NumberOfInputs)
-					{
-						this.LogWarning("LinkToApi: Input index {index} is out of range (1-{max}). Skipping.", input, _Chassis.NumberOfInputs);
-						continue;
-					}
+				this.LogInformation("LinkToApi: _Chassis.Inputs[{inputNumber}].Name = {inputName}", input.Number, input.Name.StringValue);
 
-					var joinIndex = input - 1;
+				trilist.SetSigTrueAction(joinMap.EnableInputHdcp.JoinNumber + joinOffset, () => EnableHdcp(inputNumber));
+				trilist.SetSigTrueAction(joinMap.DisableInputHdcp.JoinNumber + joinOffset, () => DisableHdcp(inputNumber));
 
-					var joinNumberInputSync = joinMap.InputSync.JoinNumber + joinIndex;
-					var joinNumberEnableInputHdcp = joinMap.EnableInputHdcp.JoinNumber + joinIndex;
-					var joinNumberDisableInputHdcp = joinMap.DisableInputHdcp.JoinNumber + joinIndex;
-					var joinNumberInputName = joinMap.InputName.JoinNumber + joinIndex;
+				InputNameFeedbacks[InputNames[inputNumber]]?.LinkInputSig(trilist.StringInput[joinMap.InputName.JoinNumber + joinOffset]);
 
-					this.LogInformation("LinkToApi: Input {input} | joinIndex = {joinIndex}, InputSyncJoin = {joinNumberInputSync}, EnableHdcpJoin = {joinNumberEnableInputHdcp}, DisableHdcpJoin = {joinNumberDisableInputHdcp}, InputNameJoin = {joinNumberInputName}",
-						input, joinIndex, joinNumberInputSync, joinNumberEnableInputHdcp, joinNumberDisableInputHdcp, joinNumberInputName);
+				InputHdcpEnableFeedback[InputNames[inputNumber]]?.LinkInputSig(trilist.BooleanInput[joinMap.EnableInputHdcp.JoinNumber + joinOffset]);
+				InputHdcpEnableFeedback[InputNames[inputNumber]]?.LinkComplementInputSig(trilist.BooleanInput[joinMap.DisableInputHdcp.JoinNumber + joinOffset]);
 
-					//Digital
-					VideoInputSyncFeedbacks[inputName]?.LinkInputSig(trilist.BooleanInput[joinNumberInputSync]);
-					InputHdcpEnableFeedback[inputName]?.LinkInputSig(trilist.BooleanInput[joinNumberEnableInputHdcp]);
-					InputHdcpEnableFeedback[inputName]?.LinkComplementInputSig(trilist.BooleanInput[joinNumberDisableInputHdcp]);
-
-					trilist.SetSigTrueAction(joinNumberEnableInputHdcp, () => EnableHdcp(input));
-					trilist.SetSigTrueAction(joinNumberDisableInputHdcp, () => DisableHdcp(input));
-
-					//Serial                
-					InputNameFeedbacks[inputName]?.LinkInputSig(trilist.StringInput[joinNumberInputName]);
-				}
-			}
-			else
-			{
-				this.LogWarning("LinkToApi: InputNames is null. Skipping input linking.");
+				VideoInputSyncFeedbacks[InputNames[inputNumber]]?.LinkInputSig(trilist.BooleanInput[joinMap.InputSync.JoinNumber + joinOffset]);
 			}
 
-			if (OutputNames != null)
+			foreach (var output in _Chassis.Outputs)
 			{
-				foreach (var kvp in OutputNames)
-				{
-					var output = kvp.Key;
-					var outputName = kvp.Value;
+				uint outputNumber = output.Number;
+				var joinOffset = outputNumber - 1;
 
-					if (output < 1 || output > _Chassis.NumberOfOutputs)
-					{
-						this.LogWarning("LinkToApi: Output index {index} is out of range (1-{max}). Skipping.", output, _Chassis.NumberOfOutputs);
-						continue;
-					}
+				this.LogInformation("LinkToApi: _Chassis.Outputs[{outputNumber}].Name = {outputName}", output.Number, output.Name.StringValue);
 
-					var joinIndex = output - 1;
+				trilist.SetUShortSigAction(joinMap.OutputRoute.JoinNumber + joinOffset, (a) => ExecuteNumericSwitch(a, (ushort)outputNumber, eRoutingSignalType.AudioVideo));
 
-					var joinNumberOutputRoute = joinMap.OutputRoute.JoinNumber + joinIndex;
-					var joinNumberOutputName = joinMap.OutputName.JoinNumber + joinIndex;
-					var joinNumberOutputRouteName = joinMap.OutputRoutedName.JoinNumber + joinIndex;
+				OutputNameFeedbacks[OutputNames[outputNumber]]?.LinkInputSig(trilist.StringInput[joinMap.OutputName.JoinNumber + joinOffset]);
+				OutputRouteNameFeedbacks[OutputNames[outputNumber]]?.LinkInputSig(trilist.StringInput[joinMap.OutputRoutedName.JoinNumber + joinOffset]);
 
-					this.LogInformation("LinkToApi: Output {output} | joinIndex = {joinIndex}, OutputRouteJoin = {joinNumberOutputRoute}, OutputNameJoin = {joinNumberOutputName}, OutputRouteNameJoin = {joinNumberOutputRouteName}",
-						output, joinIndex, joinNumberOutputRoute, joinNumberOutputName, joinNumberOutputRouteName);
-
-					//Analog
-					VideoOutputRouteFeedbacks[outputName]?.LinkInputSig(trilist.UShortInput[joinNumberOutputRoute]);
-
-					trilist.SetUShortSigAction(joinNumberOutputRoute, (a) => ExecuteNumericSwitch(a, (ushort)output, eRoutingSignalType.AudioVideo));
-
-					//Serial
-					OutputNameFeedbacks[outputName]?.LinkInputSig(trilist.StringInput[joinNumberOutputName]);
-					OutputRouteNameFeedbacks[outputName]?.LinkInputSig(trilist.StringInput[joinNumberOutputRouteName]);
-				}
-			}
-			else
-			{
-				this.LogWarning("LinkToApi: OutputNames is null. Skipping output linking.");
+				VideoOutputRouteFeedbacks[OutputNames[outputNumber]]?.LinkInputSig(trilist.UShortInput[joinMap.OutputRoute.JoinNumber + joinOffset]);
 			}
 
 			_Chassis.OnlineStatusChange += Chassis_OnlineStatusChange;
@@ -587,6 +511,8 @@ namespace PepperDash.Essentials.DM.Chassis
 			trilist.OnlineStatusChange += (d, args) =>
 			{
 				if (!args.DeviceOnLine) return;
+
+				DeviceNameFeedback?.FireUpdate();
 
 				// feedback updates was moved to the Chassis_OnlineStatusChange 
 				// due to the amount of time it takes for the device to come online                
@@ -647,6 +573,7 @@ namespace PepperDash.Essentials.DM.Chassis
 			var eventName = typeof(BaseEventArgs)
 				.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
 				.FirstOrDefault(f => f.IsLiteral && (int)f.GetValue(null) == args.EventId)?.Name ?? args.EventId.ToString();
+			
 			this.LogInformation("Chassis_BaseEvent: received {eventName} (id-{eventId}) received from device {deviceName}", eventName, args.EventId, device.GetType().Name);
 		}
 
@@ -670,7 +597,7 @@ namespace PepperDash.Essentials.DM.Chassis
 				feedback?.FireUpdate();
 			}
 
-			if (_Chassis is HdMd4xX4kzE)
+			if (_Chassis is HdMdNxM4kzE)
 			{
 				AutoRouteFeedback?.FireUpdate();
 			}
