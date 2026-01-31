@@ -140,9 +140,14 @@ namespace PepperDash.Essentials.DM.Chassis
 
 			//var inputCount = _Chassis.Inputs.Count;
 			var inputCount = _Chassis.NumberOfInputs;
-			this.LogError("SetupInputs: Chassis has {index} inputs", inputCount);
-			for (uint index = 1; index < inputCount; index++)
+			this.LogError("SetupInputs: Chassis has {inputCount} inputs", inputCount);
+			for (uint index = 1; index <= inputCount; index++)
 			{
+				if(index > inputCount)
+				{
+					this.LogError("SetupInputs: index {index} is greater than _Chassis.NumberOfInputs {inputCount}, breaking loop", index, inputCount);
+					break;
+				}
 				// for reference only
 				//InputNameFeedbacks.Add(new StringFeedback(inputName, () => _Chassis.Inputs[index].NameFeedback.StringValue));
 				//InputNameFeedbacks.Add(new StringFeedback(inputName, () => InputNames[index]));
@@ -225,9 +230,15 @@ namespace PepperDash.Essentials.DM.Chassis
 
 			//var outputCount = _Chassis.Outputs.Count;
 			var outputCount = _Chassis.NumberOfOutputs;
-			this.LogError("SetupOutputs: Chassis has {index} outputs", outputCount);
-			for (uint index = 1; index < outputCount; index++)
+			this.LogError("SetupOutputs: Chassis has {outputCount} outputs", outputCount);
+			for (uint index = 1; index <= outputCount; index++)
 			{
+				if(index > outputCount)
+				{
+					this.LogError("SetupOutputs: index {index} is greater than _Chassis.NumberOfOutputs {outputCount}, breaking loop", index, outputCount);
+					break;
+				}
+				
 				var output = _Chassis.Outputs[index];
 				var outputName = string.Format("output{0}", index);
 				this.LogError("SetupOutputs: _Chassis.Outputs[{index}] is {output}", index, output == null ? "NULL" : "NOT NULL");
