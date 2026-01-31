@@ -144,8 +144,8 @@ namespace PepperDash.Essentials.DM.Chassis
 			foreach (var kvp in InputNames)
 			{
 				var index = kvp.Key;
+				var inputKey = string.Format("input{0}", index);
 				var inputName = kvp.Value;
-				var inputFbKeyPrefix = inputName.Replace(" ", "").Trim();
 
 				if (index < 1 || index > _Chassis.NumberOfInputs)
 				{
@@ -162,16 +162,16 @@ namespace PepperDash.Essentials.DM.Chassis
 
 				hdmiInput.Name.StringValue = inputName;
 
-				InputPorts.Add(new RoutingInputPort(inputName, eRoutingSignalType.AudioVideo,
+				InputPorts.Add(new RoutingInputPort(inputKey, eRoutingSignalType.AudioVideo,
 					eRoutingPortConnectionType.Hdmi, hdmiInput, this)
 				{
 					FeedbackMatchObject = hdmiInput
 				});
 
-				InputNameFeedbacks.Add(new StringFeedback(string.Format($"{inputFbKeyPrefix}InputNameFeedback"), () =>
+				InputNameFeedbacks.Add(new StringFeedback(string.Format($"{inputKey}Name"), () =>
 				{
 					try { return InputNames[index]; }
-					catch { this.LogError($"Error getting InputNameFeedback for input {inputName}"); return ""; }
+					catch { this.LogError($"Error getting InputNameFeedback for input {inputKey}"); return ""; }
 				}));
 			}
 		}
@@ -183,10 +183,9 @@ namespace PepperDash.Essentials.DM.Chassis
 				var inputIndex = i;
 				var hdmiInput = _Chassis.HdmiInputs[inputIndex];
 
-				var inputName = string.Format("Input{0}", inputIndex);
-				var inputFbKeyPrefix = inputName.Replace(" ", "").Trim();
-
-				InputHdcpEnableFeedback.Add(new BoolFeedback(string.Format($"{inputFbKeyPrefix}HdcpEnableFeedback"), () =>
+				var inputName = string.Format("input{0}", inputIndex);
+				
+				InputHdcpEnableFeedback.Add(new BoolFeedback(string.Format($"{inputName}HdcpEnable"), () =>
 				{
 					try
 					{
@@ -221,11 +220,14 @@ namespace PepperDash.Essentials.DM.Chassis
 				return;
 			}
 
-			foreach(var input in _Chassis.HdmiInputs)
+			for (var i = 0; i < _Chassis.HdmiInputs.Count; i++)
 			{
+				var inputIndex = i + 1;
+				var input = _Chassis.HdmiInputs[(uint)inputIndex];
+
 				if(input == null)
 				{
-					this.LogError("SetupInputVideoSyncFeedbacks: Chassis HDMI {input} is null. Skipping.",input.ToString());
+					this.LogError("SetupInputVideoSyncFeedbacks: Chassis HDMI {input} is null. Skipping.", inputIndex);
 					continue;
 				}
 
@@ -236,7 +238,10 @@ namespace PepperDash.Essentials.DM.Chassis
 					continue;
 				}
 
-				VideoInputSyncFeedbacks.Add(new BoolFeedback(string.Format($"{inputSync}VideoDetectedFeedback"), () =>
+				var inputName = string.Format("Input{0}", inputIndex);
+				var inputFbKeyPrefix = inputName.Replace(" ", "").Trim();
+
+				VideoInputSyncFeedbacks.Add(new BoolFeedback(string.Format($"{inputFbKeyPrefix}VideoDetected"), () =>
 				{
 					try
 					{
@@ -297,8 +302,8 @@ namespace PepperDash.Essentials.DM.Chassis
 			foreach (var kvp in OutputNames)
 			{
 				var index = kvp.Key;
+				var outputKey = string.Format("output{0}", index);
 				var outputName = kvp.Value;
-				var outputFbKeyPrefix = outputName.Replace(" ", "").Trim();
 
 				if (index < 1 || index > _Chassis.NumberOfOutputs)
 				{
@@ -326,12 +331,12 @@ namespace PepperDash.Essentials.DM.Chassis
 					FeedbackMatchObject = hdmiOutput
 				});
 
-				OutputNameFeedbacks.Add(new StringFeedback(string.Format($"{outputFbKeyPrefix}OutputNameFeedback"), () =>
+				OutputNameFeedbacks.Add(new StringFeedback(string.Format($"{outputKey}Name"), () =>
 				{
 					try { return OutputNames[index]; }
 					catch { this.LogError($"Error getting OutputNameFeedback for output {outputName}"); return ""; }
 				}));
-				OutputRouteNameFeedbacks.Add(new StringFeedback(string.Format($"{outputFbKeyPrefix}OutputRouteNameFeedback"), () =>
+				OutputRouteNameFeedbacks.Add(new StringFeedback(string.Format($"{outputKey}RouteName"), () =>
 				{
 					try { return chassisOutput.VideoOutFeedback == null ? NoRouteText : chassisOutput.VideoOutFeedback.NameFeedback.StringValue; }
 					catch { this.LogError($"Error getting OutputRouteNameFeedback for output {outputName}"); return NoRouteText; }
@@ -352,10 +357,10 @@ namespace PepperDash.Essentials.DM.Chassis
 					continue;
 				}
 
-				var outputName = string.Format("Output{0}", outputIndex);
+				var outputName = string.Format("output{0}", outputIndex);
 				var outputFbKeyPrefix = outputName.Replace(" ", "").Trim();
 
-				VideoOutputRouteFeedbacks.Add(new IntFeedback(string.Format($"{outputFbKeyPrefix}VideoOutputRouteFeedback"), () =>
+				VideoOutputRouteFeedbacks.Add(new IntFeedback(string.Format($"{outputName}Route"), () =>
 				{
 					try
 					{
