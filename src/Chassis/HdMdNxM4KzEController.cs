@@ -209,39 +209,81 @@ namespace PepperDash.Essentials.DM.Chassis
 
 		private void SetupInputVideoSyncFeedbacks()
 		{
-			for (uint i = 1; i <= _Chassis.HdmiInputs.Count; i++)
+			if(VideoInputSyncFeedbacks == null)
 			{
-				var inputIndex = i;
-				var chassisHdmiInput = _Chassis.HdmiInputs[inputIndex];
+				this.LogError("SetupInputVideoSyncFeedbacks: VideoInputSyncFeedbacks collection is null initializing.");
+				VideoInputSyncFeedbacks = new FeedbackCollection<BoolFeedback>();
+			}
 
-				if (chassisHdmiInput == null)
+			if(_Chassis == null || _Chassis.HdmiInputs == null)
+			{
+				this.LogError("SetupInputVideoSyncFeedbacks: Chassis or Chassis HDMI inputs is null. Cannot setup VideoSync feedbacks.");
+				return;
+			}
+
+			foreach(var input in _Chassis.HdmiInputs)
+			{
+				if(input == null)
 				{
-					this.LogError("SetupInputVideoSyncFeedbacks: Chassis HDMI input {index} is null. Skipping.", inputIndex);
+					this.LogError("SetupInputVideoSyncFeedbacks: Chassis HDMI {input} is null. Skipping.",input.ToString());
 					continue;
 				}
 
-				var inputName = string.Format("Input{0}", inputIndex);
-				var inputFbKeyPrefix = inputName.Replace(" ", "").Trim();
+				var inputSync = input.VideoDetectedFeedback;
+				if(inputSync == null)
+				{
+					this.LogError("SetupInputVideoSyncFeedbacks: Chassis HDMI input VideoDetectedFeedback is null. Skipping.");
+					continue;
+				}
 
-				VideoInputSyncFeedbacks.Add(new BoolFeedback(string.Format($"{inputFbKeyPrefix}VideoDetectedFeedback"), () =>
+				VideoInputSyncFeedbacks.Add(new BoolFeedback(string.Format($"{inputSync}VideoDetectedFeedback"), () =>
 				{
 					try
 					{
-						if (chassisHdmiInput?.VideoDetectedFeedback == null)
-						{
-							this.LogError("SetupInputVideoSyncFeedbacks: Chassis HDMI input {index} VideoDetectedFeedback is null. Cannot get VideoDetectedFeedback.", inputIndex);
-							return false;
-						}
-
-						return chassisHdmiInput?.VideoDetectedFeedback?.BoolValue ?? false;
+						this.LogInformation("SetupInputVideoSyncFeedbacks: Getting VideoDetectedFeedback for HDMI {inputSync}", inputSync.ToString());
+						return inputSync.BoolValue;
 					}
 					catch
 					{
-						this.LogError($"SetupInputVideoSyncFeedbacks: Error getting VideoDetectedFeedback for {inputName}");
+						this.LogError($"SetupInputVideoSyncFeedbacks: Error getting VideoDetectedFeedback for HDMI {inputSync}");
 						return false;
 					}
 				}));
 			}
+
+			// for (uint i = 1; i <= _Chassis.HdmiInputs.Count; i++)
+			// {
+			// 	var inputIndex = i;
+			// 	var chassisHdmiInput = _Chassis.HdmiInputs[inputIndex];
+
+			// 	if (chassisHdmiInput == null)
+			// 	{
+			// 		this.LogError("SetupInputVideoSyncFeedbacks: Chassis HDMI input {index} is null. Skipping.", inputIndex);
+			// 		continue;
+			// 	}
+
+			// 	var inputName = string.Format("Input{0}", inputIndex);
+			// 	var inputFbKeyPrefix = inputName.Replace(" ", "").Trim();
+
+			// 	VideoInputSyncFeedbacks.Add(new BoolFeedback(string.Format($"{inputFbKeyPrefix}VideoDetectedFeedback"), () =>
+			// 	{
+			// 		try
+			// 		{
+			// 			if (chassisHdmiInput?.VideoDetectedFeedback == null)
+			// 			{
+			// 				this.LogError("SetupInputVideoSyncFeedbacks: Chassis HDMI input {index} VideoDetectedFeedback is null. Cannot get VideoDetectedFeedback.", inputIndex);
+			// 				return false;
+			// 			}
+
+			// 			return chassisHdmiInput?.VideoDetectedFeedback?.BoolValue ?? false;
+			// 		}
+			// 		catch
+			// 		{
+			// 			this.LogError($"SetupInputVideoSyncFeedbacks: Error getting VideoDetectedFeedback for {inputName}");
+			// 			return false;
+			// 		}
+			// 	}));
+			// }
 		}
 
 		private void SetupOutputPortsandNameFeedbacks()
@@ -486,6 +528,7 @@ namespace PepperDash.Essentials.DM.Chassis
 
 			foreach (var fb in VideoInputSyncFeedbacks)
 			{
+				this.LogInformation("AddFeedbackCollections: Adding VideoInputSyncFeedback {feedbackKey} to Feedbacks collection", fb.Key);
 				AddFeedbackToList(fb);
 			}
 			foreach (var fb in InputHdcpEnableFeedback)
@@ -810,6 +853,52 @@ namespace PepperDash.Essentials.DM.Chassis
 			}
 		}
 
+		void Chassis_DMInputChange(Switch device, DMInputEventArgs args)
+		{
+			var eventName = typeof(DMInputEventIds)
+				.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+				.FirstOrDefault(f => f.IsLiteral && (int)f.GetValue(null) == args.EventId)?.Name ?? args.EventId.ToString();
+
+			switch (args.EventId)
+			{
+				case DMInputEventIds.SourceSyncEventId:
+				case DMInputEventIds.VideoDetectedEventId:
+					{
+						this.LogInformation("Chassis_DMInputChange: received {eventName} (id-{eventId}) | Updating VideoInputSyncFeedbacks", eventName, args.EventId);
+						foreach (var item in VideoInputSyncFeedbacks)
+						{
+							this.LogInformation("Chassis_DMInputChange: Updating VideoInputSyncFeedbacks for HDMI {itemKey} to {itemValue}", item.Key, item.BoolValue);
+							item.FireUpdate();
+						}
+						break;
+					}
+				case DMInputEventIds.InputNameFeedbackEventId:
+				case DMInputEventIds.InputNameEventId:
+				case DMInputEventIds.NameFeedbackEventId:
+					{
+						this.LogInformation("Chassis_DMInputChange: received {eventName} (id-{eventId}) | Input {number} Name {name}, updating InputNameFeedbacks", eventName, args.EventId, args.Number, _Chassis.HdmiInputs[args.Number].NameFeedback.StringValue);
+						foreach (var item in InputNameFeedbacks)
+						{
+							item.FireUpdate();
+						}
+						break;
+					}
+				case DMInputEventIds.PriorityEventId:
+					{
+						this.LogInformation("Chassis_DMInputChange: received {eventName} (id-{eventId}) | Updating PriorityRouteFeedback", eventName, args.EventId);
+
+						PriorityRouteFeedback?.FireUpdate();
+
+						break;
+					}
+				default:
+					{
+						this.LogInformation("Chassis_DMInputChange: Unhandled DM Input Event {eventName} (id-{eventId}), ignoring.", eventName, args.EventId);
+						break;
+					}
+			}
+		}
+
 
 		void Chassis_DMOutputChange(Switch device, DMOutputEventArgs args)
 		{
@@ -878,51 +967,6 @@ namespace PepperDash.Essentials.DM.Chassis
 				default:
 					{
 						this.LogInformation("Chassis_DMOutputChange: Unhandled DM Output Event {eventName} (id-{eventId}), ignoring.", eventName, args.EventId);
-						break;
-					}
-			}
-		}
-
-		void Chassis_DMInputChange(Switch device, DMInputEventArgs args)
-		{
-			var eventName = typeof(DMInputEventIds)
-				.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
-				.FirstOrDefault(f => f.IsLiteral && (int)f.GetValue(null) == args.EventId)?.Name ?? args.EventId.ToString();
-
-			switch (args.EventId)
-			{
-				case DMInputEventIds.SourceSyncEventId:
-				case DMInputEventIds.VideoDetectedEventId:
-					{
-						this.LogInformation("Chassis_DMInputChange: received {eventName} (id-{eventId}) | Updating VideoInputSyncFeedbacks", eventName, args.EventId);
-						foreach (var item in VideoInputSyncFeedbacks)
-						{
-							item.FireUpdate();
-						}
-						break;
-					}
-				case DMInputEventIds.InputNameFeedbackEventId:
-				case DMInputEventIds.InputNameEventId:
-				case DMInputEventIds.NameFeedbackEventId:
-					{
-						this.LogInformation("Chassis_DMInputChange: received {eventName} (id-{eventId}) | Input {number} Name {name}, updating InputNameFeedbacks", eventName, args.EventId, args.Number, _Chassis.HdmiInputs[args.Number].NameFeedback.StringValue);
-						foreach (var item in InputNameFeedbacks)
-						{
-							item.FireUpdate();
-						}
-						break;
-					}
-				case DMInputEventIds.PriorityEventId:
-					{
-						this.LogInformation("Chassis_DMInputChange: received {eventName} (id-{eventId}) | Updating PriorityRouteFeedback", eventName, args.EventId);
-
-						PriorityRouteFeedback?.FireUpdate();
-
-						break;
-					}
-				default:
-					{
-						this.LogInformation("Chassis_DMInputChange: Unhandled DM Input Event {eventName} (id-{eventId}), ignoring.", eventName, args.EventId);
 						break;
 					}
 			}
