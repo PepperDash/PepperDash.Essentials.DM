@@ -327,7 +327,7 @@ namespace PepperDash.Essentials.DM.Chassis
 				// _Chassis.Outputs[index].VideoOutFeedback.NameFeedback
 				try
 				{
-					this.LogError("SetupOutputs: _Chassis.Outputs[{index}].VideoOutFeedback.NameFeedback is {outputVideoNameFb}", index, output.VideoOutFeedback.NameFeedback == null ? "NULL" : "NOT NULL");
+					this.LogError("SetupOutputs: _Chassis.Outputs[{index}].VideoOutFeedback.NameFeedback is {outputVideoNameFb}", index, chassisOutput.VideoOutFeedback.NameFeedback == null ? "NULL" : "NOT NULL");
 					OutputRouteNameFeedbacks.Add(new StringFeedback(string.Format($"{outputName}RoutedName"), () =>
 					{
 						try
