@@ -388,13 +388,14 @@ namespace PepperDash.Essentials.DM.Chassis
 		{
 			var input = inputSelector as HdMdNxM4kzEHdmiInput;
 			var output = outputSelector as HdMdNxM4kzEHdmiOutput;
-			this.LogVerbose("ExecuteSwitch: input={input} output={output}", input, output);
-
+			
 			if (output == null)
 			{
-				this.LogInformation("Unable to make switch. output selector is not HdMdNxM4kzEHdmiOutput");
+				this.LogError("ExecuteSwitch: Unable to make switch. output selector is not HdMdNxM4kzEHdmiOutput");
 				return;
 			}
+
+			this.LogVerbose("ExecuteSwitch: input={input} output={output}", input, output);
 
 			// Try to make switch only when necessary.  The unit appears to toggle when already selected.
 			var current = output.VideoOut;
@@ -661,37 +662,30 @@ namespace PepperDash.Essentials.DM.Chassis
 			var eventName = typeof(DMOutputEventIds)
 				.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
 				.FirstOrDefault(f => f.IsLiteral && (int)f.GetValue(null) == args.EventId)?.Name ?? args.EventId.ToString();
-			this.LogInformation("Chassis_DMOutputChange: received {eventName} (id-{eventId}); Index = {index}; Number = {number}; Stream = {stream} ", eventName, args.EventId, args.Index, args.Number, args.Stream);
-
+			
 			switch (args.EventId)
 			{
 				case DMOutputEventIds.VideoOutEventId:
 					{
-						var output = args.Number;
-						var outputName = OutputNames[output];
+						var outputNumber = args.Number;
+						var outputName = OutputNames[outputNumber];
+						var inputNumber = _Chassis.HdmiOutputs[outputNumber].VideoOutFeedback?.Number ?? 0;
 
-						var inputNumber = _Chassis.HdmiOutputs[output].VideoOutFeedback?.Number ?? 0;
+						this.LogInformation("Chassis_DMOutputChange: received {eventName} (id-{eventId}) | Input {inputNumber} routed to Output {outputNumber}", eventName, args.EventId, inputNumber, outputNumber);
 
-						var feedback = VideoOutputRouteFeedbacks.FirstOrDefault(f => f.Key == outputName);
-						if (feedback != null)
+						var feedback = VideoOutputRouteFeedbacks[outputName];
+						if(feedback == null)
 						{
-							var inPort = InputPorts.FirstOrDefault(p => p.FeedbackMatchObject == _Chassis.HdmiOutputs[output].VideoOutFeedback);
-							var outPort = OutputPorts.FirstOrDefault(p => p.FeedbackMatchObject == _Chassis.HdmiOutputs[output]);
+							this.LogInformation("Chassis_DMOutputChange: VideoOutputRouteFeedbacks does not contain key {outputName}", outputName);
+							break;
+						}
+						
+						var inPort = InputPorts.FirstOrDefault(p => p.FeedbackMatchObject == _Chassis.HdmiOutputs[outputNumber].VideoOutFeedback);
+						var outPort = OutputPorts.FirstOrDefault(p => p.FeedbackMatchObject == _Chassis.HdmiOutputs[outputNumber]);
 
-							try
-							{
-								feedback.FireUpdate();
-								OnSwitchChange(new RoutingNumericEventArgs(output, inputNumber, outPort, inPort, eRoutingSignalType.AudioVideo));
-							}
-							catch (Exception ex)
-							{
-								this.LogError(ex, "Chassis_DMOutputChange: Exception occurred while updating {eventName} (id-{eventId}) {feedbackKey}", eventName, args.EventId, feedback.Key);
-							}
-						}
-						else
-						{
-							this.LogInformation("Chassis_DMOutputChange: {outputName} not found in VideoOutputRouteFeedbacks", outputName);
-						}
+						feedback.FireUpdate();
+						OnSwitchChange(new RoutingNumericEventArgs(outputNumber, inputNumber, outPort, inPort, eRoutingSignalType.AudioVideo));
+						
 						break;
 					}
 				case DMOutputEventIds.AutoModeOffEventId:
