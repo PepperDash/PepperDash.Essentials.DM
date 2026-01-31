@@ -1,18 +1,16 @@
+using Crestron.SimplSharpPro;
+using Crestron.SimplSharpPro.DeviceSupport;
+using Crestron.SimplSharpPro.DM;
+using Newtonsoft.Json;
+using PepperDash.Core;
+using PepperDash.Core.Logging;
+using PepperDash.Essentials.Core;
+using PepperDash.Essentials.Core.Bridges;
+using PepperDash.Essentials.Core.Config;
+using PepperDash.Essentials.DM.Config;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Newtonsoft.Json;
-using Crestron.SimplSharp;
-using Crestron.SimplSharpPro.DeviceSupport;
-using Crestron.SimplSharpPro.DM;
-using PepperDash.Core;
-using PepperDash.Essentials.Core;
-using PepperDash.Essentials.DM.Config;
-using PepperDash.Essentials.Core.Bridges;
-using PepperDash.Essentials.Core.Config;
-using Crestron.SimplSharpPro;
-using PepperDash.Core.Logging;
-using System.Runtime.CompilerServices;
 
 
 namespace PepperDash.Essentials.DM.Chassis
@@ -70,38 +68,28 @@ namespace PepperDash.Essentials.DM.Chassis
 
 			NoRouteText = props.NoRouteText ?? "None";
 
-			if (props.Inputs != null)
-			{
-				InputNames = props.Inputs;
-				foreach (var kvp in InputNames)
-				{
-					Debug.LogDebug(this, "InputNames: {0}-{1}", kvp.Key, kvp.Value);
-				}
-			}
-			if (props.Outputs != null)
-			{
-				OutputNames = props.Outputs;
-				foreach (var kvp in OutputNames)
-				{
-					Debug.LogDebug(this, "OutputNamess: {0}-{1}", kvp.Key, kvp.Value);
-				}
-			}
+			InputNames = new Dictionary<uint, string>();
+            InputNames = props.Inputs ?? new Dictionary<uint, string>();
+            
+            OutputNames = new Dictionary<uint, string>();
+            OutputNames = props.Outputs ?? new Dictionary<uint, string>();
 
-			DeviceNameFeedback = new StringFeedback("DeviceName", () =>
+            InputPorts = new RoutingPortCollection<RoutingInputPort>();
+            OutputPorts = new RoutingPortCollection<RoutingOutputPort>();
+
+            DeviceNameFeedback = new StringFeedback("DeviceName", () =>
 			{
 				try { return Name; }
 				catch { this.LogError("Error getting DeviceNameFeedback"); return ""; }
 			});
 
-			VideoInputSyncFeedbacks = new FeedbackCollection<BoolFeedback>();
-			VideoOutputRouteFeedbacks = new FeedbackCollection<IntFeedback>();
-			InputNameFeedbacks = new FeedbackCollection<StringFeedback>();
-			OutputNameFeedbacks = new FeedbackCollection<StringFeedback>();
-			OutputRouteNameFeedbacks = new FeedbackCollection<StringFeedback>();
-			InputHdcpEnableFeedback = new FeedbackCollection<BoolFeedback>();
+            InputNameFeedbacks = new FeedbackCollection<StringFeedback>();
+            OutputNameFeedbacks = new FeedbackCollection<StringFeedback>();
 
-			InputPorts = new RoutingPortCollection<RoutingInputPort>();
-			OutputPorts = new RoutingPortCollection<RoutingOutputPort>();
+            VideoInputSyncFeedbacks = new FeedbackCollection<BoolFeedback>();
+			InputHdcpEnableFeedback = new FeedbackCollection<BoolFeedback>();
+            VideoOutputRouteFeedbacks = new FeedbackCollection<IntFeedback>();
+			OutputRouteNameFeedbacks = new FeedbackCollection<StringFeedback>();
 
 			if (_Chassis is HdMdNxM4kzE _chassis_M4kzE)
 			{
@@ -235,7 +223,7 @@ namespace PepperDash.Essentials.DM.Chassis
 			this.LogError("SetupOutputs: Chassis has {outputCount} outputs", outputCount);
 			for (uint i = 1; i <= outputCount; i++)
 			{
-				var index = i;
+                var index = i - 1;
 				if (index > outputCount)
 				{
 					this.LogError("SetupOutputs: index {index} is greater than _Chassis.NumberOfOutputs {outputCount}, breaking loop", index, outputCount);
