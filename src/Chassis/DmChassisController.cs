@@ -17,12 +17,13 @@ using PepperDash.Essentials.Core.Bridges;
 using PepperDash.Essentials.DM.Config;
 using PepperDash.Essentials.DM.Routing;
 using PepperDash.Essentials.Core.Config;
+using PepperDash.Core.Logging;
 
 namespace PepperDash.Essentials.DM
 {
     /// <summary>
     /// Builds a controller for basic DM-RMCs with Com and IR ports and no control functions
-    /// 
+    ///
     /// </summary>
     [Description("Wrapper class for all DM-MD chassis variants from 8x8 to 32x32")]
     public class DmChassisController : CrestronGenericBridgeableBaseDevice, IDmSwitchWithEndpointOnlineFeedback, IRoutingNumericWithFeedback, IMatrixRouting
@@ -156,7 +157,7 @@ namespace PepperDash.Essentials.DM
                 // add the cards and port names
                 foreach (var kvp in properties.InputSlots)
                     controller.AddInputCard(kvp.Value, kvp.Key);
-                
+
                 foreach (var kvp in properties.OutputSlots)
                     controller.AddOutputCard(kvp.Value, kvp.Key);
 
@@ -183,7 +184,7 @@ namespace PepperDash.Essentials.DM
                 if (!string.IsNullOrEmpty(properties.NoRouteText))
                 {
                     controller.NoRouteText = properties.NoRouteText;
-                    Debug.LogDebug(controller, "Setting No Route Text value to: {0}", controller.NoRouteText);                   
+                    Debug.LogDebug(controller, "Setting No Route Text value to: {0}", controller.NoRouteText);
                 }
                 else
                 {
@@ -202,7 +203,7 @@ namespace PepperDash.Essentials.DM
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="key"></param>
         /// <param name="name"></param>
@@ -294,7 +295,7 @@ namespace PepperDash.Essentials.DM
                         return NoRouteText;
                     });
                     OutputEndpointOnlineFeedbacks[tempX] = new BoolFeedback(() => Chassis.Outputs[tempX].EndpointOnlineFeedback);
-                    
+
                     OutputDisabledByHdcpFeedbacks[tempX] = new BoolFeedback(() => {
                         var output = Chassis.Outputs[tempX];
 
@@ -372,7 +373,7 @@ namespace PepperDash.Essentials.DM
                     VideoInputSyncFeedbacks[tempX] = new BoolFeedback(() => {
                         if (Chassis.Inputs[tempX].VideoDetectedFeedback != null)
                             return Chassis.Inputs[tempX].VideoDetectedFeedback.BoolValue;
-                        
+
                         return false;
                     });
                     InputNameFeedbacks[tempX] = new StringFeedback(() => {
@@ -456,7 +457,7 @@ namespace PepperDash.Essentials.DM
                         {
                             Debug.LogInformation(this, "The Input Card in slot: {0} supports HDCP 2.  Please update the configuration value in the inputCardSupportsHdcp2 object to true. Error: {1}", tempX, iopex);
                             return 0;
-                        }   
+                        }
                     });
                     InputStreamCardStateFeedbacks[tempX] = new IntFeedback(() =>
                     {
@@ -491,7 +492,7 @@ namespace PepperDash.Essentials.DM
 
         private void ChassisOnBaseEvent(GenericBase device, BaseEventArgs args)
         {
-            
+
         }
 
         private void RegisterForInputResolutionFeedback(IVideoAttributesBasic input, uint number, RoutingInputPortWithVideoStatuses inputPort)
@@ -505,15 +506,13 @@ namespace PepperDash.Essentials.DM
 
             input.VideoAttributes.AttributeChange += (sender, args) =>
             {
-                Debug.LogDebug(this, "Input {0} resolution updated", number);
-
-                Debug.LogDebug(this, "Updating resolution feedback for input {0}", number);
-                inputPort.VideoStatus.VideoResolutionFeedback.FireUpdate();
+                this.LogInformation("Updating feedback for input {0}", number);
+                inputPort.VideoStatus.FireAll();
             };
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="type"></param>
         /// <param name="number"></param>
@@ -531,6 +530,7 @@ namespace PepperDash.Essentials.DM
                 {
                     inputCard = new DmcHd(number, Chassis);
                     var card = inputCard as DmcHd;
+
                     AddHdmiInCardPorts(number, card.HdmiInput, card.HdmiInput);
                 }
                     break;
@@ -585,7 +585,7 @@ namespace PepperDash.Essentials.DM
                     AddDmInCardPorts(number, null, card.DmInput);
                     break;
                 }
-                    
+
                 case "dmc4kc":
                 {
                     inputCard = new Dmc4kC(number, Chassis);
@@ -593,7 +593,7 @@ namespace PepperDash.Essentials.DM
                     AddDmInCardPorts(number, card.DmInput, card.DmInput);
                     break;
                 }
-                    
+
                 case "dmc4kcdsp":
                 {
                     inputCard = new Dmc4kCDsp(number, Chassis);
@@ -601,7 +601,7 @@ namespace PepperDash.Essentials.DM
                     AddDmInCardPorts(number, card.DmInput, card.DmInput);
                     break;
                 }
-                    
+
                 case "dmc4kzc":
                 {
                     inputCard = new Dmc4kzC(number, Chassis);
@@ -609,7 +609,7 @@ namespace PepperDash.Essentials.DM
                     AddDmInCardPorts(number, card.DmInput, card.DmInput);
                     break;
                 }
-                   
+
                 case "dmc4kzcdsp":
                 {
                     inputCard = new Dmc4kzCDsp(number, Chassis);
@@ -617,7 +617,7 @@ namespace PepperDash.Essentials.DM
                     AddDmInCardPorts(number, card.DmInput, card.DmInput);
                     break;
                 }
-                    
+
                 case "dmccat":
                 {
                     inputCard = new DmcCat(number, Chassis);
@@ -796,7 +796,7 @@ namespace PepperDash.Essentials.DM
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="type"></param>
         /// <param name="number"></param>
@@ -982,6 +982,21 @@ namespace PepperDash.Essentials.DM
                 Debug.LogDebug(this, "card {0} supports IVideoAttributesBasic", cardNum);
                 var statusFuncs = new VideoStatusFuncsWrapper
                 {
+                    VideoSyncFeedbackFunc = () =>
+                    {
+                        var videoSync = false;
+                        switch (videoAttributesBasic)
+                        {
+                            case EndpointHdmiInput hdmi:
+                                videoSync = hdmi.SyncDetectedFeedback.BoolValue;
+                                break;
+                            case EndpointDmInputStream dm:
+                                videoSync = dm.SyncDetectedFeedback.BoolValue;
+                                break;
+                        }
+
+                        return videoSync;
+                    },
                     VideoResolutionFeedbackFunc = () =>
                     {
                         var resolution = videoAttributesBasic.VideoAttributes.GetVideoResolutionString();
@@ -1040,7 +1055,7 @@ namespace PepperDash.Essentials.DM
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         void AddVolumeControl(uint number, Audio.Output audio)
         {
@@ -1205,7 +1220,7 @@ namespace PepperDash.Essentials.DM
             if (newEvent != null) newEvent(this, e);
         }
 
-        /// 
+        ///
         /// </summary>
         void Chassis_DMOutputChange(Switch device, DMOutputEventArgs args)
         {
@@ -1238,7 +1253,7 @@ namespace PepperDash.Essentials.DM
                 }
                 case DMOutputEventIds.VideoOutEventId:
                 {
-                    
+
                     var inputNumber = Chassis.Outputs[output].VideoOutFeedback == null ? 0 : Chassis.
                     Outputs[output].VideoOutFeedback.Number;
 
@@ -1331,7 +1346,7 @@ namespace PepperDash.Essentials.DM
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="pnt"></param>
         void StartOffTimer(PortNumberType pnt)
@@ -1400,7 +1415,7 @@ namespace PepperDash.Essentials.DM
             //var inCard = input == 0 ? null : Chassis.Inputs[input];
             //var outCard = input == 0 ? null : Chassis.Outputs[output];
 
-            // NOTE THAT BITWISE COMPARISONS - TO CATCH ALL ROUTING TYPES 
+            // NOTE THAT BITWISE COMPARISONS - TO CATCH ALL ROUTING TYPES
             if ((sigType & eRoutingSignalType.Video) == eRoutingSignalType.Video)
             {
                 Chassis.VideoEnter.BoolValue = true;
@@ -1424,7 +1439,7 @@ namespace PepperDash.Essentials.DM
             }
 
             if ((sigType & eRoutingSignalType.UsbOutput) == eRoutingSignalType.UsbOutput)
-                
+
             {
                Chassis.USBEnter.BoolValue = true;
                 if (inputSelector == null && output != null)
@@ -1621,10 +1636,10 @@ namespace PepperDash.Essentials.DM
             Debug.LogDebug("Port is HdmiInputWithCec");
 
             var hdmiInPortWCec = port as HdmiInputWithCEC;
-            
-            
+
+
             SetHdcpStateAction(PropertiesConfig.InputSlotSupportsHdcp2[ioSlot], hdmiInPortWCec, joinMap.HdcpSupportState.JoinNumber + ioSlotJoin, trilist);
-            
+
 
             InputCardHdcpStateFeedbacks[ioSlot].LinkInputSig(
                 trilist.UShortInput[joinMap.HdcpSupportState.JoinNumber + ioSlotJoin]);
@@ -1808,7 +1823,7 @@ namespace PepperDash.Essentials.DM
 
             //added in case the InputSlotSupportsHdcp2 section isn't included in the config, or this slot is left out.
             //if the key isn't in the dictionary, supportsHdcp2 will be false
-            
+
             if(!PropertiesConfig.InputSlotSupportsHdcp2.TryGetValue(ioSlot, out supportsHdcp2))
             {
                 Debug.LogInformation(this, "Input Slot Supports HDCP2 setting not found for slot {0}. Setting to false. Program may not function as intended.",
@@ -2034,12 +2049,12 @@ namespace PepperDash.Essentials.DM
                     {
                         if (s == 0)
                         {
-                            Debug.LogVerbose(this, "Join {0} value {1} Setting HdcpSupport to off", join, s); 
+                            Debug.LogVerbose(this, "Join {0} value {1} Setting HdcpSupport to off", join, s);
                             port.HdcpSupportOff();
                         }
                         else if (s > 0)
                         {
-                            Debug.LogVerbose(this, "Join {0} value {1} Setting HdcpSupport to on", join, s); 
+                            Debug.LogVerbose(this, "Join {0} value {1} Setting HdcpSupport to on", join, s);
                             port.HdcpSupportOn();
                         }
                     });
@@ -2049,7 +2064,7 @@ namespace PepperDash.Essentials.DM
                 trilist.SetUShortSigAction(join,
                         u =>
                         {
-                            Debug.LogVerbose(this, "Join {0} value {1} Setting HdcpReceiveCapability to: {2}", join, u, (eHdcpCapabilityType)u); 
+                            Debug.LogVerbose(this, "Join {0} value {1} Setting HdcpReceiveCapability to: {2}", join, u, (eHdcpCapabilityType)u);
                             port.HdcpReceiveCapability = (eHdcpCapabilityType)u;
                         });
             }
@@ -2211,9 +2226,9 @@ namespace PepperDash.Essentials.DM
         public DmChassisControllerFactory()
         {
             MinimumEssentialsFrameworkVersion = "2.4.5";
-            TypeNames = new List<string>() { "dmmd8x8", "dmmd8x8rps", "dmmd8x8cpu3", "dmmd8x8cpu3rps", 
-                "dmmd16x16", "dmmd16x16rps", "dmmd16x16cpu3", "dmmd16x16cpu3rps", 
-                "dmmd32x32", "dmmd32x32rps", "dmmd32x32cpu3", "dmmd32x32cpu3rps", 
+            TypeNames = new List<string>() { "dmmd8x8", "dmmd8x8rps", "dmmd8x8cpu3", "dmmd8x8cpu3rps",
+                "dmmd16x16", "dmmd16x16rps", "dmmd16x16cpu3", "dmmd16x16cpu3rps",
+                "dmmd32x32", "dmmd32x32rps", "dmmd32x32cpu3", "dmmd32x32cpu3rps",
                 "dmmd64x64", "dmmd128x128" };
         }
 
