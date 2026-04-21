@@ -984,18 +984,10 @@ namespace PepperDash.Essentials.DM
                 {
                     VideoSyncFeedbackFunc = () =>
                     {
-                        var videoSync = false;
-                        switch (videoAttributesBasic)
-                        {
-                            case EndpointHdmiInput hdmi:
-                                videoSync = hdmi.SyncDetectedFeedback.BoolValue;
-                                break;
-                            case EndpointDmInputStream dm:
-                                videoSync = dm.SyncDetectedFeedback.BoolValue;
-                                break;
-                        }
-
-                        return videoSync;
+                        // Use chassis input's VideoDetectedFeedback directly for reliable sync detection
+                        if (Chassis.Inputs[cardNum].VideoDetectedFeedback != null)
+                            return Chassis.Inputs[cardNum].VideoDetectedFeedback.BoolValue;
+                        return false;
                     },
                     VideoResolutionFeedbackFunc = () =>
                     {
@@ -1122,6 +1114,17 @@ namespace PepperDash.Essentials.DM
                         {
                             Debug.LogVerbose(this, "DM Input {0} VideoDetectedEventId", args.Number);
                             VideoInputSyncFeedbacks[args.Number].FireUpdate();
+                            
+                            // Also fire the routing port's VideoSyncFeedback for subscribers (e.g., auto-routing on sync)
+                            var syncInputPort =
+                                InputPorts.OfType<RoutingInputPortWithVideoStatuses>()
+                                    .FirstOrDefault((ip) => ip.Key.Contains(String.Format("inputCard{0}", args.Number)));
+
+                            if (syncInputPort != null)
+                            {
+                                Debug.LogDebug(this, "Firing VideoSyncFeedback for input {0}", args.Number);
+                                syncInputPort.VideoStatus.VideoSyncFeedback.FireUpdate();
+                            }
                             break;
                         }
                     case DMInputEventIds.InputNameEventId:
@@ -1186,7 +1189,7 @@ namespace PepperDash.Essentials.DM
                     {
                         Debug.LogDebug(this, "Input {0} resolution updated", args.Number);
                         var inputPort =
-                            InputPorts.Cast<RoutingInputPortWithVideoStatuses>()
+                            InputPorts.OfType<RoutingInputPortWithVideoStatuses>()
                                 .FirstOrDefault((ip) => ip.Key.Contains(String.Format("inputCard{0}", args.Number)));
 
                         if (inputPort != null)
