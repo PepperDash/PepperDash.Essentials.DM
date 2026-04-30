@@ -283,7 +283,7 @@ namespace PepperDash.Essentials.DM
     {
         public HdMdxxxCEControllerFactory()
         {
-            MinimumEssentialsFrameworkVersion = "2.4.5";
+            MinimumEssentialsFrameworkVersion = "3.0.0";
             TypeNames = new List<string>() { "hdmd400ce", "hdmd300ce", "hdmd200ce", "hdmd200c1ge"};
         }
 

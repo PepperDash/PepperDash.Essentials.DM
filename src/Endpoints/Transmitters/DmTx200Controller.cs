@@ -234,7 +234,7 @@ namespace PepperDash.Essentials.DM
             OnSwitchChange(new RoutingNumericEventArgs(1, AudioSourceNumericFeedback.UShortValue, OutputPorts.First(), localAudioInputPort, eRoutingSignalType.Audio));
         }
 
-        public override bool CustomActivate()
+        protected override bool CustomActivate()
         {
 
             Tx.HdmiInput.InputStreamChange += (o, a) => FowardInputStreamChange(HdmiInput, a.EventId);

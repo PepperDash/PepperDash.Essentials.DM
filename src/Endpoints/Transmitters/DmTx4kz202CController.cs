@@ -194,7 +194,7 @@ namespace PepperDash.Essentials.DM
 
 
 
-        public override bool CustomActivate()
+        protected override bool CustomActivate()
         {
             // Link up all of these damned events to the various RoutingPorts via a helper handler
             Tx.HdmiInputs[1].InputStreamChange += (o, a) => FowardInputStreamChange(HdmiIn1, a.EventId);

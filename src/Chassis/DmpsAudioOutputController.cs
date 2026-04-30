@@ -346,6 +346,9 @@ namespace PepperDash.Essentials.DM
 
     public class DmpsAudioOutput : IBasicVolumeWithFeedback
     {
+        public string Key { get; private set; }
+        public string Name { get; private set; }
+
         private UShortInputSig Level;
         private bool EnableVolumeSend;
         private ushort VolumeLevelInput;
@@ -364,6 +367,8 @@ namespace PepperDash.Essentials.DM
 
         public DmpsAudioOutput(Dmps3AudioOutputBase output, eDmpsLevelType type)
         {
+            Key = string.Format("dmpsAudioOutput-{0}", type);
+            Name = string.Format("DMPS Audio Output {0}", type);
             VolumeLevelInput = 0;
             EnableVolumeSend = false;
             Type = type;

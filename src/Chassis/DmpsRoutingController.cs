@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -192,7 +192,7 @@ namespace PepperDash.Essentials.DM
             Microphones = new DmpsMicrophoneController(Dmps);
         }
 
-        public override bool CustomActivate()
+        protected override bool CustomActivate()
         {
             // Set input and output names from config
             SetInputNames();
@@ -1183,8 +1183,8 @@ namespace PepperDash.Essentials.DM
                 }
 
                 var sigTypeIsUsbOrVideo = ((sigType & eRoutingSignalType.Video) == eRoutingSignalType.Video) ||
-                                          ((sigType & eRoutingSignalType.UsbInput) == eRoutingSignalType.UsbInput) ||
-                                          ((sigType & eRoutingSignalType.UsbOutput) == eRoutingSignalType.UsbOutput);
+                                          ((sigType & eRoutingSignalType.Usb) == eRoutingSignalType.Usb) ||
+                                          ((sigType & eRoutingSignalType.Usb) == eRoutingSignalType.Usb);
 
                 if (input == null || (input.Number <= Dmps.NumberOfSwitcherInputs && output.Number <= Dmps.NumberOfSwitcherOutputs &&
                      sigTypeIsUsbOrVideo) ||
@@ -1246,12 +1246,12 @@ namespace PepperDash.Essentials.DM
                         }
                     }
 
-                    if ((sigType & eRoutingSignalType.UsbOutput) == eRoutingSignalType.UsbOutput)
+                    if ((sigType & eRoutingSignalType.Usb) == eRoutingSignalType.Usb)
                     {
                             output.USBRoutedTo = input;
                     }
 
-                    if ((sigType & eRoutingSignalType.UsbInput) != eRoutingSignalType.UsbInput)
+                    if ((sigType & eRoutingSignalType.Usb) != eRoutingSignalType.Usb)
                     {
                         return;
                     }

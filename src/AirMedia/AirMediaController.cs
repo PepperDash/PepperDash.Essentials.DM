@@ -123,7 +123,7 @@ namespace PepperDash.Essentials.DM.AirMedia
             HdmiVideoSyncDetectedFeedback = new BoolFeedback(() => false);
         }
 
-        public override bool CustomActivate()
+        protected override bool CustomActivate()
         {
             if (PropertiesConfig.AutoSwitchingEnabled)
                 AirMedia.DisplayControl.EnableAutomaticRouting();
@@ -371,7 +371,7 @@ namespace PepperDash.Essentials.DM.AirMedia
     {
         public AirMediaControllerFactory()
         {
-            MinimumEssentialsFrameworkVersion = "2.4.5";
+            MinimumEssentialsFrameworkVersion = "3.0.0";
             TypeNames = new List<string>() { "am200", "am300", "am3200" };
         }
 

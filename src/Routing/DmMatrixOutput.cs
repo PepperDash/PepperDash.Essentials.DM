@@ -70,8 +70,7 @@ namespace PepperDash.Essentials.DM.Routing
         {
             {eRoutingSignalType.Audio, default },
             {eRoutingSignalType.Video, default },
-            {eRoutingSignalType.UsbInput, default },
-            {eRoutingSignalType.UsbOutput, default },
+            {eRoutingSignalType.Usb, default },
         };
 
         private void SetInputRoute(eRoutingSignalType type, IRoutingInputSlot input)

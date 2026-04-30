@@ -44,7 +44,7 @@ namespace PepperDash.Essentials.DM.Routing
 
         public int SlotNumber => (int)_device.SwitcherInputOutput.Number;
 
-        public eRoutingSignalType SupportedSignalTypes => eRoutingSignalType.AudioVideo | eRoutingSignalType.SecondaryAudio;
+        public eRoutingSignalType SupportedSignalTypes => eRoutingSignalType.AudioVideo;
 
         public string Name { get; private set; }
 

@@ -521,7 +521,7 @@ Selector: {4}
     {
         public HdSp401ControllerFactory()
         {
-            MinimumEssentialsFrameworkVersion = "2.4.5";
+            MinimumEssentialsFrameworkVersion = "3.0.0";
             
             TypeNames = new List<string>() { "hdps401", "hdps402", "hdps621", "hdps622" };
         }

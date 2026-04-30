@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Crestron.SimplSharp;
-using Crestron.SimplSharp.Reflection;
 using Crestron.SimplSharpPro;
 using Crestron.SimplSharpPro.DeviceSupport;
 using Crestron.SimplSharpPro.DM;
@@ -1371,8 +1370,8 @@ namespace PepperDash.Essentials.DM
 
             var output = outputSelector as DMOutput;
 
-            var isUsbInput = (sigType & eRoutingSignalType.UsbInput) == eRoutingSignalType.UsbInput;
-            var isUsbOutput = (sigType & eRoutingSignalType.UsbOutput) == eRoutingSignalType.UsbOutput;
+            var isUsbInput = (sigType & eRoutingSignalType.Usb) == eRoutingSignalType.Usb;
+            var isUsbOutput = (sigType & eRoutingSignalType.Usb) == eRoutingSignalType.Usb;
 
             if (output == null && !(isUsbOutput || isUsbInput))
             {
@@ -1423,7 +1422,7 @@ namespace PepperDash.Essentials.DM
                 }
             }
 
-            if ((sigType & eRoutingSignalType.UsbOutput) == eRoutingSignalType.UsbOutput)
+            if ((sigType & eRoutingSignalType.Usb) == eRoutingSignalType.Usb)
                 
             {
                Chassis.USBEnter.BoolValue = true;
@@ -1453,7 +1452,7 @@ namespace PepperDash.Essentials.DM
                 }
             }
 
-            if((sigType & eRoutingSignalType.UsbInput) != eRoutingSignalType.UsbInput)
+            if((sigType & eRoutingSignalType.Usb) != eRoutingSignalType.Usb)
             {
                 return;
             }
@@ -1489,7 +1488,7 @@ namespace PepperDash.Essentials.DM
             DMInputOutputBase dmCard;
 
             //Routing Input to Input or Output to Input
-            if ((sigType & eRoutingSignalType.UsbInput) == eRoutingSignalType.UsbInput)
+            if ((sigType & eRoutingSignalType.Usb) == eRoutingSignalType.Usb)
             {
                 Debug.LogVerbose(this, "Executing USB Input switch.\r\n in:{0} output: {1}", inputSelector, outputSelector);
                 if (outputSelector > chassisSize)
@@ -1514,7 +1513,7 @@ namespace PepperDash.Essentials.DM
                 ExecuteSwitch(dmCard, Chassis.Inputs[outputSelector], sigType);
                 return;
             }
-            if ((sigType & eRoutingSignalType.UsbOutput) == eRoutingSignalType.UsbOutput)
+            if ((sigType & eRoutingSignalType.Usb) == eRoutingSignalType.Usb)
             {
                 Debug.LogVerbose(this, "Executing USB Output switch.\r\n in:{0} output: {1}", inputSelector, outputSelector);
 
@@ -1936,9 +1935,9 @@ namespace PepperDash.Essentials.DM
             trilist.SetUShortSigAction(joinMap.OutputAudio.JoinNumber + ioSlotJoin,
                 o => ExecuteNumericSwitch(o, (ushort) ioSlot, eRoutingSignalType.Audio));
             trilist.SetUShortSigAction(joinMap.OutputUsb.JoinNumber + ioSlotJoin,
-                o => ExecuteNumericSwitch(o, (ushort) ioSlot, eRoutingSignalType.UsbOutput));
+                o => ExecuteNumericSwitch(o, (ushort) ioSlot, eRoutingSignalType.Usb));
             trilist.SetUShortSigAction(joinMap.InputUsb.JoinNumber + ioSlotJoin,
-                o => ExecuteNumericSwitch(o, (ushort) ioSlot, eRoutingSignalType.UsbInput));
+                o => ExecuteNumericSwitch(o, (ushort) ioSlot, eRoutingSignalType.Usb));
 
             //Routing Feedbacks
             VideoOutputFeedbacks[ioSlot].LinkInputSig(trilist.UShortInput[joinMap.OutputVideo.JoinNumber + ioSlotJoin]);
@@ -2210,7 +2209,7 @@ namespace PepperDash.Essentials.DM
     {
         public DmChassisControllerFactory()
         {
-            MinimumEssentialsFrameworkVersion = "2.4.5";
+            MinimumEssentialsFrameworkVersion = "3.0.0";
             TypeNames = new List<string>() { "dmmd8x8", "dmmd8x8rps", "dmmd8x8cpu3", "dmmd8x8cpu3rps", 
                 "dmmd16x16", "dmmd16x16rps", "dmmd16x16cpu3", "dmmd16x16cpu3rps", 
                 "dmmd32x32", "dmmd32x32rps", "dmmd32x32cpu3", "dmmd32x32cpu3rps", 

@@ -72,7 +72,7 @@ namespace PepperDash.Essentials.DM.Chassis
             }
         }
 
-        public override bool CustomActivate()
+        protected override bool CustomActivate()
         {
             var result = Chassis.Register();
             if (result != Crestron.SimplSharpPro.eDeviceRegistrationUnRegistrationResponse.Success)
@@ -121,7 +121,7 @@ namespace PepperDash.Essentials.DM.Chassis
                 type = type.ToLower();
                 if (type == "hdmd4x14ke")
                 {
-                    Debug.Console(0, @"The 'hdmd4x14ke' device is not an Essentials Bridgeable device.  
+                    Debug.LogInformation(@"The 'hdmd4x14ke' device is not an Essentials Bridgeable device.  
                         If an essentials Bridgeable Device is required, use the 'hdmd4x14ke-bridgeable' type");
   
                     var chassis = new HdMd4x14kE(ipid, address, Global.ControlSystem);

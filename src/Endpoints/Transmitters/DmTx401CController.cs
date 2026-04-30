@@ -234,7 +234,7 @@ namespace PepperDash.Essentials.DM
             DmOut.Port = Tx.DmOutput;
 		}
 
-		public override bool CustomActivate()
+		protected override bool CustomActivate()
 		{
 			// Link up all of these damned events to the various RoutingPorts via a helper handler
 			Tx.HdmiInput.InputStreamChange += (o, a) => FowardInputStreamChange(HdmiIn, a.EventId);
