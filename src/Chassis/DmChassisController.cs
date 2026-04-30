@@ -1620,10 +1620,18 @@ namespace PepperDash.Essentials.DM
             Debug.LogDebug("Port is HdmiInputWithCec");
 
             var hdmiInPortWCec = port as HdmiInputWithCEC;
-            
-            
-            SetHdcpStateAction(PropertiesConfig.InputSlotSupportsHdcp2[ioSlot], hdmiInPortWCec, joinMap.HdcpSupportState.JoinNumber + ioSlotJoin, trilist);
-            
+
+            if (!PropertiesConfig.InputSlotSupportsHdcp2.TryGetValue(ioSlot, out var supportsHdcp2))
+            {
+                Debug.LogInformation(this, "Input Slot Supports HDCP2 setting not found for slot {0}. Setting to false. Program may not function as intended.", ioSlot);
+            }
+
+            SetHdcpStateAction(supportsHdcp2, hdmiInPortWCec, joinMap.HdcpSupportState.JoinNumber + ioSlotJoin, trilist);
+
+            if (!InputCardHdcpStateFeedbacks.ContainsKey(ioSlot))
+            {
+                return;
+            }
 
             InputCardHdcpStateFeedbacks[ioSlot].LinkInputSig(
                 trilist.UShortInput[joinMap.HdcpSupportState.JoinNumber + ioSlotJoin]);
