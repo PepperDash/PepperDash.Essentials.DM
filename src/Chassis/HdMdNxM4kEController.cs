@@ -142,6 +142,7 @@ namespace PepperDash.Essentials.DM.Chassis
         {
             public HdMdNxM4kEFactory()
             {
+                MinimumEssentialsFrameworkVersion = "3.0.0";
                 TypeNames = new List<string>() {"hdmd4x14ke"};
             }
 
