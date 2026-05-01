@@ -1183,7 +1183,6 @@ namespace PepperDash.Essentials.DM
                 }
 
                 var sigTypeIsUsbOrVideo = ((sigType & eRoutingSignalType.Video) == eRoutingSignalType.Video) ||
-                                          ((sigType & eRoutingSignalType.Usb) == eRoutingSignalType.Usb) ||
                                           ((sigType & eRoutingSignalType.Usb) == eRoutingSignalType.Usb);
 
                 if (input == null || (input.Number <= Dmps.NumberOfSwitcherInputs && output.Number <= Dmps.NumberOfSwitcherOutputs &&

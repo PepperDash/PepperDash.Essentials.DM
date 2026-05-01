@@ -412,7 +412,7 @@ namespace PepperDash.Essentials.DM
                             }
                             if (inputCard.Card is Dmc4kHdDspBase)
                             {
-                                if (PropertiesConfig.InputSlotSupportsHdcp2[tempX])
+                                if (PropertiesConfig.InputSlotSupportsHdcp2.TryGetValue(tempX, out var hdDspSupportsHdcp2) && hdDspSupportsHdcp2)
                                 {
                                     InputCardHdcpCapabilityTypes[tempX] = eHdcpCapabilityType.Hdcp2_2Support;
                                     return (int)(inputCard.Card as Dmc4kHdDspBase).HdmiInput.HdcpReceiveCapability;
@@ -426,7 +426,7 @@ namespace PepperDash.Essentials.DM
 
                             if (inputCard.Card is Dmc4kCBase)
                             {
-                                if (PropertiesConfig.InputSlotSupportsHdcp2[tempX])
+                                if (PropertiesConfig.InputSlotSupportsHdcp2.TryGetValue(tempX, out var c4kCSupportsHdcp2) && c4kCSupportsHdcp2)
                                 {
                                     InputCardHdcpCapabilityTypes[tempX] = eHdcpCapabilityType.HdcpAutoSupport;
                                     return (int)(inputCard.Card as Dmc4kCBase).DmInput.HdcpReceiveCapability;
@@ -438,7 +438,7 @@ namespace PepperDash.Essentials.DM
                             }
                             if (inputCard.Card is Dmc4kCDspBase)
                             {
-                                if (PropertiesConfig.InputSlotSupportsHdcp2[tempX])
+                                if (PropertiesConfig.InputSlotSupportsHdcp2.TryGetValue(tempX, out var cDspSupportsHdcp2) && cDspSupportsHdcp2)
                                 {
                                     InputCardHdcpCapabilityTypes[tempX] = eHdcpCapabilityType.HdcpAutoSupport;
                                     return (int)(inputCard.Card as Dmc4kCDspBase).DmInput.HdcpReceiveCapability;
@@ -1370,10 +1370,10 @@ namespace PepperDash.Essentials.DM
 
             var output = outputSelector as DMOutput;
 
-            var isUsbInput = (sigType & eRoutingSignalType.Usb) == eRoutingSignalType.Usb;
-            var isUsbOutput = (sigType & eRoutingSignalType.Usb) == eRoutingSignalType.Usb;
+            // In Essentials v3, eRoutingSignalType.UsbInput and UsbOutput were merged into Usb.
+            var isUsb = (sigType & eRoutingSignalType.Usb) == eRoutingSignalType.Usb;
 
-            if (output == null && !(isUsbOutput || isUsbInput))
+            if (output == null && !isUsb)
             {
                 Debug.LogInformation(this, "Unable to execute switch for inputSelector {0} to outputSelector {1}", inputSelector,
                     outputSelector);
@@ -1487,7 +1487,7 @@ namespace PepperDash.Essentials.DM
 
             DMInputOutputBase dmCard;
 
-            //Routing Input to Input or Output to Input
+            //Routing Input to Input or Output to Input (USB input-side routing)
             if ((sigType & eRoutingSignalType.Usb) == eRoutingSignalType.Usb)
             {
                 Debug.LogVerbose(this, "Executing USB Input switch.\r\n in:{0} output: {1}", inputSelector, outputSelector);
@@ -1513,46 +1513,55 @@ namespace PepperDash.Essentials.DM
                 ExecuteSwitch(dmCard, Chassis.Inputs[outputSelector], sigType);
                 return;
             }
-            if ((sigType & eRoutingSignalType.Usb) == eRoutingSignalType.Usb)
-            {
-                Debug.LogVerbose(this, "Executing USB Output switch.\r\n in:{0} output: {1}", inputSelector, outputSelector);
-
-                //routing Output to Output or Input to Output
-                if (inputSelector > chassisSize)
-                {
-                    //wanting to route an output to an output. Subtract chassis size and get output, unless it's 8x8
-                    //need this to determine USB routing values
-                    //8x8 -> 1-8 is inputs 1-8, 17-24 is outputs 1-8
-                    //16x16 1-16 is inputs 1-16, 17-32 is outputs 1-16
-                    //32x32 1-32 is inputs 1-32, 33-64 is outputs 1-32
-                    uint outputIndex;
-
-                    if (chassisSize == 8)
-                    {
-                        outputIndex = (uint) inputSelector - 16;
-                    }
-                    else
-                    {
-                        outputIndex = inputSelector - chassisSize;
-                    }
-
-                    dmCard = Chassis.Outputs[outputIndex];
-                }
-                else
-                {
-                    dmCard = Chassis.Inputs[inputSelector];
-                }
-                Chassis.USBEnter.BoolValue = true;
-
-                Debug.LogVerbose(this, "Routing USB for input {0} to {1}", inputSelector, dmCard);
-                ExecuteSwitch(dmCard, Chassis.Outputs[outputSelector], sigType);
-                return;
-            }
 
             var inputCard = inputSelector == 0 ? null : Chassis.Inputs[inputSelector];
             var outputCard = Chassis.Outputs[outputSelector];
 
             ExecuteSwitch(inputCard, outputCard, sigType);
+        }
+
+        /// <summary>
+        /// Executes USB output-side routing (routes a USB source to a switcher output slot).
+        /// In Essentials v3, eRoutingSignalType.UsbOutput was merged into eRoutingSignalType.Usb,
+        /// so this dedicated helper preserves the output-slot routing behaviour that was previously
+        /// in the now-unreachable UsbOutput branch of ExecuteNumericSwitch.
+        /// </summary>
+        private void ExecuteUsbOutputSwitch(ushort inputSelector, ushort outputSelector)
+        {
+            var chassisSize = (uint)Chassis.NumberOfInputs;
+            DMInputOutputBase dmCard;
+
+            Debug.LogVerbose(this, "Executing USB Output switch.\r\n in:{0} output: {1}", inputSelector, outputSelector);
+
+            //routing Output to Output or Input to Output
+            if (inputSelector > chassisSize)
+            {
+                //wanting to route an output to an output. Subtract chassis size and get output, unless it's 8x8
+                //need this to determine USB routing values
+                //8x8 -> 1-8 is inputs 1-8, 17-24 is outputs 1-8
+                //16x16 1-16 is inputs 1-16, 17-32 is outputs 1-16
+                //32x32 1-32 is inputs 1-32, 33-64 is outputs 1-32
+                uint outputIndex;
+
+                if (chassisSize == 8)
+                {
+                    outputIndex = (uint) inputSelector - 16;
+                }
+                else
+                {
+                    outputIndex = inputSelector - chassisSize;
+                }
+
+                dmCard = Chassis.Outputs[outputIndex];
+            }
+            else
+            {
+                dmCard = Chassis.Inputs[inputSelector];
+            }
+            Chassis.USBEnter.BoolValue = true;
+
+            Debug.LogVerbose(this, "Routing USB for input {0} to {1}", inputSelector, dmCard);
+            ExecuteSwitch(dmCard, Chassis.Outputs[outputSelector], eRoutingSignalType.Usb);
         }
 
         #endregion
@@ -1943,7 +1952,7 @@ namespace PepperDash.Essentials.DM
             trilist.SetUShortSigAction(joinMap.OutputAudio.JoinNumber + ioSlotJoin,
                 o => ExecuteNumericSwitch(o, (ushort) ioSlot, eRoutingSignalType.Audio));
             trilist.SetUShortSigAction(joinMap.OutputUsb.JoinNumber + ioSlotJoin,
-                o => ExecuteNumericSwitch(o, (ushort) ioSlot, eRoutingSignalType.Usb));
+                o => ExecuteUsbOutputSwitch(o, (ushort) ioSlot));
             trilist.SetUShortSigAction(joinMap.InputUsb.JoinNumber + ioSlotJoin,
                 o => ExecuteNumericSwitch(o, (ushort) ioSlot, eRoutingSignalType.Usb));
 
