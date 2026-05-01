@@ -46,9 +46,9 @@ public class FactoryDiscoveryTests
     {
         var factoryTypes = AssemblyFixture.FindFactoryTypes();
 
-        // 12 factories: DmChassis, HdMdNxM4kE, HdMdNxM4kEBridgeable, HdMd8xN,
+        // 13 factories: DmChassis, HdMdNxM4kE, HdMdNxM4kEBridgeable, HdMdNxM4kzE, HdMd8xN,
         // HdSp401, HdMdxxxCE, AirMedia, DmTx, DmRmc, DmDge200C, Dge100, HdWp4k401c
-        factoryTypes.Should().HaveCount(12);
+        factoryTypes.Should().HaveCount(13);
     }
 
     [Theory]
@@ -64,6 +64,7 @@ public class FactoryDiscoveryTests
     [InlineData("DmDge200CControllerFactory")]
     [InlineData("Dge100ControllerFactory")]
     [InlineData("HdWp4k401cControllerFactory")]
+    [InlineData("HdMdNxM4kzEControllerFactory")]
     public void Factory_Exists_ByName(string factoryClassName)
     {
         var factoryTypes = AssemblyFixture.FindFactoryTypes();

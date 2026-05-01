@@ -56,6 +56,19 @@ public class ConfigDeserializationTests
     }
 
     // -------------------------------------------------------------------
+    // HdMdNxM4kzEPropertiesConfig
+    // -------------------------------------------------------------------
+
+    [Theory]
+    [InlineData("HdMdNxM4kzEPropertiesConfig", "control")]
+    [InlineData("HdMdNxM4kzEPropertiesConfig", "inputs")]
+    [InlineData("HdMdNxM4kzEPropertiesConfig", "outputs")]
+    public void HdMdNxM4kzEConfig_Has_JsonProperty(string className, string jsonPropertyName)
+    {
+        AssertTypeHasJsonProperty(className, jsonPropertyName);
+    }
+
+    // -------------------------------------------------------------------
     // DmCardAudioPropertiesConfig
     // -------------------------------------------------------------------
 
@@ -115,6 +128,7 @@ public class ConfigDeserializationTests
     [InlineData("DgePropertiesConfig")]
     [InlineData("HdPsXxxPropertiesConfig")]
     [InlineData("DmpsRoutingPropertiesConfig")]
+    [InlineData("HdMdNxM4kzEPropertiesConfig")]
     public void Config_Has_Parameterless_Constructor(string className)
     {
         var type = FindType(className);

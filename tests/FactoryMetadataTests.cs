@@ -131,6 +131,11 @@ public class FactoryMetadataTests
     [InlineData("Dge100ControllerFactory", "dge100")]
     [InlineData("DmDge200CControllerFactory", "dmdge200c")]
     [InlineData("HdWp4k401cControllerFactory", "hdWp4k401c")]
+    [InlineData("HdMdNxM4kzEControllerFactory", "hdmd4x14kze")]
+    [InlineData("HdMdNxM4kzEControllerFactory", "hdmd4x24kze")]
+    [InlineData("HdMdNxM4kzEControllerFactory", "hdmd4x44kze")]
+    [InlineData("HdMdNxM4kzEControllerFactory", "hdmd8x44kze")]
+    [InlineData("HdMdNxM4kzEControllerFactory", "hdmd8x84kze")]
     public void Factory_Source_Contains_TypeName(string factoryClassName, string expectedTypeName)
     {
         var srcDir = Path.GetFullPath(Path.Combine(
