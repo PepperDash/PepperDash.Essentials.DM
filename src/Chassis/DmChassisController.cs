@@ -27,6 +27,8 @@ namespace PepperDash.Essentials.DM
     public class DmChassisController : CrestronGenericBridgeableBaseDevice, IDmSwitchWithEndpointOnlineFeedback, IRoutingNumericWithFeedback, IMatrixRouting
     {
         private const string NonePortKey = "inputCard0--None";
+        // On an 8x8 chassis the USB slot numbers for outputs start at 17 (inputs 1-8, outputs 17-24).
+        private const uint Usb8x8OutputSlotOffset = 16;
         public DMChassisPropertiesConfig PropertiesConfig { get; set; }
 
         public Switch Chassis { get; private set; }
@@ -1370,7 +1372,7 @@ namespace PepperDash.Essentials.DM
 
             var output = outputSelector as DMOutput;
 
-            // In Essentials v3, eRoutingSignalType.UsbInput and UsbOutput were merged into Usb.
+            // In Essentials v3, eRoutingSignalType.UsbInput and eRoutingSignalType.UsbOutput were merged into eRoutingSignalType.Usb.
             var isUsb = (sigType & eRoutingSignalType.Usb) == eRoutingSignalType.Usb;
 
             if (output == null && !isUsb)
@@ -1487,7 +1489,7 @@ namespace PepperDash.Essentials.DM
 
             DMInputOutputBase dmCard;
 
-            //Routing Input to Input or Output to Input (USB input-side routing)
+            //Routing for USB input-side: routes a USB source to a switcher input slot
             if ((sigType & eRoutingSignalType.Usb) == eRoutingSignalType.Usb)
             {
                 Debug.LogVerbose(this, "Executing USB Input switch.\r\n in:{0} output: {1}", inputSelector, outputSelector);
@@ -1497,7 +1499,7 @@ namespace PepperDash.Essentials.DM
 
                     if (chassisSize == 8)
                     {
-                        outputIndex = (uint) inputSelector - 16;
+                        outputIndex = (uint) inputSelector - Usb8x8OutputSlotOffset;
                     }
                     else
                     {
@@ -1545,7 +1547,7 @@ namespace PepperDash.Essentials.DM
 
                 if (chassisSize == 8)
                 {
-                    outputIndex = (uint) inputSelector - 16;
+                    outputIndex = (uint) inputSelector - Usb8x8OutputSlotOffset;
                 }
                 else
                 {
