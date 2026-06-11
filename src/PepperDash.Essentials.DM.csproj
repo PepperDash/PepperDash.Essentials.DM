@@ -27,7 +27,7 @@
     <DebugType>portable</DebugType>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="PepperDashEssentials" Version="2.37.0-feature-air-media-sharing-interface.1">
+    <PackageReference Include="PepperDashEssentials" Version="2.37.0-feature-web-api-updates.7">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
   </ItemGroup>
