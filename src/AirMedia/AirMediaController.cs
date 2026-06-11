@@ -14,11 +14,12 @@ using PepperDash.Core;
 using PepperDash.Essentials.Core;
 using PepperDash.Essentials.Core.Bridges;
 using PepperDash.Essentials.Core.Config;
+using PepperDash.Essentials.Core.DeviceTypeInterfaces;
 
 namespace PepperDash.Essentials.DM.AirMedia
 {
     [Description("Wrapper class for an AM-200 or AM-300")]
-    public class AirMediaController : CrestronGenericBridgeableBaseDevice, IRoutingNumericWithFeedback, IIROutputPorts, IComPorts
+    public class AirMediaController : CrestronGenericBridgeableBaseDevice, IRoutingNumericWithFeedback, IIROutputPorts, IComPorts, IHasWirelessSharing
     {
         public Am3x00 AirMedia { get; private set; }
 
@@ -35,6 +36,18 @@ namespace PepperDash.Essentials.DM.AirMedia
         public event EventHandler<RoutingNumericEventArgs> NumericSwitchChange;
 
         public BoolFeedback IsInSessionFeedback { get; private set; }
+
+        /// <summary>
+        /// Reports whether a wireless sharing session is currently active. Implements <see cref="IHasWirelessSharing"/>;
+        /// equivalent to <see cref="IsInSessionFeedback"/>.
+        /// </summary>
+        public BoolFeedback IsSharingFeedback { get { return IsInSessionFeedback; } }
+
+        /// <summary>
+        /// Raised when wireless sharing starts or stops. Implements <see cref="IHasWirelessSharing"/>.
+        /// </summary>
+        public event EventHandler<WirelessSharingEventArgs> SharingChanged;
+
         public IntFeedback ErrorFeedback { get; private set; }
         public IntFeedback NumberOfUsersConnectedFeedback { get; set; }
         public IntFeedback LoginCodeFeedback { get; set; }
@@ -202,6 +215,11 @@ namespace PepperDash.Essentials.DM.AirMedia
                 case AirMediaInputSlot.AirMediaStatusFeedbackEventId:
                     {
                         IsInSessionFeedback.FireUpdate();
+
+                        var sharingHandler = SharingChanged;
+                        if (sharingHandler != null)
+                            sharingHandler(this, new WirelessSharingEventArgs(IsInSessionFeedback.BoolValue));
+
                         break;
                     }
                 case AirMediaInputSlot.AirMediaErrorFeedbackEventId:
