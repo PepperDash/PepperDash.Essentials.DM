@@ -1,6 +1,5 @@
 using System.Reflection;
-using FluentAssertions;
-using Xunit;
+using System.Text.Json;
 
 namespace PepperDash.Essentials.DM.Tests;
 
@@ -14,14 +13,23 @@ public static class AssemblyFixture
     private static readonly Lazy<MetadataLoadContext> LazyContext = new(CreateContext);
     private static readonly Lazy<Assembly> LazyAssembly = new(LoadPluginAssembly);
 
-    /// <summary>
-    /// Path to the built DM plugin DLL. Assumes the DM project has been built in Debug.
-    /// </summary>
+    private static string Configuration
+    {
+        get
+        {
+            // Derive from test output path: tests/bin/{Configuration}/net8.0/
+            var baseDir = AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar);
+            var parts = baseDir.Split(Path.DirectorySeparatorChar);
+            return parts[^2]; // net8.0 is last, Configuration is second-to-last
+        }
+    }
+
+    // This plugin outputs to src/4Series/bin/{Config}/net8/ (OutputPath = 4Series\bin\$(Configuration)\).
     private static string PluginDllPath =>
         Path.GetFullPath(Path.Combine(
-            AppContext.BaseDirectory, // tests bin dir
-            "..", "..", "..", "..",   // up to repo root
-            "src", "4Series", "bin", "Debug", "net8",
+            AppContext.BaseDirectory,
+            "..", "..", "..", "..",
+            "src", "4Series", "bin", Configuration, "net8",
             "PepperDash.Essentials.DM.dll"));
 
     private static string PluginOutputDir => Path.GetDirectoryName(PluginDllPath)!;
@@ -32,29 +40,66 @@ public static class AssemblyFixture
     private static MetadataLoadContext CreateContext()
     {
         var runtimeDir = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
+        var dllByName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        // Collect DLLs from: .NET runtime, plugin output, and NuGet global packages cache
-        var dllPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        // Fail clearly if the plugin hasn't been built yet, rather than letting
+        // Directory.GetFiles throw a less actionable DirectoryNotFoundException below.
+        if (!File.Exists(PluginDllPath))
+            throw new FileNotFoundException(
+                $"Plugin DLL not found at '{PluginDllPath}'. Build the plugin first.");
 
-        foreach (var dll in Directory.GetFiles(runtimeDir, "*.dll"))
-            dllPaths.Add(dll);
-
+        // Priority 1: Plugin output dir (correct versions win)
         foreach (var dll in Directory.GetFiles(PluginOutputDir, "*.dll"))
-            dllPaths.Add(dll);
+            dllByName[Path.GetFileName(dll)] = dll;
 
-        // Search NuGet global packages cache for referenced assemblies
-        var nugetDir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-            ".nuget", "packages");
+        // Priority 2: .NET runtime
+        foreach (var dll in Directory.GetFiles(runtimeDir, "*.dll"))
+            dllByName.TryAdd(Path.GetFileName(dll), dll);
 
-        if (Directory.Exists(nugetDir))
+        // Priority 3: Deterministic deps.json resolution for transitive packages
+        var depsJsonPath = Path.ChangeExtension(PluginDllPath, ".deps.json");
+        if (File.Exists(depsJsonPath))
         {
-            foreach (var dll in Directory.GetFiles(nugetDir, "*.dll", SearchOption.AllDirectories))
-                dllPaths.Add(dll);
+            foreach (var path in ResolveDepsJsonAssemblies(depsJsonPath))
+                dllByName.TryAdd(Path.GetFileName(path), path);
         }
 
-        var resolver = new PathAssemblyResolver(dllPaths);
-        return new MetadataLoadContext(resolver);
+        return new MetadataLoadContext(new PathAssemblyResolver(dllByName.Values));
+    }
+
+    private static IEnumerable<string> ResolveDepsJsonAssemblies(string depsJsonPath)
+    {
+        // Honor NUGET_PACKAGES (common in CI / enterprise setups); fall back to the default.
+        var nugetDir = Environment.GetEnvironmentVariable("NUGET_PACKAGES");
+        if (string.IsNullOrEmpty(nugetDir))
+            nugetDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".nuget", "packages");
+
+        using var stream = File.OpenRead(depsJsonPath);
+        using var doc = JsonDocument.Parse(stream);
+
+        if (!doc.RootElement.TryGetProperty("libraries", out var libraries))
+            yield break;
+
+        foreach (var lib in libraries.EnumerateObject())
+        {
+            if (!lib.Value.TryGetProperty("type", out var typeProp) || typeProp.GetString() != "package")
+                continue;
+            if (!lib.Value.TryGetProperty("path", out var pathProp))
+                continue;
+
+            var packagePath = Path.Combine(nugetDir, pathProp.GetString()!);
+            if (!Directory.Exists(packagePath)) continue;
+
+            var libDir = Path.Combine(packagePath, "lib", "net8.0");
+            if (!Directory.Exists(libDir))
+                libDir = Path.Combine(packagePath, "lib", "netstandard2.0");
+            if (!Directory.Exists(libDir)) continue;
+
+            foreach (var dll in Directory.GetFiles(libDir, "*.dll"))
+                yield return dll;
+        }
     }
 
     private static Assembly LoadPluginAssembly()
