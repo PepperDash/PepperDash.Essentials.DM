@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 
 namespace PepperDash.Essentials.DM
 {
-    public class HDBaseTRxController : DmHdBaseTControllerBase, IRoutingInputsOutputs,
+    public class HDBaseTRxController : DmHdBaseTControllerBase, IRoutingMidpoint,
         IComPorts
     {
         public RoutingInputPort DmIn { get; private set; }

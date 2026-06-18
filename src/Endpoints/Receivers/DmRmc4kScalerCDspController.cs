@@ -15,7 +15,7 @@ namespace PepperDash.Essentials.DM
     /// 
     /// </summary>
     [Description("Wrapper Class for DM-RMC-4K-SCALER-C-DSP")]
-    public class DmRmc4kScalerCDspController : DmRmcControllerBase, IRoutingInputsOutputs, IBasicVolumeWithFeedback,
+    public class DmRmc4kScalerCDspController : DmRmcControllerBase, IRoutingMidpoint, IBasicVolumeWithFeedback,
         IIROutputPorts, IComPorts, ICec, IRelayPorts, IHasDmInHdcp
     {
         private readonly DmRmc4kScalerCDsp _rmc;

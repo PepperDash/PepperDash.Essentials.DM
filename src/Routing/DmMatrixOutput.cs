@@ -1,6 +1,5 @@
 ﻿using PepperDash.Core;
 using PepperDash.Essentials.Core;
-using PepperDash.Essentials.Core.Routing;
 using Crestron.SimplSharpPro.DM;
 using Crestron.SimplSharpPro.DM.Cards;
 using System;
@@ -9,8 +8,8 @@ using System.Linq;
 
 namespace PepperDash.Essentials.DM.Routing
 {
-    public class DmMatrixOutput :IRoutingOutputSlot
-    {       
+    public class DmMatrixOutput : IDmOutputSlot
+    {
         private readonly CardDevice _device;
         private readonly DmChassisController _chassis;
         private readonly string _key;
@@ -23,6 +22,8 @@ namespace PepperDash.Essentials.DM.Routing
                 _chassis = chassis;
                 _key = key;
                 Name = name;
+
+                IsOnline = new BoolFeedback(() => _device.IsOnline);
 
                 _device.OnlineStatusChange += _device_OnlineStatusChange;
 
@@ -66,14 +67,14 @@ namespace PepperDash.Essentials.DM.Routing
 
         public string RxDeviceKey => "";
 
-        private readonly Dictionary<eRoutingSignalType, IRoutingInputSlot> currentRoutes = new Dictionary<eRoutingSignalType, IRoutingInputSlot>
+        private readonly Dictionary<eRoutingSignalType, IDmInputSlot> currentRoutes = new Dictionary<eRoutingSignalType, IDmInputSlot>
         {
             {eRoutingSignalType.Audio, default },
             {eRoutingSignalType.Video, default },
             {eRoutingSignalType.Usb, default },
         };
 
-        private void SetInputRoute(eRoutingSignalType type, IRoutingInputSlot input)
+        private void SetInputRoute(eRoutingSignalType type, IDmInputSlot input)
         {
             if (currentRoutes.ContainsKey(type))
             {
@@ -92,7 +93,7 @@ namespace PepperDash.Essentials.DM.Routing
         {
             IsOnline.FireUpdate();
         }
-        public Dictionary<eRoutingSignalType, IRoutingInputSlot> CurrentRoutes => currentRoutes;
+        public Dictionary<eRoutingSignalType, IDmInputSlot> CurrentRoutes => currentRoutes;
 
         public int SlotNumber => (int)_device.SwitcherInputOutput.Number;
         public eRoutingSignalType SupportedSignalTypes => eRoutingSignalType.AudioVideo;

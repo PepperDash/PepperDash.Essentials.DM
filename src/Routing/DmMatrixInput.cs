@@ -1,5 +1,4 @@
 ﻿using PepperDash.Essentials.Core;
-using PepperDash.Essentials.Core.Routing;
 using Crestron.SimplSharpPro.DM;
 using Crestron.SimplSharpPro.DM.Cards;
 using System;
@@ -7,7 +6,7 @@ using System.Linq;
 
 namespace PepperDash.Essentials.DM.Routing
 {
-    public class DmMatrixInput : IRoutingInputSlot
+    public class DmMatrixInput : IDmInputSlot
     {
         private readonly CardDevice _device;
         private readonly string _key;

@@ -1,10 +1,9 @@
 ﻿using PepperDash.Essentials.Core;
-using PepperDash.Essentials.Core.Routing;
 using System;
 
 namespace PepperDash.Essentials.DM.Routing
 {
-    public class DmMatrixClearInput : IRoutingInputSlot
+    public class DmMatrixClearInput : IDmInputSlot
     {
         public string TxDeviceKey => string.Empty;
 

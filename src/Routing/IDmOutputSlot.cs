@@ -1,0 +1,34 @@
+using System;
+using System.Collections.Generic;
+using PepperDash.Core;
+using PepperDash.Essentials.Core;
+
+namespace PepperDash.Essentials.DM.Routing
+{
+    /// <summary>
+    /// Plugin-local output-slot abstraction for the DM chassis matrix router.
+    /// Replaces the core <c>IRoutingOutputSlot</c> (and its <c>IRoutingSlot</c> base) that were
+    /// removed in PepperDashEssentials v3-routing. Consumed only internally by the DM chassis
+    /// (the slot dictionaries are plugin-private). Implemented by <see cref="DmMatrixOutput"/>.
+    /// </summary>
+    public interface IDmOutputSlot : IKeyName
+    {
+        /// <summary>Matrix slot number.</summary>
+        int SlotNumber { get; }
+
+        /// <summary>Signal types this output can carry.</summary>
+        eRoutingSignalType SupportedSignalTypes { get; }
+
+        /// <summary>Online feedback for the backing endpoint.</summary>
+        BoolFeedback IsOnline { get; }
+
+        /// <summary>Key of the receiver device fed by this output slot, if known.</summary>
+        string RxDeviceKey { get; }
+
+        /// <summary>Current input routed to this output per signal type.</summary>
+        Dictionary<eRoutingSignalType, IDmInputSlot> CurrentRoutes { get; }
+
+        /// <summary>Raised when the routed input on this output changes.</summary>
+        event EventHandler OutputSlotChanged;
+    }
+}

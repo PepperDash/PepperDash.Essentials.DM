@@ -14,7 +14,7 @@ using PepperDash.Essentials.DM.Config;
 namespace PepperDash.Essentials.DM.Chassis
 {
 	[Description("Wrapper class for HD-MD-NxM-4KZ-E switchers")]
-	public class HdMdNxM4kzEController : CrestronGenericBridgeableBaseDevice, IRoutingNumericWithFeedback, IHasFeedback
+	public class HdMdNxM4kzEController : CrestronGenericBridgeableBaseDevice, IRoutingMidpointWithFeedback, IHasFeedback
 	{
 		private readonly HdMdNxM4kzE _chassis;
 
@@ -131,7 +131,50 @@ namespace PepperDash.Essentials.DM.Chassis
 		{
 			var newEvent = NumericSwitchChange;
 			if (newEvent != null) newEvent(this, e);
+			UpdateCurrentRoute(e);
 		}
+
+		#region IRoutingMidpointWithFeedback Members
+
+		/// <summary>
+		/// Currently active routes, per IRoutingMidpointWithFeedback. Maintained from the device's
+		/// switch-change feedback (see UpdateCurrentRoute / OnSwitchChange).
+		/// </summary>
+		public List<RouteSwitchDescriptor> CurrentRoutes { get; } = new List<RouteSwitchDescriptor>();
+
+		/// <summary>
+		/// Raised when a route changes, per IRoutingMidpointWithFeedback.
+		/// </summary>
+		public event RouteChangedEventHandler RouteChanged;
+
+		/// <summary>
+		/// Clears the route to an output by switching a null input (no source) to it.
+		/// </summary>
+		public void ClearRoute(object outputSelector, eRoutingSignalType signalType)
+		{
+			ExecuteSwitch(null, outputSelector, signalType);
+		}
+
+		/// <summary>
+		/// Maintains <see cref="CurrentRoutes"/> and raises <see cref="RouteChanged"/> from a numeric
+		/// switch-change event so the feedback surface tracks the same routes as NumericSwitchChange.
+		/// </summary>
+		private void UpdateCurrentRoute(RoutingNumericEventArgs e)
+		{
+			if (e == null || e.OutputPort == null)
+				return;
+
+			CurrentRoutes.RemoveAll(r => ReferenceEquals(r.OutputPort, e.OutputPort));
+
+			var descriptor = new RouteSwitchDescriptor(e.OutputPort, e.InputPort);
+			if (e.InputPort != null)
+				CurrentRoutes.Add(descriptor);
+
+			var handler = RouteChanged;
+			handler?.Invoke(this, descriptor);
+		}
+
+		#endregion
 
 		public void EnableHdcp(uint port)
 		{

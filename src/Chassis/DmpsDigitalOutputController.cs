@@ -15,7 +15,7 @@ namespace PepperDash.Essentials.DM
     /// <summary>
     /// 
     /// </summary>
-    public class DmpsDigitalOutputController : Device, IRoutingNumeric, IHasFeedback
+    public class DmpsDigitalOutputController : Device, IRoutingMidpointWithFeedback, IHasFeedback
     {
         public Card.Dmps3OutputBase OutputCard { get; protected set; }
 
@@ -158,6 +158,30 @@ namespace PepperDash.Essentials.DM
                     (OutputCard as Card.Dmps3HdmiOutputBackend).AudioOutSourceDevice = (eDmps34KAudioOutSourceDevice)inputSelector;
                 }
             }
+        }
+
+        #endregion
+
+        #region IRoutingMidpointWithFeedback Members
+
+        /// <summary>
+        /// Currently active routes, per IRoutingMidpointWithFeedback. Route state is surfaced via
+        /// AudioSourceNumericFeedback; this list is kept empty to satisfy the interface contract.
+        /// </summary>
+        public List<RouteSwitchDescriptor> CurrentRoutes { get; } = new List<RouteSwitchDescriptor>();
+
+        /// <summary>
+        /// Raised when a route changes, per IRoutingMidpointWithFeedback. Route feedback is carried by
+        /// AudioSourceNumericFeedback; implemented as a no-op event to stay warning-clean.
+        /// </summary>
+        public event RouteChangedEventHandler RouteChanged { add { } remove { } }
+
+        /// <summary>
+        /// Clears the digital audio route by selecting the "None" source.
+        /// </summary>
+        public void ClearRoute(object outputSelector, eRoutingSignalType signalType)
+        {
+            ExecuteNumericSwitch(0, 0, signalType);
         }
 
         #endregion

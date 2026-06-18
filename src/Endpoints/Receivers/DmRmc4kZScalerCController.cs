@@ -6,8 +6,10 @@ using Crestron.SimplSharpPro.DM;
 using Crestron.SimplSharpPro.DM.Endpoints;
 using Crestron.SimplSharpPro.DM.Endpoints.Receivers;
 
+using System.Collections.Generic;
 using PepperDash.Essentials.Core;
 using PepperDash.Essentials.Core.Bridges;
+using PepperDash.Essentials.DM.Routing;
 using PepperDash.Core;
 using PepperDash_Essentials_DM;
 
@@ -50,7 +52,54 @@ namespace PepperDash.Essentials.DM
         {
             var newEvent = NumericSwitchChange;
             if (newEvent != null) newEvent(this, e);
+            UpdateCurrentRoute(e);
         }
+
+        #region IRoutingMidpointWithFeedback Members
+
+        /// <summary>
+        /// Currently active routes, per IRoutingMidpointWithFeedback. Maintained from the receiver's
+        /// selected-source feedback (see UpdateCurrentRoute / OnSwitchChange).
+        /// </summary>
+        public List<RouteSwitchDescriptor> CurrentRoutes { get; } = new List<RouteSwitchDescriptor>();
+
+        /// <summary>
+        /// Raised when a route changes, per IRoutingMidpointWithFeedback.
+        /// </summary>
+        public event RouteChangedEventHandler RouteChanged;
+
+        /// <summary>
+        /// Clears the route to the HDMI output by selecting source 0 (no source).
+        /// </summary>
+        public void ClearRoute(object outputSelector, eRoutingSignalType signalType)
+        {
+            ExecuteNumericSwitch(0, 0, signalType);
+        }
+
+        /// <summary>
+        /// Maintains <see cref="CurrentRoutes"/> and raises <see cref="RouteChanged"/> from a numeric
+        /// switch-change event so the IRoutingMidpointWithFeedback surface tracks the receiver's source.
+        /// </summary>
+        private void UpdateCurrentRoute(RoutingNumericEventArgs e)
+        {
+            if (e == null)
+                return;
+
+            var outputPort = e.OutputPort ?? OutputPorts.FirstOrDefault();
+            if (outputPort == null)
+                return;
+
+            CurrentRoutes.RemoveAll(r => ReferenceEquals(r.OutputPort, outputPort));
+
+            var descriptor = new RouteSwitchDescriptor(outputPort, e.InputPort);
+            if (e.InputPort != null)
+                CurrentRoutes.Add(descriptor);
+
+            var handler = RouteChanged;
+            handler?.Invoke(this, descriptor);
+        }
+
+        #endregion
 
         public DmRmc4kZScalerCController(string key, string name, DmRmc4kzScalerC rmc)
             : base(key, name, rmc)

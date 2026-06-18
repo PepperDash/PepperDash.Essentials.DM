@@ -20,7 +20,7 @@ namespace PepperDash.Essentials.DM
     /// Represent both a transmitter and receiver pair of the HD-MD-400-C-E / HD-MD-300-C-E / HD-MD-200-C-E kits
     /// </summary>
     [Description("Wrapper class for all HD-MD variants")]
-    public class HdMdxxxCEController : CrestronGenericBridgeableBaseDevice, IRouting//, IComPorts
+    public class HdMdxxxCEController : CrestronGenericBridgeableBaseDevice, IRoutingMidpointWithFeedback//, IComPorts
     {
         /// <summary>
         /////  DmLite Ports
@@ -213,6 +213,26 @@ namespace PepperDash.Essentials.DM
             var input = number == 0 ? null : TxRxPair.Inputs[number];
 
             TxRxPair.HdmiOutputs[1].VideoOut = input;
+        }
+
+        /// <summary>
+        /// Currently active routes, per IRoutingMidpointWithFeedback. Route state for this kit is
+        /// surfaced via VideoSourceFeedback; this list is kept empty to satisfy the interface contract.
+        /// </summary>
+        public List<RouteSwitchDescriptor> CurrentRoutes { get; } = new List<RouteSwitchDescriptor>();
+
+        /// <summary>
+        /// Raised when a route changes, per IRoutingMidpointWithFeedback. Route feedback is carried by
+        /// VideoSourceFeedback; implemented as a no-op event to stay warning-clean.
+        /// </summary>
+        public event RouteChangedEventHandler RouteChanged { add { } remove { } }
+
+        /// <summary>
+        /// Clears the route to the single HDMI output by selecting no input.
+        /// </summary>
+        public void ClearRoute(object outputSelector, eRoutingSignalType signalType)
+        {
+            TxRxPair.HdmiOutputs[1].VideoOut = null;
         }
 
         // This device has a different class for com ports which will make it hard to implement IComPorts....
