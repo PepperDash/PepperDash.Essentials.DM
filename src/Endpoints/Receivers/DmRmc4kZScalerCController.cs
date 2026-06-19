@@ -57,11 +57,14 @@ namespace PepperDash.Essentials.DM
 
         #region IRoutingMidpointWithFeedback Members
 
+        // Per (output port, signal type) route tracking shared with the chassis/transmitters.
+        private readonly DmRouteFeedbackTracker _routeTracker = new DmRouteFeedbackTracker();
+
         /// <summary>
         /// Currently active routes, per IRoutingMidpointWithFeedback. Maintained from the receiver's
         /// selected-source feedback (see UpdateCurrentRoute / OnSwitchChange).
         /// </summary>
-        public List<RouteSwitchDescriptor> CurrentRoutes { get; } = new List<RouteSwitchDescriptor>();
+        public List<RouteSwitchDescriptor> CurrentRoutes => _routeTracker.CurrentRoutes;
 
         /// <summary>
         /// Raised when a route changes, per IRoutingMidpointWithFeedback.
@@ -86,14 +89,9 @@ namespace PepperDash.Essentials.DM
                 return;
 
             var outputPort = e.OutputPort ?? OutputPorts.FirstOrDefault();
-            if (outputPort == null)
+            var descriptor = _routeTracker.ApplyRoute(outputPort, e.InputPort, e.SigType);
+            if (descriptor == null)
                 return;
-
-            CurrentRoutes.RemoveAll(r => ReferenceEquals(r.OutputPort, outputPort));
-
-            var descriptor = new RouteSwitchDescriptor(outputPort, e.InputPort);
-            if (e.InputPort != null)
-                CurrentRoutes.Add(descriptor);
 
             var handler = RouteChanged;
             handler?.Invoke(this, descriptor);

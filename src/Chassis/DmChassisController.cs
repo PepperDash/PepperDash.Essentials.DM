@@ -1210,7 +1210,6 @@ namespace PepperDash.Essentials.DM
         }
 
         /// <summary>
-        /// <summary>
         /// Raise an event when the status of a switch object changes.
         /// </summary>
         /// <param name="e">Arguments defined as IKeyName sender, output, input, and eRoutingSignalType</param>
@@ -1222,11 +1221,15 @@ namespace PepperDash.Essentials.DM
 
         #region IRoutingMidpointWithFeedback Members
 
+        // Tracks routes per (output port, signal type) so breakaway audio/video routes to the same
+        // output are represented independently (see DmRouteFeedbackTracker).
+        private readonly DmRouteFeedbackTracker _routeTracker = new DmRouteFeedbackTracker();
+
         /// <summary>
         /// Currently active routes on the chassis, per the IRoutingMidpointWithFeedback contract.
         /// Maintained from the chassis VideoOut/AudioOut feedback events (see UpdateCurrentRoute).
         /// </summary>
-        public List<RouteSwitchDescriptor> CurrentRoutes { get; } = new List<RouteSwitchDescriptor>();
+        public List<RouteSwitchDescriptor> CurrentRoutes => _routeTracker.CurrentRoutes;
 
         /// <summary>
         /// Raised when a route changes on the chassis, per IRoutingMidpointWithFeedback.
@@ -1244,23 +1247,15 @@ namespace PepperDash.Essentials.DM
 
         /// <summary>
         /// Maintains <see cref="CurrentRoutes"/> and raises <see cref="RouteChanged"/> from the
-        /// chassis output feedback events. A null input port (no source) removes the tracked route.
-        /// KNOWN LIMITATION: removal is keyed on the output port ONLY (not signal type), so an
-        /// output tracks at most one descriptor. Audio and video routed to the same output overwrite
-        /// each other here — breakaway (independent A/V) routes are not represented. The transmitter
-        /// tracker (DmTxControllerBase.UpdateCurrentRouteFromArgs) keys per signal type; aligning the
-        /// chassis to that is tracked separately.
+        /// chassis output feedback events. Keyed on the (output port, signal type) pair so breakaway
+        /// audio and video routes to the same output are tracked independently. A null input port
+        /// (no source) clears the route for that output/signal while still firing the change event.
         /// </summary>
-        private void UpdateCurrentRoute(RoutingOutputPort outputPort, RoutingInputPort inputPort)
+        private void UpdateCurrentRoute(RoutingOutputPort outputPort, RoutingInputPort inputPort, eRoutingSignalType signalType)
         {
-            if (outputPort == null)
+            var descriptor = _routeTracker.ApplyRoute(outputPort, inputPort, signalType);
+            if (descriptor == null)
                 return;
-
-            CurrentRoutes.RemoveAll(r => ReferenceEquals(r.OutputPort, outputPort));
-
-            var descriptor = new RouteSwitchDescriptor(outputPort, inputPort);
-            if (inputPort != null)
-                CurrentRoutes.Add(descriptor);
 
             var handler = RouteChanged;
             handler?.Invoke(this, descriptor);
@@ -1325,7 +1320,7 @@ namespace PepperDash.Essentials.DM
                             Debug.LogWarning(this, "Video route feedback on output {Output}: no matching output port; CurrentRoutes not updated", output);
                         else if (localInputPort == null && inputNumber != 0)
                             Debug.LogWarning(this, "Video route feedback on output {Output}: routed input {Input} has no matching input port; reporting as route-off", output, inputNumber);
-                        UpdateCurrentRoute(localOutputPort, localInputPort);
+                        UpdateCurrentRoute(localOutputPort, localInputPort, eRoutingSignalType.Video);
                     }
 
                     if (OutputVideoRouteNameFeedbacks.ContainsKey(output))
@@ -1357,7 +1352,7 @@ namespace PepperDash.Essentials.DM
                             Debug.LogWarning(this, "Audio route feedback on output {Output}: no matching output port; CurrentRoutes not updated", output);
                         else if (localInputPort == null && inputNumber != 0)
                             Debug.LogWarning(this, "Audio route feedback on output {Output}: routed input {Input} has no matching input port; reporting as route-off", output, inputNumber);
-                        UpdateCurrentRoute(localOutputPort, localInputPort);
+                        UpdateCurrentRoute(localOutputPort, localInputPort, eRoutingSignalType.Audio);
                     }
 
                     if (OutputAudioRouteNameFeedbacks.ContainsKey(output))

@@ -265,13 +265,16 @@ namespace PepperDash.Essentials.DM
         public RoutingInputPortWithVideoStatuses AnyVideoInput { get; protected set; }
         public IntFeedback HdcpStateFeedback { get; protected set; }
 
+        // Per (output port, signal type) route tracking shared with the chassis/receivers.
+        private readonly DmRouteFeedbackTracker _routeTracker = new DmRouteFeedbackTracker();
+
         /// <summary>
         /// Tracks the currently active routes for the IRoutingMidpointWithFeedback contract.
         /// DM transmitters select an internal source rather than performing matrix switching, so the
         /// authoritative route feedback continues to be carried by the device-specific numeric
         /// feedbacks (Video/AudioSourceNumericFeedback) and the NumericSwitchChange event.
         /// </summary>
-        public List<RouteSwitchDescriptor> CurrentRoutes { get; } = new List<RouteSwitchDescriptor>();
+        public List<RouteSwitchDescriptor> CurrentRoutes => _routeTracker.CurrentRoutes;
 
         /// <summary>
         /// Raised when a route changes, per IRoutingMidpointWithFeedback. DM transmitters drive route
@@ -287,13 +290,8 @@ namespace PepperDash.Essentials.DM
         /// </summary>
         public virtual void ClearRoute(object outputSelector, eRoutingSignalType signalType)
         {
-            if (CurrentRoutes.Count == 0)
-                return;
-
-            CurrentRoutes.Clear();
-
-            var handler = RouteChanged;
-            handler?.Invoke(this as IRoutingMidpointWithFeedback, null);
+            if (_routeTracker.Clear())
+                OnRouteChanged(null);
         }
 
         /// <summary>
@@ -316,15 +314,9 @@ namespace PepperDash.Essentials.DM
             if (e == null)
                 return;
 
-            var outputPort = e.OutputPort;
-            if (outputPort == null)
+            var descriptor = _routeTracker.ApplyRoute(e.OutputPort, e.InputPort, e.SigType);
+            if (descriptor == null)
                 return;
-
-            CurrentRoutes.RemoveAll(r => ReferenceEquals(r.OutputPort, outputPort) && r.InputPort?.Type == e.SigType);
-
-            var descriptor = new RouteSwitchDescriptor(outputPort, e.InputPort);
-            if (e.InputPort != null)
-                CurrentRoutes.Add(descriptor);
 
             OnRouteChanged(descriptor);
         }
