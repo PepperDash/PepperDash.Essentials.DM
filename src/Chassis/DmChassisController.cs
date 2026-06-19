@@ -1244,8 +1244,12 @@ namespace PepperDash.Essentials.DM
 
         /// <summary>
         /// Maintains <see cref="CurrentRoutes"/> and raises <see cref="RouteChanged"/> from the
-        /// chassis output feedback events. Keyed on the output port so each output has at most one
-        /// tracked descriptor per call; a null input port (no source) removes the tracked route.
+        /// chassis output feedback events. A null input port (no source) removes the tracked route.
+        /// KNOWN LIMITATION: removal is keyed on the output port ONLY (not signal type), so an
+        /// output tracks at most one descriptor. Audio and video routed to the same output overwrite
+        /// each other here — breakaway (independent A/V) routes are not represented. The transmitter
+        /// tracker (DmTxControllerBase.UpdateCurrentRouteFromArgs) keys per signal type; aligning the
+        /// chassis to that is tracked separately.
         /// </summary>
         private void UpdateCurrentRoute(RoutingOutputPort outputPort, RoutingInputPort inputPort)
         {
@@ -1264,7 +1268,8 @@ namespace PepperDash.Essentials.DM
 
         #endregion
 
-        /// 
+        /// <summary>
+        /// Handles chassis output-change events (volume, online, video/audio route, name, USB, HDCP, stream state).
         /// </summary>
         void Chassis_DMOutputChange(Switch device, DMOutputEventArgs args)
         {
@@ -1316,6 +1321,10 @@ namespace PepperDash.Essentials.DM
                             localOutputPort,
                             localInputPort,
                             eRoutingSignalType.Video));
+                        if (localOutputPort == null)
+                            Debug.LogWarning(this, "Video route feedback on output {Output}: no matching output port; CurrentRoutes not updated", output);
+                        else if (localInputPort == null && inputNumber != 0)
+                            Debug.LogWarning(this, "Video route feedback on output {Output}: routed input {Input} has no matching input port; reporting as route-off", output, inputNumber);
                         UpdateCurrentRoute(localOutputPort, localInputPort);
                     }
 
@@ -1344,6 +1353,10 @@ namespace PepperDash.Essentials.DM
                             localOutputPort,
                             localInputPort,
                             eRoutingSignalType.Audio));
+                        if (localOutputPort == null)
+                            Debug.LogWarning(this, "Audio route feedback on output {Output}: no matching output port; CurrentRoutes not updated", output);
+                        else if (localInputPort == null && inputNumber != 0)
+                            Debug.LogWarning(this, "Audio route feedback on output {Output}: routed input {Input} has no matching input port; reporting as route-off", output, inputNumber);
                         UpdateCurrentRoute(localOutputPort, localInputPort);
                     }
 

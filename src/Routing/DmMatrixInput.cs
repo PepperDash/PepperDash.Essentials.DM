@@ -11,16 +11,16 @@ namespace PepperDash.Essentials.DM.Routing
         private readonly CardDevice _device;
         private readonly string _key;
 
-        public DmMatrixInput(CardDevice device, string key, string name, BoolFeedback videoSyncfeedback):base()
+        public DmMatrixInput(CardDevice device, string key, string name, BoolFeedback videoSyncfeedback) : base()
         {
-            _device = device;
+            _device = device ?? throw new ArgumentNullException(nameof(device));
+            if (videoSyncfeedback == null) throw new ArgumentNullException(nameof(videoSyncfeedback));
             _key = key;
             IsOnline = new BoolFeedback(() => _device.IsOnline);
             Name = name;
 
             _device.OnlineStatusChange += _device_OnlineStatusChange;
             videoSyncfeedback.OutputChange += VideoSyncfeedback_OutputChange;
-
         }
 
         private void VideoSyncfeedback_OutputChange(object sender, FeedbackEventArgs e)

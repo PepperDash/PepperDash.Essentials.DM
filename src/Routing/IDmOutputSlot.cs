@@ -8,8 +8,10 @@ namespace PepperDash.Essentials.DM.Routing
     /// <summary>
     /// Plugin-local output-slot abstraction for the DM chassis matrix router.
     /// Replaces the core <c>IRoutingOutputSlot</c> (and its <c>IRoutingSlot</c> base) that were
-    /// removed in PepperDashEssentials v3-routing. Consumed only internally by the DM chassis
-    /// (the slot dictionaries are plugin-private). Implemented by <see cref="DmMatrixOutput"/>.
+    /// removed in the Essentials v3 routing refactor. The chassis exposes these slots only as
+    /// public members of the controller; they are no longer part of any core routing interface
+    /// contract (the chassis dropped <c>IMatrixRouting</c>), so core routing does not consume them.
+    /// Implemented by <see cref="DmMatrixOutput"/>.
     /// </summary>
     public interface IDmOutputSlot : IKeyName
     {

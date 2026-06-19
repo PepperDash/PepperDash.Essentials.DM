@@ -63,11 +63,12 @@ namespace PepperDash.Essentials.DM.Routing
 
         public string RxDeviceKey => "";
 
+        // Seeded only with the signal types this output actually tracks from hardware feedback
+        // (Switcher_DMOutputChange handles Video/Audio). USB is not tracked here.
         private readonly Dictionary<eRoutingSignalType, IDmInputSlot> currentRoutes = new Dictionary<eRoutingSignalType, IDmInputSlot>
         {
             {eRoutingSignalType.Audio, default },
             {eRoutingSignalType.Video, default },
-            {eRoutingSignalType.Usb, default },
         };
 
         private void SetInputRoute(eRoutingSignalType type, IDmInputSlot input)
