@@ -25,8 +25,11 @@ namespace PepperDash.Essentials.DM.Routing
         /// <summary>Key of the receiver device fed by this output slot, if known.</summary>
         string RxDeviceKey { get; }
 
-        /// <summary>Current input routed to this output per signal type.</summary>
-        Dictionary<eRoutingSignalType, IDmInputSlot> CurrentRoutes { get; }
+        /// <summary>
+        /// Current input routed to this output per signal type. Read-only view: mutations must go
+        /// through the implementation so <see cref="OutputSlotChanged"/> fires.
+        /// </summary>
+        IReadOnlyDictionary<eRoutingSignalType, IDmInputSlot> CurrentRoutes { get; }
 
         /// <summary>Raised when the routed input on this output changes.</summary>
         event EventHandler OutputSlotChanged;

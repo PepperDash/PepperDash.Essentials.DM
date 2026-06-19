@@ -917,16 +917,30 @@ namespace PepperDash.Essentials.DM
 
             if (card1 != null)
             {
-                var name = OutputNames[(number * 2) - 1];
-                var matrixOutputCard1 = new DmMatrixOutput(card1, this, $"matrixOutput-{(number*2)-1}", name);
-                OutputSlots.Add(matrixOutputCard1.Key, matrixOutputCard1);
+                try
+                {
+                    var name = OutputNames[(number * 2) - 1];
+                    var matrixOutputCard1 = new DmMatrixOutput(card1, this, $"matrixOutput-{(number * 2) - 1}", name);
+                    OutputSlots.Add(matrixOutputCard1.Key, matrixOutputCard1);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogMessage(ex, "Failed to create output slot for card1 on output card {OutputCard}; slot not registered", this, number);
+                }
             }
 
             if (card2 != null)
             {
-                var name = OutputNames[number * 2];
-                var matrixOutputCard2 = new DmMatrixOutput(card2, this, $"matrixOutput-{number*2}", name);
-                OutputSlots.Add(matrixOutputCard2.Key, matrixOutputCard2);
+                try
+                {
+                    var name = OutputNames[number * 2];
+                    var matrixOutputCard2 = new DmMatrixOutput(card2, this, $"matrixOutput-{number * 2}", name);
+                    OutputSlots.Add(matrixOutputCard2.Key, matrixOutputCard2);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogMessage(ex, "Failed to create output slot for card2 on output card {OutputCard}; slot not registered", this, number);
+                }
             }
         }
 

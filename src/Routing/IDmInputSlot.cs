@@ -1,4 +1,3 @@
-using System;
 using PepperDash.Core;
 using PepperDash.Essentials.Core;
 
@@ -23,13 +22,7 @@ namespace PepperDash.Essentials.DM.Routing
         /// <summary>Online feedback for the backing endpoint.</summary>
         BoolFeedback IsOnline { get; }
 
-        /// <summary>True when the input has detected video sync.</summary>
-        bool VideoSyncDetected { get; }
-
         /// <summary>Key of the transmitter device feeding this input slot, if known.</summary>
         string TxDeviceKey { get; }
-
-        /// <summary>Raised when <see cref="VideoSyncDetected"/> changes.</summary>
-        event EventHandler VideoSyncChanged;
     }
 }
