@@ -13,7 +13,7 @@ namespace PepperDash.Essentials.DM
     /// 
     /// </summary>
     [Description("Wrapper Class for DM-RMC-150-S")]
-    public class DmRmc150SController : DmRmcControllerBase, IRoutingInputsOutputs,
+    public class DmRmc150SController : DmRmcControllerBase, IRoutingMidpoint,
         IIROutputPorts, IComPorts, ICec
     {
         private readonly DmRmc150S _rmc;

@@ -1,0 +1,82 @@
+{
+  "system": {
+    "info": {}
+  },
+  "template": {
+    "devices": [
+      {
+        "key": "processor",
+        "name": "processor",
+        "type": "rmc4",
+        "group": "processor",
+        "supportedConfigModes": [
+          "compliance",
+          "essentials"
+        ],
+        "supportedSystemTypes": [
+          "hudType",
+          "presType",
+          "vtcType",
+          "custom"
+        ],
+        "supportsCompliance": true,
+        "properties": {}
+      },
+      {
+        "key": "dm-chassis-1",
+        "name": "DigitalMedia Switcher 8x8",
+        "type": "dmmd8x8",
+        "group": "switcher",
+        "properties": {
+          "control": {
+            "method": "ipidTcp",
+            "ipid": "10",
+            "tcpSshProperties": {
+              "address": "10.11.50.121",
+              "port": 0
+            }
+          },
+          "noRouteText": "No Selection",
+          "inputSlots": {
+            "1": "dmchddsp",
+            "2": "dmchddsp",
+            "3": "dmcdvi",
+            "4": "dmcdvi",
+            "5": "dmcc",
+            "6": "dmccdsp",
+            "7": "dmc4kzc",
+            "8": "dmc4kzc"
+          },
+          "outputSlots": {
+            "1": "dmccohd",
+            "2": "dmccohd"
+          },
+          "inputNames": {
+            "1": "Wall Plate 1",
+            "2": "Wall Plate 2",
+            "3": "TV Tuner 1",
+            "4": "TV Tuner 2",
+            "5": "AirMedia",
+            "6": "Codec",
+            "7": "DM 3 (DMC-4KZ-C)",
+            "8": "DM 4 (DMC-4KZ-C)"
+          },
+          "outputNames": {
+            "1": "Side Display",
+            "2": "Projector",
+            "3": "Output 3 (DMC-CO-HD)",
+            "4": "Output 4 (DMC-CO-HD)"
+          },
+          "inputSlotSupportsHdcp2": {
+            "7": true,
+            "8": true
+          },
+          "volumeControls": {}
+        }
+      }
+    ],
+    "info": {},
+    "rooms": [],
+    "tieLines": []
+  }
+}

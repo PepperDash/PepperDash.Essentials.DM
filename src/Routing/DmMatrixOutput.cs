@@ -1,6 +1,5 @@
 ﻿using PepperDash.Core;
 using PepperDash.Essentials.Core;
-using PepperDash.Essentials.Core.Routing;
 using Crestron.SimplSharpPro.DM;
 using Crestron.SimplSharpPro.DM.Cards;
 using System;
@@ -9,29 +8,27 @@ using System.Linq;
 
 namespace PepperDash.Essentials.DM.Routing
 {
-    public class DmMatrixOutput :IRoutingOutputSlot
-    {       
+    public class DmMatrixOutput : IDmOutputSlot
+    {
         private readonly CardDevice _device;
         private readonly DmChassisController _chassis;
         private readonly string _key;
 
         public DmMatrixOutput(CardDevice device, DmChassisController chassis, string key, string name)
         {
-            try
-            {
-                _device = device;
-                _chassis = chassis;
-                _key = key;
-                Name = name;
+            // Establish invariants or throw: a slot that can't wire its feedback must not be
+            // registered (the caller skips-and-logs). Swallowing here would leave a half-built
+            // slot in OutputSlots that reports stale feedback and NREs later in SlotNumber/IsOnline.
+            _device = device ?? throw new ArgumentNullException(nameof(device));
+            _chassis = chassis ?? throw new ArgumentNullException(nameof(chassis));
+            _key = key;
+            Name = name;
 
-                _device.OnlineStatusChange += _device_OnlineStatusChange;
+            IsOnline = new BoolFeedback(() => _device.IsOnline);
 
-                _device.Switcher.DMOutputChange += Switcher_DMOutputChange;
+            _device.OnlineStatusChange += _device_OnlineStatusChange;
 
-            } catch (Exception ex)
-            {
-                Debug.LogMessage(ex, "Exception creating DmMatrixOutput {ex}", this, ex.Message);                
-            }
+            _device.Switcher.DMOutputChange += Switcher_DMOutputChange;
         }
 
         private void Switcher_DMOutputChange(Switch device, DMOutputEventArgs args)
@@ -66,14 +63,15 @@ namespace PepperDash.Essentials.DM.Routing
 
         public string RxDeviceKey => "";
 
-        private readonly Dictionary<eRoutingSignalType, IRoutingInputSlot> currentRoutes = new Dictionary<eRoutingSignalType, IRoutingInputSlot>
+        // Seeded only with the signal types this output actually tracks from hardware feedback
+        // (Switcher_DMOutputChange handles Video/Audio). USB is not tracked here.
+        private readonly Dictionary<eRoutingSignalType, IDmInputSlot> currentRoutes = new Dictionary<eRoutingSignalType, IDmInputSlot>
         {
             {eRoutingSignalType.Audio, default },
             {eRoutingSignalType.Video, default },
-            {eRoutingSignalType.Usb, default },
         };
 
-        private void SetInputRoute(eRoutingSignalType type, IRoutingInputSlot input)
+        private void SetInputRoute(eRoutingSignalType type, IDmInputSlot input)
         {
             if (currentRoutes.ContainsKey(type))
             {
@@ -92,7 +90,8 @@ namespace PepperDash.Essentials.DM.Routing
         {
             IsOnline.FireUpdate();
         }
-        public Dictionary<eRoutingSignalType, IRoutingInputSlot> CurrentRoutes => currentRoutes;
+        // Read-only view: all mutations go through SetInputRoute so OutputSlotChanged fires.
+        public IReadOnlyDictionary<eRoutingSignalType, IDmInputSlot> CurrentRoutes => currentRoutes;
 
         public int SlotNumber => (int)_device.SwitcherInputOutput.Number;
         public eRoutingSignalType SupportedSignalTypes => eRoutingSignalType.AudioVideo;

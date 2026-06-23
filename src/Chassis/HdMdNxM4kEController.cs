@@ -14,7 +14,7 @@ using PepperDash.Essentials.DM.Config;
 namespace PepperDash.Essentials.DM.Chassis
 {
     [Obsolete("Please use HdMdNxM4kEBridgeable Controller")]
-    public class HdMdNxM4kEController : CrestronGenericBaseDevice, IRoutingInputsOutputs, IRouting
+    public class HdMdNxM4kEController : CrestronGenericBaseDevice, IRoutingMidpointWithFeedback
     {
         public HdMdNxM Chassis { get; private set; }
 
@@ -94,6 +94,26 @@ namespace PepperDash.Essentials.DM.Chassis
             var current = Chassis.HdmiOutputs[1].VideoOut;
             if (current != Chassis.HdmiInputs[(uint)inputSelector])
                 Chassis.HdmiOutputs[1].VideoOut = Chassis.HdmiInputs[(uint)inputSelector];
+        }
+
+        /// <summary>
+        /// Currently active routes, per IRoutingMidpointWithFeedback. This obsolete controller does not
+        /// track route feedback; the list is kept empty to satisfy the interface contract.
+        /// </summary>
+        public List<RouteSwitchDescriptor> CurrentRoutes { get; } = new List<RouteSwitchDescriptor>();
+
+        /// <summary>
+        /// Raised when a route changes, per IRoutingMidpointWithFeedback. Never raised by this obsolete
+        /// controller (no route feedback). Implemented as a no-op event to stay warning-clean.
+        /// </summary>
+        public event RouteChangedEventHandler RouteChanged { add { } remove { } }
+
+        /// <summary>
+        /// Clears the route to the single HDMI output by selecting no input (input 0).
+        /// </summary>
+        public void ClearRoute(object outputSelector, eRoutingSignalType signalType)
+        {
+            Chassis.HdmiOutputs[1].VideoOut = null;
         }
 
         #endregion

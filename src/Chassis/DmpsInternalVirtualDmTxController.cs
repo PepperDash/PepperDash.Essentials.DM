@@ -8,6 +8,7 @@ using Crestron.SimplSharpPro.DM.Cards;
 
 using PepperDash.Core;
 using PepperDash.Essentials.Core;
+using PepperDash.Essentials.DM.Routing;
 
 
 namespace PepperDash.Essentials.DM
@@ -288,6 +289,32 @@ namespace PepperDash.Essentials.DM
                 InputCard.VideoSource = (eDmps3InputVideoSource)inputSelector;
             if ((signalType | eRoutingSignalType.Audio) == eRoutingSignalType.Audio)
                 InputCard.AudioSource = (eDmps3InputAudioSource)inputSelector;
+        }
+
+        #endregion
+
+        #region IRoutingMidpointWithFeedback Members
+
+        /// <summary>
+        /// Currently active routes, per IRoutingMidpointWithFeedback. This virtual input controller
+        /// selects an internal source; route state is carried by Video/AudioSourceNumericFeedback, so
+        /// this list is kept empty to satisfy the interface contract.
+        /// </summary>
+        public List<RouteSwitchDescriptor> CurrentRoutes { get; } = new List<RouteSwitchDescriptor>();
+
+        /// <summary>
+        /// Raised when a route changes, per IRoutingMidpointWithFeedback. Route feedback is carried by
+        /// the numeric source feedbacks; implemented as a no-op event to stay warning-clean.
+        /// </summary>
+        public event RouteChangedEventHandler RouteChanged { add { } remove { } }
+
+        /// <summary>
+        /// Clears the route by selecting no source (Auto). Source selection is driven by
+        /// ExecuteSwitch/ExecuteNumericSwitch.
+        /// </summary>
+        public void ClearRoute(object outputSelector, eRoutingSignalType signalType)
+        {
+            ExecuteNumericSwitch(0, 0, signalType);
         }
 
         #endregion

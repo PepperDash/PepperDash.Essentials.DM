@@ -24,7 +24,7 @@ namespace PepperDash.Essentials.DM
     /// 
     /// </summary>
     [Description("Wrapper class for all DM-MD chassis variants from 8x8 to 32x32")]
-    public class DmChassisController : CrestronGenericBridgeableBaseDevice, IDmSwitchWithEndpointOnlineFeedback, IRoutingNumericWithFeedback, IMatrixRouting
+    public class DmChassisController : CrestronGenericBridgeableBaseDevice, IDmSwitchWithEndpointOnlineFeedback, IRoutingMidpointWithFeedback
     {
         private const string NonePortKey = "inputCard0--None";
         // On an 8x8 chassis the USB slot numbers for outputs start at 17 (inputs 1-8, outputs 17-24).
@@ -75,8 +75,8 @@ namespace PepperDash.Essentials.DM
         public Dictionary<uint, string> OutputNames { get; set; }
         public Dictionary<uint, DmCardAudioOutputController> VolumeControls { get; private set; }
 
-        public Dictionary<string, IRoutingInputSlot> InputSlots { get; private set; }
-        public Dictionary<string, IRoutingOutputSlot> OutputSlots { get; private set; }
+        public Dictionary<string, IDmInputSlot> InputSlots { get; private set; }
+        public Dictionary<string, IDmOutputSlot> OutputSlots { get; private set; }
 
         public const int RouteOffTime = 500;
         Dictionary<PortNumberType, CTimer> RouteOffTimers = new Dictionary<PortNumberType, CTimer>();
@@ -248,8 +248,8 @@ namespace PepperDash.Essentials.DM
             OutputStreamCardStateFeedbacks = new Dictionary<uint, IntFeedback>();
             InputCardHdcpCapabilityTypes = new Dictionary<uint, eHdcpCapabilityType>();
 
-            InputSlots = new Dictionary<string, IRoutingInputSlot>();
-            OutputSlots = new Dictionary<string, IRoutingOutputSlot>();
+            InputSlots = new Dictionary<string, IDmInputSlot>();
+            OutputSlots = new Dictionary<string, IDmOutputSlot>();
 
             for (uint x = 1; x <= Chassis.NumberOfOutputs; x++)
             {
@@ -917,16 +917,30 @@ namespace PepperDash.Essentials.DM
 
             if (card1 != null)
             {
-                var name = OutputNames[(number * 2) - 1];
-                var matrixOutputCard1 = new DmMatrixOutput(card1, this, $"matrixOutput-{(number*2)-1}", name);
-                OutputSlots.Add(matrixOutputCard1.Key, matrixOutputCard1);
+                try
+                {
+                    var name = OutputNames[(number * 2) - 1];
+                    var matrixOutputCard1 = new DmMatrixOutput(card1, this, $"matrixOutput-{(number * 2) - 1}", name);
+                    OutputSlots.Add(matrixOutputCard1.Key, matrixOutputCard1);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogMessage(ex, "Failed to create output slot for card1 on output card {OutputCard}; slot not registered", this, number);
+                }
             }
 
             if (card2 != null)
             {
-                var name = OutputNames[number * 2];
-                var matrixOutputCard2 = new DmMatrixOutput(card2, this, $"matrixOutput-{number*2}", name);
-                OutputSlots.Add(matrixOutputCard2.Key, matrixOutputCard2);
+                try
+                {
+                    var name = OutputNames[number * 2];
+                    var matrixOutputCard2 = new DmMatrixOutput(card2, this, $"matrixOutput-{number * 2}", name);
+                    OutputSlots.Add(matrixOutputCard2.Key, matrixOutputCard2);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogMessage(ex, "Failed to create output slot for card2 on output card {OutputCard}; slot not registered", this, number);
+                }
             }
         }
 
@@ -1196,7 +1210,6 @@ namespace PepperDash.Essentials.DM
         }
 
         /// <summary>
-        /// <summary>
         /// Raise an event when the status of a switch object changes.
         /// </summary>
         /// <param name="e">Arguments defined as IKeyName sender, output, input, and eRoutingSignalType</param>
@@ -1206,7 +1219,52 @@ namespace PepperDash.Essentials.DM
             if (newEvent != null) newEvent(this, e);
         }
 
-        /// 
+        #region IRoutingMidpointWithFeedback Members
+
+        // Tracks routes per (output port, signal type) so breakaway audio/video routes to the same
+        // output are represented independently (see DmRouteFeedbackTracker).
+        private readonly DmRouteFeedbackTracker _routeTracker = new DmRouteFeedbackTracker();
+
+        /// <summary>
+        /// Currently active routes on the chassis, per the IRoutingMidpointWithFeedback contract.
+        /// Maintained from the chassis VideoOut/AudioOut feedback events (see UpdateCurrentRoute).
+        /// </summary>
+        public List<RouteSwitchDescriptor> CurrentRoutes => _routeTracker.CurrentRoutes;
+
+        /// <summary>
+        /// Raised when a route changes on the chassis, per IRoutingMidpointWithFeedback.
+        /// </summary>
+        public event RouteChangedEventHandler RouteChanged;
+
+        /// <summary>
+        /// Clears the route to an output. Mirrors the legacy "route off" behaviour by switching a
+        /// null input (no source) to the target output for the given signal type.
+        /// </summary>
+        public void ClearRoute(object outputSelector, eRoutingSignalType signalType)
+        {
+            ExecuteSwitch(null, outputSelector, signalType);
+        }
+
+        /// <summary>
+        /// Maintains <see cref="CurrentRoutes"/> and raises <see cref="RouteChanged"/> from the
+        /// chassis output feedback events. Keyed on the (output port, signal type) pair so breakaway
+        /// audio and video routes to the same output are tracked independently. A null input port
+        /// (no source) clears the route for that output/signal while still firing the change event.
+        /// </summary>
+        private void UpdateCurrentRoute(RoutingOutputPort outputPort, RoutingInputPort inputPort, eRoutingSignalType signalType)
+        {
+            var descriptor = _routeTracker.ApplyRoute(outputPort, inputPort, signalType);
+            if (descriptor == null)
+                return;
+
+            var handler = RouteChanged;
+            handler?.Invoke(this, descriptor);
+        }
+
+        #endregion
+
+        /// <summary>
+        /// Handles chassis output-change events (volume, online, video/audio route, name, USB, HDCP, stream state).
         /// </summary>
         void Chassis_DMOutputChange(Switch device, DMOutputEventArgs args)
         {
@@ -1258,6 +1316,11 @@ namespace PepperDash.Essentials.DM
                             localOutputPort,
                             localInputPort,
                             eRoutingSignalType.Video));
+                        if (localOutputPort == null)
+                            Debug.LogWarning(this, "Video route feedback on output {Output}: no matching output port; CurrentRoutes not updated", output);
+                        else if (localInputPort == null && inputNumber != 0)
+                            Debug.LogWarning(this, "Video route feedback on output {Output}: routed input {Input} has no matching input port; reporting as route-off", output, inputNumber);
+                        UpdateCurrentRoute(localOutputPort, localInputPort, eRoutingSignalType.Video);
                     }
 
                     if (OutputVideoRouteNameFeedbacks.ContainsKey(output))
@@ -1285,6 +1348,11 @@ namespace PepperDash.Essentials.DM
                             localOutputPort,
                             localInputPort,
                             eRoutingSignalType.Audio));
+                        if (localOutputPort == null)
+                            Debug.LogWarning(this, "Audio route feedback on output {Output}: no matching output port; CurrentRoutes not updated", output);
+                        else if (localInputPort == null && inputNumber != 0)
+                            Debug.LogWarning(this, "Audio route feedback on output {Output}: routed input {Input} has no matching input port; reporting as route-off", output, inputNumber);
+                        UpdateCurrentRoute(localOutputPort, localInputPort, eRoutingSignalType.Audio);
                     }
 
                     if (OutputAudioRouteNameFeedbacks.ContainsKey(output))

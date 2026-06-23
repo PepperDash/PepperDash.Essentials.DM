@@ -9,6 +9,7 @@ using Crestron.SimplSharpPro.DM.Endpoints.Transmitters;
 using PepperDash.Core;
 using PepperDash.Essentials.Core;
 using PepperDash.Essentials.Core.Bridges;
+using PepperDash.Essentials.DM.Routing;
 
 namespace PepperDash.Essentials.DM
 {
@@ -49,6 +50,7 @@ namespace PepperDash.Essentials.DM
         {
             var newEvent = NumericSwitchChange;
             if (newEvent != null) newEvent(this, e);
+            UpdateCurrentRouteFromArgs(e);
         }
 
 
