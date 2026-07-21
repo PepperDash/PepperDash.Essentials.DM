@@ -287,7 +287,13 @@ namespace PepperDash.Essentials.DM.Chassis
 		{
 			if (newFb == null) return;
 
-			if (!Feedbacks.Contains(newFb))
+			// Feedbacks.Contains(newFb) checks by reference (FeedbackCollection<T> derives from
+			// Collection<T>, whose default Contains is reference-equality), which never catches a
+			// *different* Feedback instance that happens to share the same Key as one already added
+			// (e.g. VideoInputSyncFeedbacks and InputNameFeedbacks both keyed by the same input name) -
+			// that duplicate key would throw when merged into this shared collection. Check by key via
+			// the collection's own indexer instead.
+			if (string.IsNullOrEmpty(newFb.Key) || Feedbacks[newFb.Key] == null)
 			{
 				Feedbacks.Add(newFb);
 			}
