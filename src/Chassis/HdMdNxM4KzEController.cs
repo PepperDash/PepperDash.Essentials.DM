@@ -174,6 +174,33 @@ namespace PepperDash.Essentials.DM.Chassis
 			handler?.Invoke(this, descriptor);
 		}
 
+		/// <summary>
+		/// Seeds <see cref="CurrentRoutes"/> (and raises <see cref="RouteChanged"/>) for every output's
+		/// currently-routed input, mirroring what <see cref="Chassis_DMOutputChange"/> does on a live route
+		/// change. Without this, a route already established on the hardware before Essentials started (or
+		/// before this chassis reconnected) would never be reflected in the IRoutingMidpointWithFeedback
+		/// surface - CurrentRoutes would stay empty until the route actually changed again, which is what
+		/// makes the device appear to have no current route on the devtools Routing page.
+		/// </summary>
+		private void SyncCurrentRoutes()
+		{
+			for (uint i = 1; i <= _chassis.NumberOfOutputs; i++)
+			{
+				if (!OutputNames.ContainsKey(i)) continue;
+
+				var inputNumber = _chassis.HdmiOutputs[i].VideoOutFeedback == null
+					? 0
+					: _chassis.HdmiOutputs[i].VideoOutFeedback.Number;
+
+				var inPort = InputPorts.FirstOrDefault(
+					p => p.FeedbackMatchObject == _chassis.HdmiOutputs[i].VideoOutFeedback);
+				var outPort = OutputPorts.FirstOrDefault(
+					p => p.FeedbackMatchObject == _chassis.HdmiOutputs[i]);
+
+				OnSwitchChange(new RoutingNumericEventArgs(i, inputNumber, outPort, inPort, eRoutingSignalType.AudioVideo));
+			}
+		}
+
 		#endregion
 
 		public void EnableHdcp(uint port)
@@ -368,6 +395,8 @@ namespace PepperDash.Essentials.DM.Chassis
 			}
 
 			AutoRouteFeedback.FireUpdate();
+
+			SyncCurrentRoutes();
 		}
 
 		private void Chassis_DMOutputChange(Switch device, DMOutputEventArgs args)
