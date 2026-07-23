@@ -421,6 +421,8 @@ Selector: {4}
 			{
 				feedback.FireUpdate();
 			}
+
+			SyncCurrentRoutes();
 		}
 
 
@@ -538,6 +540,33 @@ Selector: {4}
 
 			var handler = RouteChanged;
 			handler?.Invoke(this, descriptor);
+		}
+
+		/// <summary>
+		/// Seeds <see cref="CurrentRoutes"/> (and raises <see cref="RouteChanged"/>) for every output's
+		/// currently-routed input, mirroring what <see cref="_chassis_OutputChange"/> does on a live route
+		/// change. Without this, a route already established on the hardware before Essentials started (or
+		/// before this chassis reconnected) would never be reflected in the IRoutingMidpointWithFeedback
+		/// surface - CurrentRoutes would stay empty until the route actually changed again, which is what
+		/// makes the device appear to have no current route on the devtools Routing page.
+		/// </summary>
+		private void SyncCurrentRoutes()
+		{
+			for (uint i = 1; i <= _chassis.NumberOfOutputs; i++)
+			{
+				if (!OutputNames.ContainsKey(i)) continue;
+
+				var input = _chassis.HdmiDmLiteOutputs[i].VideoOutFeedback == null
+					? 0
+					: _chassis.HdmiDmLiteOutputs[i].VideoOutFeedback.Number;
+
+				var inputPort = InputPorts.FirstOrDefault(
+					p => p.FeedbackMatchObject == _chassis.HdmiDmLiteOutputs[i].VideoOutFeedback);
+				var outputPort = OutputPorts.FirstOrDefault(
+					p => p.FeedbackMatchObject == _chassis.HdmiDmLiteOutputs[i]);
+
+				OnSwitchChange(new RoutingNumericEventArgs(i, input, outputPort, inputPort, eRoutingSignalType.AudioVideo));
+			}
 		}
 
 		#endregion
