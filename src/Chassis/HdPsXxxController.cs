@@ -600,7 +600,7 @@ Selector: {4}
 		}
 	}
 
-	public class HdPsAnalogAuxOutputController : IBasicVolumeWithFeedback
+	public class HdPsAnalogAuxOutputController
 	{
 		private readonly HdPsXxxAnalogAuxMixer _mixer;
 
