@@ -24,6 +24,8 @@ namespace PepperDash_Essentials_DM.Chassis
 
 		public Dictionary<uint, string> InputNames { get; set; }
 		public Dictionary<uint, string> OutputNames { get; set; }
+		public Dictionary<uint, HdPsAudioOutputController> VolumeControls { get; private set; }
+		public Dictionary<uint, HdPsAnalogAuxOutputController> AnalogAuxVolumeControls { get; private set; }
 
 		public FeedbackCollection<StringFeedback> InputNameFeedbacks { get; private set; }
 		public FeedbackCollection<BoolFeedback> InputHdcpEnableFeedback { get; private set; }
@@ -69,6 +71,8 @@ namespace PepperDash_Essentials_DM.Chassis
 			OutputNameFeedbacks = new FeedbackCollection<StringFeedback>();
 			OutputRouteNameFeedback = new FeedbackCollection<StringFeedback>();
 			OutputNames = new Dictionary<uint, string>();
+			VolumeControls = new Dictionary<uint, HdPsAudioOutputController>();
+			AnalogAuxVolumeControls = new Dictionary<uint, HdPsAnalogAuxOutputController>();
 
 			VideoInputSyncFeedbacks = new FeedbackCollection<BoolFeedback>();
 			VideoOutputRouteFeedbacks = new FeedbackCollection<IntFeedback>();
@@ -81,6 +85,11 @@ namespace PepperDash_Essentials_DM.Chassis
 
 			OutputNames = props.Outputs;
 			SetupOutputs(OutputNames);
+
+			foreach (var mixer in _chassis.AnalogAuxiliaryMixer)
+			{
+				AnalogAuxVolumeControls.Add(mixer.MixerNumber, new HdPsAnalogAuxOutputController(mixer));
+			}
 		}
 
 		// input setup
@@ -195,6 +204,11 @@ namespace PepperDash_Essentials_DM.Chassis
 
 				VideoOutputRouteFeedbacks.Add(new IntFeedback(index.ToString(CultureInfo.InvariantCulture), 
 					() => output.VideoOutFeedback == null ? 0 : (int)output.VideoOutFeedback.Number));
+
+				if (output.Mixer != null)
+				{
+					VolumeControls.Add(index, new HdPsAudioOutputController(output.Mixer));
+				}
 			}
 
 			_chassis.DMOutputChange += _chassis_OutputChange;
@@ -466,6 +480,11 @@ Selector: {4}
 		// _chassis output change event
 		private void _chassis_OutputChange(Switch device, DMOutputEventArgs args)
 		{
+			if (VolumeControls.ContainsKey(args.Number))
+			{
+				VolumeControls[args.Number].VolumeEventFromChassis();
+			}
+
 			if (args.EventId != DMOutputEventIds.VideoOutEventId) return;
 
 			var output = args.Number;
@@ -512,6 +531,129 @@ Selector: {4}
 
 		
 		
+	}
+
+	public class HdPsAudioOutputController : IBasicVolumeWithFeedback
+	{
+		private readonly HdPsXxxHdmiDmLiteOutputMixer _mixer;
+		private ushort _preMuteVolumeLevel;
+		private bool _isMuted;
+
+		public IntFeedback VolumeLevelFeedback { get; private set; }
+		public BoolFeedback MuteFeedback { get; private set; }
+
+		public HdPsAudioOutputController(HdPsXxxHdmiDmLiteOutputMixer mixer)
+		{
+			_mixer = mixer;
+			VolumeLevelFeedback = new IntFeedback(() => _mixer.VolumeFeedback.UShortValue);
+			MuteFeedback = new BoolFeedback(() => _isMuted);
+		}
+
+		public void MuteOff()
+		{
+			SetVolume(_preMuteVolumeLevel);
+			_isMuted = false;
+			MuteFeedback.FireUpdate();
+		}
+
+		public void MuteOn()
+		{
+			_preMuteVolumeLevel = _mixer.VolumeFeedback.UShortValue;
+			SetVolume(0);
+			_isMuted = true;
+			MuteFeedback.FireUpdate();
+		}
+
+		public void SetVolume(ushort level)
+		{
+			_mixer.Volume.UShortValue = level;
+		}
+
+		public void MuteToggle()
+		{
+			if (_isMuted)
+				MuteOff();
+			else
+				MuteOn();
+		}
+
+		public void VolumeDown(bool pressRelease)
+		{
+			if (pressRelease)
+				_mixer.Volume.CreateRamp(0, (uint)(400 * (_mixer.Volume.UShortValue / 65535)));
+			else
+				_mixer.Volume.StopRamp();
+		}
+
+		public void VolumeUp(bool pressRelease)
+		{
+			if (pressRelease)
+				_mixer.Volume.CreateRamp(65535, 400);
+			else
+				_mixer.Volume.StopRamp();
+		}
+
+		internal void VolumeEventFromChassis()
+		{
+			VolumeLevelFeedback.FireUpdate();
+			MuteFeedback.FireUpdate();
+		}
+	}
+
+	public class HdPsAnalogAuxOutputController : IBasicVolumeWithFeedback
+	{
+		private readonly HdPsXxxAnalogAuxMixer _mixer;
+
+		public IntFeedback VolumeLevelFeedback { get; private set; }
+		public BoolFeedback MuteFeedback { get; private set; }
+
+		public HdPsAnalogAuxOutputController(HdPsXxxAnalogAuxMixer mixer)
+		{
+			_mixer = mixer;
+			VolumeLevelFeedback = new IntFeedback(() => _mixer.VolumeFeedback.UShortValue);
+			MuteFeedback = new BoolFeedback(() => _mixer.AuxiliaryMuteControl.MuteOnFeedback.BoolValue);
+		}
+
+		public void MuteOff()
+		{
+			_mixer.AuxiliaryMuteControl.MuteOff();
+			MuteFeedback.FireUpdate();
+		}
+
+		public void MuteOn()
+		{
+			_mixer.AuxiliaryMuteControl.MuteOn();
+			MuteFeedback.FireUpdate();
+		}
+
+		public void SetVolume(ushort level)
+		{
+			_mixer.Volume.UShortValue = level;
+		}
+
+		public void MuteToggle()
+		{
+			if (_mixer.AuxiliaryMuteControl.MuteOnFeedback.BoolValue)
+				MuteOff();
+			else
+				MuteOn();
+		}
+
+		public void VolumeDown(bool pressRelease)
+		{
+			if (pressRelease)
+				_mixer.Volume.CreateRamp(0, (uint)(400 * (_mixer.Volume.UShortValue / 65535)));
+			else
+				_mixer.Volume.StopRamp();
+		}
+
+		public void VolumeUp(bool pressRelease)
+		{
+			if (pressRelease)
+				_mixer.Volume.CreateRamp(65535, 400);
+			else
+				_mixer.Volume.StopRamp();
+		}
 	}
 
     #region Factory
