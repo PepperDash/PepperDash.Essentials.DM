@@ -533,7 +533,7 @@ Selector: {4}
 		
 	}
 
-	public class HdPsAudioOutputController : IBasicVolumeWithFeedback
+	public class HdPsAudioOutputController
 	{
 		private readonly HdPsXxxHdmiDmLiteOutputMixer _mixer;
 		private ushort _preMuteVolumeLevel;
