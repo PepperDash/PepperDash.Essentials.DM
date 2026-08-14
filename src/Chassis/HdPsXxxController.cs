@@ -587,7 +587,7 @@ Selector: {4}
 		public void VolumeDown(bool pressRelease)
 		{
 			if (pressRelease)
-				_mixer.Volume.CreateRamp(0, (uint)(400 * (_mixer.Volume.UShortValue / 65535)));
+				_mixer.Volume.CreateRamp(0, (uint)(400 * (_mixer.VolumeFeedback.UShortValue / 65535.0)));
 			else
 				_mixer.Volume.StopRamp();
 		}
@@ -650,7 +650,7 @@ Selector: {4}
 		public void VolumeDown(bool pressRelease)
 		{
 			if (pressRelease)
-				_mixer.Volume.CreateRamp(0, (uint)(400 * (_mixer.Volume.UShortValue / 65535)));
+				_mixer.Volume.CreateRamp(0, (uint)(400 * (_mixer.VolumeFeedback.UShortValue / 65535.0)));
 			else
 				_mixer.Volume.StopRamp();
 		}
