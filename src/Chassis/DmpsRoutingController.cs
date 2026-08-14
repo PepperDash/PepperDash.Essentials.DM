@@ -978,7 +978,7 @@ namespace PepperDash.Essentials.DM
         /// </summary>
         void AddVolumeControl(uint number, Audio.Output audio)
         {
-            VolumeControls.Add(number, new DmCardAudioOutputController(audio));
+            VolumeControls.Add(number, new DmCardAudioOutputController(string.Format("{0}-audioOutput{1}", Key, number), string.Format("{0} Audio Output {1}", Name, number), audio));
         }
 
         void Dmps_DMInputChange(Switch device, DMInputEventArgs args)

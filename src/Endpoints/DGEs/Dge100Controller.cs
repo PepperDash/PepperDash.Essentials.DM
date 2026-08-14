@@ -263,7 +263,7 @@ namespace PepperDash.Essentials.DM.Endpoints.DGEs
     {
         public Dge100ControllerFactory()
         {
-            MinimumEssentialsFrameworkVersion = "2.4.5";
+            MinimumEssentialsFrameworkVersion = "2.28.1";
             TypeNames = new List<string>() { "dge100" };
         }
 
