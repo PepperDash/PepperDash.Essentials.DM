@@ -88,7 +88,10 @@ namespace PepperDash_Essentials_DM.Chassis
 
 			foreach (var mixer in _chassis.AnalogAuxiliaryMixer)
 			{
-				AnalogAuxVolumeControls.Add(mixer.MixerNumber, new HdPsAnalogAuxOutputController(mixer));
+				var control = new HdPsAnalogAuxOutputController(string.Format("{0}-analogAux{1}-mixer", Key, mixer.MixerNumber),
+					string.Format("Auxiliary Audio Output {0}", mixer.MixerNumber), mixer);
+				AnalogAuxVolumeControls.Add(mixer.MixerNumber, control);
+				DeviceManager.AddDevice(control);
 			}
 		}
 
@@ -207,7 +210,10 @@ namespace PepperDash_Essentials_DM.Chassis
 
 				if (output.Mixer != null)
 				{
-					VolumeControls.Add(index, new HdPsAudioOutputController(output.Mixer));
+					var control = new HdPsAudioOutputController(string.Format("{0}-output{1}-mixer", Key, index),
+						string.Format("Output Audio Control {0}", index), output.Mixer);
+					VolumeControls.Add(index, control);
+					DeviceManager.AddDevice(control);
 				}
 			}
 
@@ -533,7 +539,7 @@ Selector: {4}
 		
 	}
 
-	public class HdPsAudioOutputController
+	public class HdPsAudioOutputController : EssentialsDevice, IBasicVolumeWithFeedback
 	{
 		private readonly HdPsXxxHdmiDmLiteOutputMixer _mixer;
 		private ushort _preMuteVolumeLevel;
@@ -542,7 +548,8 @@ Selector: {4}
 		public IntFeedback VolumeLevelFeedback { get; private set; }
 		public BoolFeedback MuteFeedback { get; private set; }
 
-		public HdPsAudioOutputController(HdPsXxxHdmiDmLiteOutputMixer mixer)
+		public HdPsAudioOutputController(string key, string name, HdPsXxxHdmiDmLiteOutputMixer mixer)
+			: base(key, name)
 		{
 			_mixer = mixer;
 			VolumeLevelFeedback = new IntFeedback(() => _mixer.VolumeFeedback.UShortValue);
@@ -600,14 +607,15 @@ Selector: {4}
 		}
 	}
 
-	public class HdPsAnalogAuxOutputController
+	public class HdPsAnalogAuxOutputController : EssentialsDevice, IBasicVolumeWithFeedback
 	{
 		private readonly HdPsXxxAnalogAuxMixer _mixer;
 
 		public IntFeedback VolumeLevelFeedback { get; private set; }
 		public BoolFeedback MuteFeedback { get; private set; }
 
-		public HdPsAnalogAuxOutputController(HdPsXxxAnalogAuxMixer mixer)
+		public HdPsAnalogAuxOutputController(string key, string name, HdPsXxxAnalogAuxMixer mixer)
+			: base(key, name)
 		{
 			_mixer = mixer;
 			VolumeLevelFeedback = new IntFeedback(() => _mixer.VolumeFeedback.UShortValue);
