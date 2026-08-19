@@ -1560,8 +1560,13 @@ namespace PepperDash.Essentials.DM
             //Routing for USB input-side: routes a USB source to a switcher input slot
             if ((sigType & eRoutingSignalType.Usb) == eRoutingSignalType.Usb)
             {
-                Debug.LogVerbose(this, "Executing USB Input switch.\r\n in:{0} output: {1}", inputSelector, outputSelector);
-                if (outputSelector > chassisSize)
+                Debug.LogVerbose(this, "Executing USB Input switch.\r\n in:{0} to input: {1}", inputSelector, outputSelector);
+                //if clearing a route, then dmCard should be (null)
+                if (inputSelector == 0)
+                {
+                    dmCard = null;
+                }
+                else if (outputSelector > chassisSize)
                 {
                     uint outputIndex;
 
@@ -1604,7 +1609,12 @@ namespace PepperDash.Essentials.DM
             Debug.LogVerbose(this, "Executing USB Output switch.\r\n in:{0} output: {1}", inputSelector, outputSelector);
 
             //routing Output to Output or Input to Output
-            if (inputSelector > chassisSize)
+            //if clearing a route, then dmCard should be (null)
+            if (inputSelector == 0)
+            {
+                dmCard = null;
+            }
+            else if (inputSelector > chassisSize)
             {
                 //wanting to route an output to an output. Subtract chassis size and get output, unless it's 8x8
                 //need this to determine USB routing values
