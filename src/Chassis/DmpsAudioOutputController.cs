@@ -367,11 +367,11 @@ namespace PepperDash.Essentials.DM
 
         public DmpsAudioOutput(Dmps3AudioOutputBase output, eDmpsLevelType type)
         {
-            Key = string.Format("dmpsAudioOutput-{0}", type);
-            Name = string.Format("DMPS Audio Output {0}", type);
             VolumeLevelInput = 0;
             EnableVolumeSend = false;
             Type = type;
+            Key = type.ToString();
+            Name = type.ToString();
             MinLevel = -800;
             MaxLevel = 100;
 

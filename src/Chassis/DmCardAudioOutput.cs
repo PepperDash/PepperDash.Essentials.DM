@@ -26,9 +26,9 @@ namespace PepperDash.Essentials.DM
 
         public DmCardAudioOutputController(Audio.Output output)
         {
-            Key = "dmCardAudioOutput";
-            Name = "DM Card Audio Output";
             Output = output;
+            Key = output.ToString();
+            Name = output.ToString();
             VolumeLevelFeedback = new IntFeedback(() => Output.VolumeFeedback.UShortValue);
             MuteFeedback = new BoolFeedback(() => IsMuted);
         }
