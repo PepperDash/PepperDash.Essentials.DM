@@ -558,7 +558,7 @@ namespace PepperDash.Essentials.DM
         /// </summary>
         void AddVolumeControl(uint number, Audio.Output audio)
         {
-            VolumeControls.Add(number, new DmCardAudioOutputController(audio, string.Format("{0}-volume-{1}", Key, number)));
+            VolumeControls.Add(number, new DmCardAudioOutputController(string.Format("{0}-audioOutput{1}", Key, number), string.Format("{0} Audio Output {1}", Name, number), audio));
         }
 
         //public void SetInputHdcpSupport(uint input, ePdtHdcpSupport hdcpSetting)
