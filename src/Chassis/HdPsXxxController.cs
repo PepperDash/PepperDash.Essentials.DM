@@ -15,7 +15,7 @@ using PepperDash_Essentials_DM.Config;
 namespace PepperDash_Essentials_DM.Chassis
 {
 	[Description("Wrapper class for all HdPsXxx switchers")]
-	public class HdPsXxxController : CrestronGenericBridgeableBaseDevice, IRoutingNumericWithFeedback, IRoutingHasVideoInputSyncFeedbacks
+	public class HdPsXxxController : CrestronGenericBridgeableBaseDevice, IRoutingMidpointWithFeedback, IRoutingHasVideoInputSyncFeedbacks
 	{
 		private readonly HdPsXxx _chassis;
 
@@ -421,6 +421,8 @@ Selector: {4}
 			{
 				feedback.FireUpdate();
 			}
+
+			SyncCurrentRoutes();
 		}
 
 
@@ -497,7 +499,77 @@ Selector: {4}
 		{
 			var newEvent = NumericSwitchChange;
 			if (newEvent != null) newEvent(this, args);
+			UpdateCurrentRoute(args);
 		}
+
+		#region IRoutingMidpointWithFeedback Members
+
+		/// <summary>
+		/// Currently active routes, per IRoutingMidpointWithFeedback. Maintained from the device's
+		/// switch-change feedback (see UpdateCurrentRoute / OnSwitchChange).
+		/// </summary>
+		public List<RouteSwitchDescriptor> CurrentRoutes { get; } = new List<RouteSwitchDescriptor>();
+
+		/// <summary>
+		/// Raised when a route changes, per IRoutingMidpointWithFeedback.
+		/// </summary>
+		public event RouteChangedEventHandler RouteChanged;
+
+		/// <summary>
+		/// Clears the route to an output by switching a null input (no source) to it.
+		/// </summary>
+		public void ClearRoute(object outputSelector, eRoutingSignalType signalType)
+		{
+			ExecuteSwitch(null, outputSelector, signalType);
+		}
+
+		/// <summary>
+		/// Maintains <see cref="CurrentRoutes"/> and raises <see cref="RouteChanged"/> from a numeric
+		/// switch-change event so the feedback surface tracks the same routes as NumericSwitchChange.
+		/// </summary>
+		private void UpdateCurrentRoute(RoutingNumericEventArgs e)
+		{
+			if (e == null || e.OutputPort == null)
+				return;
+
+			CurrentRoutes.RemoveAll(r => ReferenceEquals(r.OutputPort, e.OutputPort));
+
+			var descriptor = new RouteSwitchDescriptor(e.OutputPort, e.InputPort);
+			if (e.InputPort != null)
+				CurrentRoutes.Add(descriptor);
+
+			var handler = RouteChanged;
+			handler?.Invoke(this, descriptor);
+		}
+
+		/// <summary>
+		/// Seeds <see cref="CurrentRoutes"/> (and raises <see cref="RouteChanged"/>) for every output's
+		/// currently-routed input, mirroring what <see cref="_chassis_OutputChange"/> does on a live route
+		/// change. Without this, a route already established on the hardware before Essentials started (or
+		/// before this chassis reconnected) would never be reflected in the IRoutingMidpointWithFeedback
+		/// surface - CurrentRoutes would stay empty until the route actually changed again, which is what
+		/// makes the device appear to have no current route on the devtools Routing page.
+		/// </summary>
+		private void SyncCurrentRoutes()
+		{
+			for (uint i = 1; i <= _chassis.NumberOfOutputs; i++)
+			{
+				if (!OutputNames.ContainsKey(i)) continue;
+
+				var input = _chassis.HdmiDmLiteOutputs[i].VideoOutFeedback == null
+					? 0
+					: _chassis.HdmiDmLiteOutputs[i].VideoOutFeedback.Number;
+
+				var inputPort = InputPorts.FirstOrDefault(
+					p => p.FeedbackMatchObject == _chassis.HdmiDmLiteOutputs[i].VideoOutFeedback);
+				var outputPort = OutputPorts.FirstOrDefault(
+					p => p.FeedbackMatchObject == _chassis.HdmiDmLiteOutputs[i]);
+
+				OnSwitchChange(new RoutingNumericEventArgs(i, input, outputPort, inputPort, eRoutingSignalType.AudioVideo));
+			}
+		}
+
+		#endregion
 
 		// Raise an event when the DM input changes.
 		private void OnDmInputChange(DMInputEventArgs args)
@@ -521,7 +593,7 @@ Selector: {4}
     {
         public HdSp401ControllerFactory()
         {
-            MinimumEssentialsFrameworkVersion = "2.4.5";
+            MinimumEssentialsFrameworkVersion = "3.0.0";
             
             TypeNames = new List<string>() { "hdps401", "hdps402", "hdps621", "hdps622" };
         }

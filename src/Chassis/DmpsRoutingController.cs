@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,7 +19,7 @@ using Feedback = PepperDash.Essentials.Core.Feedback;
 
 namespace PepperDash.Essentials.DM
 {
-    public class DmpsRoutingController : EssentialsBridgeableDevice, IRoutingNumericWithFeedback, IHasFeedback
+    public class DmpsRoutingController : EssentialsBridgeableDevice, IRoutingMidpointWithFeedback, IHasFeedback
     {
         private const string NonePortKey = "none";
 
@@ -78,7 +78,50 @@ namespace PepperDash.Essentials.DM
         {
             var newEvent = NumericSwitchChange;
             if (newEvent != null) newEvent(this, e);
+            UpdateCurrentRoute(e);
         }
+
+        #region IRoutingMidpointWithFeedback Members
+
+        /// <summary>
+        /// Currently active routes, per IRoutingMidpointWithFeedback. Maintained from the device's
+        /// switch-change feedback (see UpdateCurrentRoute / OnSwitchChange).
+        /// </summary>
+        public List<RouteSwitchDescriptor> CurrentRoutes { get; } = new List<RouteSwitchDescriptor>();
+
+        /// <summary>
+        /// Raised when a route changes, per IRoutingMidpointWithFeedback.
+        /// </summary>
+        public event RouteChangedEventHandler RouteChanged;
+
+        /// <summary>
+        /// Clears the route to an output by switching a null input (no source) to it.
+        /// </summary>
+        public void ClearRoute(object outputSelector, eRoutingSignalType signalType)
+        {
+            ExecuteSwitch(null, outputSelector, signalType);
+        }
+
+        /// <summary>
+        /// Maintains <see cref="CurrentRoutes"/> and raises <see cref="RouteChanged"/> from a numeric
+        /// switch-change event so the feedback surface tracks the same routes as NumericSwitchChange.
+        /// </summary>
+        private void UpdateCurrentRoute(RoutingNumericEventArgs e)
+        {
+            if (e == null || e.OutputPort == null)
+                return;
+
+            CurrentRoutes.RemoveAll(r => ReferenceEquals(r.OutputPort, e.OutputPort));
+
+            var descriptor = new RouteSwitchDescriptor(e.OutputPort, e.InputPort);
+            if (e.InputPort != null)
+                CurrentRoutes.Add(descriptor);
+
+            var handler = RouteChanged;
+            handler?.Invoke(this, descriptor);
+        }
+
+        #endregion
 
 
         public static DmpsRoutingController GetDmpsRoutingController(string key, string name,
@@ -192,7 +235,7 @@ namespace PepperDash.Essentials.DM
             Microphones = new DmpsMicrophoneController(Dmps);
         }
 
-        public override bool CustomActivate()
+        protected override bool CustomActivate()
         {
             // Set input and output names from config
             SetInputNames();
@@ -978,7 +1021,7 @@ namespace PepperDash.Essentials.DM
         /// </summary>
         void AddVolumeControl(uint number, Audio.Output audio)
         {
-            VolumeControls.Add(number, new DmCardAudioOutputController(audio));
+            VolumeControls.Add(number, new DmCardAudioOutputController(audio, number));
         }
 
         void Dmps_DMInputChange(Switch device, DMInputEventArgs args)
@@ -1183,8 +1226,7 @@ namespace PepperDash.Essentials.DM
                 }
 
                 var sigTypeIsUsbOrVideo = ((sigType & eRoutingSignalType.Video) == eRoutingSignalType.Video) ||
-                                          ((sigType & eRoutingSignalType.UsbInput) == eRoutingSignalType.UsbInput) ||
-                                          ((sigType & eRoutingSignalType.UsbOutput) == eRoutingSignalType.UsbOutput);
+                                          ((sigType & eRoutingSignalType.Usb) == eRoutingSignalType.Usb);
 
                 if (input == null || (input.Number <= Dmps.NumberOfSwitcherInputs && output.Number <= Dmps.NumberOfSwitcherOutputs &&
                      sigTypeIsUsbOrVideo) ||
@@ -1246,17 +1288,12 @@ namespace PepperDash.Essentials.DM
                         }
                     }
 
-                    if ((sigType & eRoutingSignalType.UsbOutput) == eRoutingSignalType.UsbOutput)
-                    {
-                            output.USBRoutedTo = input;
-                    }
-
-                    if ((sigType & eRoutingSignalType.UsbInput) != eRoutingSignalType.UsbInput)
+                    if ((sigType & eRoutingSignalType.Usb) != eRoutingSignalType.Usb)
                     {
                         return;
                     }
-                    if (input != null)
-                        input.USBRoutedTo = output;
+
+                    ExecuteUsbSwitch(input, output, routeToInput: false);
                 }
                 else
                 {
@@ -1268,6 +1305,21 @@ namespace PepperDash.Essentials.DM
             {
                 Debug.LogDebug(this, "Error executing switch: {0}", e);
             }
+        }
+
+        private static void ExecuteUsbSwitch(DMInput input, DMOutput output, bool routeToInput)
+        {
+            if (routeToInput)
+            {
+                if (input != null)
+                {
+                    input.USBRoutedTo = output;
+                }
+
+                return;
+            }
+
+            output.USBRoutedTo = input;
         }
 
         #endregion

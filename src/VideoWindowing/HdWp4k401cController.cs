@@ -342,7 +342,12 @@ namespace PepperDash.Essentials.DM.VideoWindowing
         {
             if (newFb == null) return;
 
-            if (!Feedbacks.Contains(newFb))
+            // Feedbacks.Contains(newFb) checks by reference (FeedbackCollection<T> derives from
+            // Collection<T>, whose default Contains is reference-equality), which never catches a
+            // *different* Feedback instance that happens to share the same Key as one already added -
+            // that duplicate key would throw when merged into this shared collection. Check by key via
+            // the collection's own indexer instead.
+            if (string.IsNullOrEmpty(newFb.Key) || Feedbacks[newFb.Key] == null)
             {
                 Feedbacks.Add(newFb);
             }
@@ -412,7 +417,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
         {
             public HdWp4k401cControllerFactory()
             {
-                MinimumEssentialsFrameworkVersion = "2.4.5";
+                MinimumEssentialsFrameworkVersion = "3.0.0";
                 TypeNames = new List<string>() { "hdWp4k401c" };
             }
 

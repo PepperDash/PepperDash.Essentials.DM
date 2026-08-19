@@ -18,7 +18,7 @@ using PepperDash.Essentials.Core.Config;
 namespace PepperDash.Essentials.DM.AirMedia
 {
     [Description("Wrapper class for an AM-200 or AM-300")]
-    public class AirMediaController : CrestronGenericBridgeableBaseDevice, IRoutingNumericWithFeedback, IIROutputPorts, IComPorts
+    public class AirMediaController : CrestronGenericBridgeableBaseDevice, IRoutingMidpointWithFeedback, IIROutputPorts, IComPorts
     {
         public Am3x00 AirMedia { get; private set; }
 
@@ -123,7 +123,7 @@ namespace PepperDash.Essentials.DM.AirMedia
             HdmiVideoSyncDetectedFeedback = new BoolFeedback(() => false);
         }
 
-        public override bool CustomActivate()
+        protected override bool CustomActivate()
         {
             if (PropertiesConfig.AutoSwitchingEnabled)
                 AirMedia.DisplayControl.EnableAutomaticRouting();
@@ -189,10 +189,61 @@ namespace PepperDash.Essentials.DM.AirMedia
         {
             var handler = NumericSwitchChange;
 
-            if (handler == null) return;
-                
-            handler(this, e);
+            if (handler != null)
+                handler(this, e);
+
+            UpdateCurrentRoute(e);
         }
+
+        #region IRoutingMidpointWithFeedback Members
+
+        /// <summary>
+        /// Currently active routes, per IRoutingMidpointWithFeedback. Maintained from the AirMedia
+        /// switch-change feedback (see UpdateCurrentRoute / OnSwitchChange).
+        /// </summary>
+        public List<RouteSwitchDescriptor> CurrentRoutes { get; } = new List<RouteSwitchDescriptor>();
+
+        /// <summary>
+        /// Raised when a route changes, per IRoutingMidpointWithFeedback.
+        /// </summary>
+        public event RouteChangedEventHandler RouteChanged;
+
+        /// <summary>
+        /// Clears the route. AirMedia routing is driven by ExecuteSwitch/ExecuteNumericSwitch (which
+        /// require a non-null selector), so a clear simply drops the tracked route and notifies
+        /// subscribers rather than issuing a hardware switch.
+        /// </summary>
+        public void ClearRoute(object outputSelector, eRoutingSignalType signalType)
+        {
+            if (CurrentRoutes.Count == 0)
+                return;
+
+            CurrentRoutes.Clear();
+
+            var handler = RouteChanged;
+            handler?.Invoke(this, null);
+        }
+
+        /// <summary>
+        /// Maintains <see cref="CurrentRoutes"/> and raises <see cref="RouteChanged"/> from a numeric
+        /// switch-change event so the feedback surface tracks the same routes as NumericSwitchChange.
+        /// </summary>
+        private void UpdateCurrentRoute(RoutingNumericEventArgs e)
+        {
+            if (e == null || e.OutputPort == null)
+                return;
+
+            CurrentRoutes.RemoveAll(r => ReferenceEquals(r.OutputPort, e.OutputPort));
+
+            var descriptor = new RouteSwitchDescriptor(e.OutputPort, e.InputPort);
+            if (e.InputPort != null)
+                CurrentRoutes.Add(descriptor);
+
+            var handler = RouteChanged;
+            handler?.Invoke(this, descriptor);
+        }
+
+        #endregion
 
 
         void AirMedia_AirMediaChange(object sender, Crestron.SimplSharpPro.DeviceSupport.GenericEventArgs args)
@@ -371,7 +422,7 @@ namespace PepperDash.Essentials.DM.AirMedia
     {
         public AirMediaControllerFactory()
         {
-            MinimumEssentialsFrameworkVersion = "2.4.5";
+            MinimumEssentialsFrameworkVersion = "3.0.0";
             TypeNames = new List<string>() { "am200", "am300", "am3200" };
         }
 

@@ -11,6 +11,7 @@ using PepperDash.Core;
 using PepperDash.Essentials.Core;
 using PepperDash.Essentials.Core.Bridges;
 using PepperDash.Essentials.DM.Config;
+using PepperDash.Essentials.DM.Routing;
 using PepperDash.Essentials.Core.Config;
 
 namespace PepperDash.Essentials.DM
@@ -253,7 +254,7 @@ namespace PepperDash.Essentials.DM
     }
 
     /// <summary>
-    /// 
+    ///
     /// </summary>
     [Description("Wrapper class for all DM-TX variants")]
     public abstract class DmTxControllerBase : BasicDmTxControllerBase
@@ -263,6 +264,62 @@ namespace PepperDash.Essentials.DM
         public abstract StringFeedback ActiveVideoInputFeedback { get; protected set; }
         public RoutingInputPortWithVideoStatuses AnyVideoInput { get; protected set; }
         public IntFeedback HdcpStateFeedback { get; protected set; }
+
+        // Per (output port, signal type) route tracking shared with the chassis/receivers.
+        private readonly DmRouteFeedbackTracker _routeTracker = new DmRouteFeedbackTracker();
+
+        /// <summary>
+        /// Tracks the currently active routes for the IRoutingMidpointWithFeedback contract.
+        /// DM transmitters select an internal source rather than performing matrix switching, so the
+        /// authoritative route feedback continues to be carried by the device-specific numeric
+        /// feedbacks (Video/AudioSourceNumericFeedback) and the NumericSwitchChange event.
+        /// </summary>
+        public List<RouteSwitchDescriptor> CurrentRoutes => _routeTracker.CurrentRoutes;
+
+        /// <summary>
+        /// Raised when a route changes, per IRoutingMidpointWithFeedback. DM transmitters drive route
+        /// feedback through NumericSwitchChange/the numeric source feedbacks; this event is kept so the
+        /// device satisfies the interface and is fired when ClearRoute drops the tracked route.
+        /// </summary>
+        public event RouteChangedEventHandler RouteChanged;
+
+        /// <summary>
+        /// Clears the tracked route for IRoutingMidpointWithFeedback. Transmitter source selection is
+        /// driven by ExecuteSwitch/ExecuteNumericSwitch; clearing simply drops the tracked descriptor
+        /// and notifies subscribers.
+        /// </summary>
+        public virtual void ClearRoute(object outputSelector, eRoutingSignalType signalType)
+        {
+            if (_routeTracker.Clear())
+                OnRouteChanged(null);
+        }
+
+        /// <summary>
+        /// Raises the RouteChanged event. Call from derived classes when the tracked route changes.
+        /// </summary>
+        protected void OnRouteChanged(RouteSwitchDescriptor newRoute)
+        {
+            var handler = RouteChanged;
+            handler?.Invoke(this as IRoutingMidpointWithFeedback, newRoute);
+        }
+
+        /// <summary>
+        /// Maintains <see cref="CurrentRoutes"/> and raises <see cref="RouteChanged"/> from a numeric
+        /// switch-change event. Call from a derived transmitter's OnSwitchChange so the
+        /// IRoutingMidpointWithFeedback feedback surface tracks the same routes as NumericSwitchChange.
+        /// Keyed on the (output port, signal type) pair; a null input port (no source) clears it.
+        /// </summary>
+        protected void UpdateCurrentRouteFromArgs(RoutingNumericEventArgs e)
+        {
+            if (e == null)
+                return;
+
+            var descriptor = _routeTracker.ApplyRoute(e.OutputPort, e.InputPort, e.SigType);
+            if (descriptor == null)
+                return;
+
+            OnRouteChanged(descriptor);
+        }
 
         protected DmTxControllerBase(string key, string name, EndpointTransmitterBase hardware)
             : base(key, name, hardware)
@@ -490,7 +547,7 @@ namespace PepperDash.Essentials.DM
     {
         public DmTxControllerFactory()
         {
-            MinimumEssentialsFrameworkVersion = "2.4.5";
+            MinimumEssentialsFrameworkVersion = "3.0.0";
             TypeNames = new List<string>
             {
                 "dmtx200c",

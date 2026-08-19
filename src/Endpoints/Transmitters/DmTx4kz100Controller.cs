@@ -22,7 +22,7 @@ namespace PepperDash.Essentials.DM
     /// Controller class for all DM-TX-201C/S/F transmitters
     /// </summary>
     [Description("Wrapper class for DM-TX-4K-Z-100-C")]
-    public class DmTx4kz100Controller : BasicDmTxControllerBase, IRoutingInputsOutputs, IHasFeedback,
+    public class DmTx4kz100Controller : BasicDmTxControllerBase, IRoutingMidpoint, IHasFeedback,
         IIROutputPorts, IComPorts, ICec
     {
         public DmTx4kz100C1G Tx { get; private set; }

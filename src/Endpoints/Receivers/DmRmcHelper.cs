@@ -11,6 +11,7 @@ using PepperDash.Essentials.Core;
 using PepperDash.Essentials.Core.Bridges;
 using PepperDash.Essentials.Core.DeviceInfo;
 using PepperDash.Essentials.DM.Config;
+using PepperDash.Essentials.DM.Routing;
 using PepperDash.Essentials.Core.Config;
 using PepperDash_Essentials_DM;
 
@@ -83,7 +84,7 @@ namespace PepperDash.Essentials.DM
 
 
             //If the device is an DM-RMC-4K-Z-SCALER-C
-            var routing = rmc as IRoutingInputsOutputs;
+            var routing = rmc as IRoutingMidpoint;
 
             trilist.UShortInput[joinMap.HdcpInputPortCount.JoinNumber].UShortValue = (ushort)(routing == null
                 ? 1
@@ -608,7 +609,7 @@ namespace PepperDash.Essentials.DM
     {
         public DmRmcControllerFactory()
         {
-            MinimumEssentialsFrameworkVersion = "2.4.5";
+            MinimumEssentialsFrameworkVersion = "3.0.0";
             TypeNames = new List<string>
             { "hdbasetrx", "dmrmc4k100c1g", "dmrmc100c", "dmrmc100s", "dmrmc4k100c", "dmrmc150s",
                 "dmrmc200c", "dmrmc200s", "dmrmc200s2", "dmrmcscalerc", "dmrmcscalers", "dmrmcscalers2", "dmrmc4kscalerc", "dmrmc4kscalercdsp",

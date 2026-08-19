@@ -1,5 +1,4 @@
 ﻿using PepperDash.Essentials.Core;
-using PepperDash.Essentials.Core.Routing;
 using Crestron.SimplSharpPro.DM;
 using Crestron.SimplSharpPro.DM.Cards;
 using System;
@@ -7,21 +6,21 @@ using System.Linq;
 
 namespace PepperDash.Essentials.DM.Routing
 {
-    public class DmMatrixInput : IRoutingInputSlot
+    public class DmMatrixInput : IDmInputSlot
     {
         private readonly CardDevice _device;
         private readonly string _key;
 
-        public DmMatrixInput(CardDevice device, string key, string name, BoolFeedback videoSyncfeedback):base()
+        public DmMatrixInput(CardDevice device, string key, string name, BoolFeedback videoSyncfeedback) : base()
         {
-            _device = device;
+            _device = device ?? throw new ArgumentNullException(nameof(device));
+            if (videoSyncfeedback == null) throw new ArgumentNullException(nameof(videoSyncfeedback));
             _key = key;
             IsOnline = new BoolFeedback(() => _device.IsOnline);
             Name = name;
 
             _device.OnlineStatusChange += _device_OnlineStatusChange;
             videoSyncfeedback.OutputChange += VideoSyncfeedback_OutputChange;
-
         }
 
         private void VideoSyncfeedback_OutputChange(object sender, FeedbackEventArgs e)
@@ -44,7 +43,7 @@ namespace PepperDash.Essentials.DM.Routing
 
         public int SlotNumber => (int)_device.SwitcherInputOutput.Number;
 
-        public eRoutingSignalType SupportedSignalTypes => eRoutingSignalType.AudioVideo | eRoutingSignalType.SecondaryAudio;
+        public eRoutingSignalType SupportedSignalTypes => eRoutingSignalType.AudioVideo;
 
         public string Name { get; private set; }
 

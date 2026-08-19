@@ -16,7 +16,7 @@ using PepperDash.Essentials.Core.Config;
 namespace PepperDash.Essentials.DM.Chassis
 {
 	[Description("Wrapper class for all HdMdNxM4E switchers")]
-	public class HdMdNxM4kEBridgeableController : CrestronGenericBridgeableBaseDevice, IRoutingNumericWithFeedback, IHasFeedback
+	public class HdMdNxM4kEBridgeableController : CrestronGenericBridgeableBaseDevice, IRoutingMidpointWithFeedback, IHasFeedback
 	{
 		private HdMdNxM _Chassis;
 		private HdMd4x14kE _Chassis4x1;
@@ -143,7 +143,77 @@ namespace PepperDash.Essentials.DM.Chassis
 		{
 			var newEvent = NumericSwitchChange;
 			if (newEvent != null) newEvent(this, e);
+			UpdateCurrentRoute(e);
 		}
+
+		#region IRoutingMidpointWithFeedback Members
+
+		/// <summary>
+		/// Currently active routes, per IRoutingMidpointWithFeedback. Maintained from the device's
+		/// switch-change feedback (see UpdateCurrentRoute / OnSwitchChange).
+		/// </summary>
+		public List<RouteSwitchDescriptor> CurrentRoutes { get; } = new List<RouteSwitchDescriptor>();
+
+		/// <summary>
+		/// Raised when a route changes, per IRoutingMidpointWithFeedback.
+		/// </summary>
+		public event RouteChangedEventHandler RouteChanged;
+
+		/// <summary>
+		/// Clears the route to an output by switching a null input (no source) to it.
+		/// </summary>
+		public void ClearRoute(object outputSelector, eRoutingSignalType signalType)
+		{
+			ExecuteSwitch(null, outputSelector, signalType);
+		}
+
+		/// <summary>
+		/// Maintains <see cref="CurrentRoutes"/> and raises <see cref="RouteChanged"/> from a numeric
+		/// switch-change event so the feedback surface tracks the same routes as NumericSwitchChange.
+		/// </summary>
+		private void UpdateCurrentRoute(RoutingNumericEventArgs e)
+		{
+			if (e == null || e.OutputPort == null)
+				return;
+
+			CurrentRoutes.RemoveAll(r => ReferenceEquals(r.OutputPort, e.OutputPort));
+
+			var descriptor = new RouteSwitchDescriptor(e.OutputPort, e.InputPort);
+			if (e.InputPort != null)
+				CurrentRoutes.Add(descriptor);
+
+			var handler = RouteChanged;
+			handler?.Invoke(this, descriptor);
+		}
+
+		/// <summary>
+		/// Seeds <see cref="CurrentRoutes"/> (and raises <see cref="RouteChanged"/>) for every output's
+		/// currently-routed input, mirroring what <see cref="Chassis_DMOutputChange"/> does on a live route
+		/// change. Without this, a route already established on the hardware before Essentials started (or
+		/// before this chassis reconnected) would never be reflected in the IRoutingMidpointWithFeedback
+		/// surface - CurrentRoutes would stay empty until the route actually changed again, which is what
+		/// makes the device appear to have no current route on the devtools Routing page.
+		/// </summary>
+		private void SyncCurrentRoutes()
+		{
+			for (uint i = 1; i <= _Chassis.NumberOfOutputs; i++)
+			{
+				if (!OutputNames.ContainsKey(i)) continue;
+
+				var inputNumber = _Chassis.HdmiOutputs[i].VideoOutFeedback == null
+					? 0
+					: _Chassis.HdmiOutputs[i].VideoOutFeedback.Number;
+
+				var inPort = InputPorts.FirstOrDefault(
+					p => p.FeedbackMatchObject == _Chassis.HdmiOutputs[i].VideoOutFeedback);
+				var outPort = OutputPorts.FirstOrDefault(
+					p => p.FeedbackMatchObject == _Chassis.HdmiOutputs[i]);
+
+				OnSwitchChange(new RoutingNumericEventArgs(i, inputNumber, outPort, inPort, eRoutingSignalType.AudioVideo));
+			}
+		}
+
+		#endregion
 
 		public void EnableHdcp(uint port)
 		{
@@ -264,7 +334,12 @@ namespace PepperDash.Essentials.DM.Chassis
 		{
 			if (newFb == null) return;
 
-			if (!Feedbacks.Contains(newFb))
+			// Feedbacks.Contains(newFb) checks by reference (FeedbackCollection<T> derives from
+			// Collection<T>, whose default Contains is reference-equality), which never catches a
+			// *different* Feedback instance that happens to share the same Key as one already added -
+			// that duplicate key would throw when merged into this shared collection. Check by key via
+			// the collection's own indexer instead.
+			if (string.IsNullOrEmpty(newFb.Key) || Feedbacks[newFb.Key] == null)
 			{
 				Feedbacks.Add(newFb);
 			}
@@ -397,6 +472,8 @@ namespace PepperDash.Essentials.DM.Chassis
 
             if (_Chassis4x1 != null)
                 AutoRouteFeedback.FireUpdate();
+
+            SyncCurrentRoutes();
 		}
 
 		void Chassis_DMOutputChange(Switch device, DMOutputEventArgs args)
@@ -467,7 +544,7 @@ namespace PepperDash.Essentials.DM.Chassis
 		{
 			public HdMdNxM4kEControllerFactory()
 			{
-                MinimumEssentialsFrameworkVersion = "2.4.5";
+                MinimumEssentialsFrameworkVersion = "3.0.0";
                 TypeNames = new List<string>() { "hdmd4x14ke-bridgeable", "hdmd4x24ke", "hdmd6x24ke" };
 			}
 

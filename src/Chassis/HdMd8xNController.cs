@@ -17,7 +17,7 @@ using PepperDash.Essentials.Core.Config;
 namespace PepperDash.Essentials.DM.Chassis
 {
 	[Description("Wrapper class for all HdMd8xN switchers")]
-	public class HdMd8xNController : CrestronGenericBridgeableBaseDevice, IRoutingNumericWithFeedback, IHasFeedback
+	public class HdMd8xNController : CrestronGenericBridgeableBaseDevice, IRoutingMidpointWithFeedback, IHasFeedback
 	{
 		private HdMd8xN _Chassis;
 
@@ -159,7 +159,50 @@ namespace PepperDash.Essentials.DM.Chassis
 		{
 			var newEvent = NumericSwitchChange;
 			if (newEvent != null) newEvent(this, e);
+			UpdateCurrentRoute(e);
 		}
+
+		#region IRoutingMidpointWithFeedback Members
+
+		/// <summary>
+		/// Currently active routes, per IRoutingMidpointWithFeedback. Maintained from the device's
+		/// switch-change feedback (see UpdateCurrentRoute / OnSwitchChange).
+		/// </summary>
+		public List<RouteSwitchDescriptor> CurrentRoutes { get; } = new List<RouteSwitchDescriptor>();
+
+		/// <summary>
+		/// Raised when a route changes, per IRoutingMidpointWithFeedback.
+		/// </summary>
+		public event RouteChangedEventHandler RouteChanged;
+
+		/// <summary>
+		/// Clears the route to an output by switching a null input (no source) to it.
+		/// </summary>
+		public void ClearRoute(object outputSelector, eRoutingSignalType signalType)
+		{
+			ExecuteSwitch(null, outputSelector, signalType);
+		}
+
+		/// <summary>
+		/// Maintains <see cref="CurrentRoutes"/> and raises <see cref="RouteChanged"/> from a numeric
+		/// switch-change event so the feedback surface tracks the same routes as NumericSwitchChange.
+		/// </summary>
+		private void UpdateCurrentRoute(RoutingNumericEventArgs e)
+		{
+			if (e == null || e.OutputPort == null)
+				return;
+
+			CurrentRoutes.RemoveAll(r => ReferenceEquals(r.OutputPort, e.OutputPort));
+
+			var descriptor = new RouteSwitchDescriptor(e.OutputPort, e.InputPort);
+			if (e.InputPort != null)
+				CurrentRoutes.Add(descriptor);
+
+			var handler = RouteChanged;
+			handler?.Invoke(this, descriptor);
+		}
+
+		#endregion
 
 		#region PostActivate
 
@@ -244,7 +287,13 @@ namespace PepperDash.Essentials.DM.Chassis
 		{
 			if (newFb == null) return;
 
-			if (!Feedbacks.Contains(newFb))
+			// Feedbacks.Contains(newFb) checks by reference (FeedbackCollection<T> derives from
+			// Collection<T>, whose default Contains is reference-equality), which never catches a
+			// *different* Feedback instance that happens to share the same Key as one already added
+			// (e.g. VideoInputSyncFeedbacks and InputNameFeedbacks both keyed by the same input name) -
+			// that duplicate key would throw when merged into this shared collection. Check by key via
+			// the collection's own indexer instead.
+			if (string.IsNullOrEmpty(newFb.Key) || Feedbacks[newFb.Key] == null)
 			{
 				Feedbacks.Add(newFb);
 			}
@@ -486,7 +535,7 @@ namespace PepperDash.Essentials.DM.Chassis
 		{
 			public HdMd8xNControllerFactory()
 			{
-                MinimumEssentialsFrameworkVersion = "2.4.5";
+                MinimumEssentialsFrameworkVersion = "3.0.0";
                 TypeNames = new List<string>() { "hdmd8x2", "hdmd8x1" };
 			}
 

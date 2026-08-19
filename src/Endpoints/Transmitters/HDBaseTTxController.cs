@@ -18,7 +18,7 @@ namespace PepperDash.Essentials.DM
     /// Controller class for suitable for HDBaseT transmitters
     /// </summary>
     [Description("Wrapper Class for HDBaseT devices based on HDTx3CB class")]
-    public class HDBaseTTxController : BasicDmTxControllerBase, IRoutingInputsOutputs, IComPorts
+    public class HDBaseTTxController : BasicDmTxControllerBase, IRoutingMidpoint, IComPorts
     {
         public RoutingInputPort HdmiIn { get; private set; }
         public RoutingOutputPort DmOut { get; private set; }

@@ -14,6 +14,7 @@ using PepperDash.Core;
 using PepperDash.Essentials.Core;
 using PepperDash.Essentials.Core.Bridges;
 using PepperDash.Essentials.DM.Config;
+using PepperDash.Essentials.DM.Routing;
 
 namespace PepperDash.Essentials.DM
 {
@@ -57,6 +58,7 @@ namespace PepperDash.Essentials.DM
         {
             var newEvent = NumericSwitchChange;
             if (newEvent != null) newEvent(this, e);
+            UpdateCurrentRouteFromArgs(e);
         }
 
 
@@ -249,7 +251,7 @@ namespace PepperDash.Essentials.DM
 
 
 
-        public override bool CustomActivate()
+        protected override bool CustomActivate()
         {
             // Link up all of these damned events to the various RoutingPorts via a helper handler
             Tx.HdmiInputs[1].InputStreamChange += (o, a) => FowardInputStreamChange(HdmiIn1, a.EventId);

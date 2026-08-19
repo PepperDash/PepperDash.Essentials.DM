@@ -9,6 +9,7 @@ using System.Linq;
 using PepperDash.Core;
 using PepperDash.Essentials.Core;
 using PepperDash.Essentials.Core.Bridges;
+using PepperDash.Essentials.DM.Routing;
 
 namespace PepperDash.Essentials.DM
 {
@@ -49,6 +50,7 @@ namespace PepperDash.Essentials.DM
         {
             var newEvent = NumericSwitchChange;
             if (newEvent != null) newEvent(this, e);
+            UpdateCurrentRouteFromArgs(e);
         }
 
 
@@ -245,7 +247,7 @@ namespace PepperDash.Essentials.DM
             }
         }
 
-        public override bool CustomActivate()
+        protected override bool CustomActivate()
         {
             Tx.HdmiInput.InputStreamChange += (o, a) => FowardInputStreamChange(HdmiInput, a.EventId);
             Tx.HdmiInput.VideoAttributes.AttributeChange += (o, a) => FireVideoAttributeChange(HdmiInput, a.EventId);
