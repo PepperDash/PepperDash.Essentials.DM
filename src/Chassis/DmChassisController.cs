@@ -25,8 +25,11 @@ namespace PepperDash.Essentials.DM
     /// </summary>
     [Description("Wrapper class for all DM-MD chassis variants from 8x8 to 32x32")]
     public class DmChassisController : CrestronGenericBridgeableBaseDevice, IDmSwitchWithEndpointOnlineFeedback, IRoutingMidpointWithFeedback
+    public class DmChassisController : CrestronGenericBridgeableBaseDevice, IDmSwitchWithEndpointOnlineFeedback, IRoutingMidpointWithFeedback
     {
         private const string NonePortKey = "inputCard0--None";
+        // On an 8x8 chassis the USB slot numbers for outputs start at 17 (inputs 1-8, outputs 17-24).
+        private const uint Usb8x8OutputSlotOffset = 16;
         // On an 8x8 chassis the USB slot numbers for outputs start at 17 (inputs 1-8, outputs 17-24).
         private const uint Usb8x8OutputSlotOffset = 16;
         public DMChassisPropertiesConfig PropertiesConfig { get; set; }
@@ -75,6 +78,8 @@ namespace PepperDash.Essentials.DM
         public Dictionary<uint, string> OutputNames { get; set; }
         public Dictionary<uint, DmCardAudioOutputController> VolumeControls { get; private set; }
 
+        public Dictionary<string, IDmInputSlot> InputSlots { get; private set; }
+        public Dictionary<string, IDmOutputSlot> OutputSlots { get; private set; }
         public Dictionary<string, IDmInputSlot> InputSlots { get; private set; }
         public Dictionary<string, IDmOutputSlot> OutputSlots { get; private set; }
 
@@ -250,6 +255,8 @@ namespace PepperDash.Essentials.DM
 
             InputSlots = new Dictionary<string, IDmInputSlot>();
             OutputSlots = new Dictionary<string, IDmOutputSlot>();
+            InputSlots = new Dictionary<string, IDmInputSlot>();
+            OutputSlots = new Dictionary<string, IDmOutputSlot>();
 
             for (uint x = 1; x <= Chassis.NumberOfOutputs; x++)
             {
@@ -415,6 +422,7 @@ namespace PepperDash.Essentials.DM
                             if (inputCard.Card is Dmc4kHdDspBase)
                             {
                                 if (PropertiesConfig.InputSlotSupportsHdcp2.TryGetValue(tempX, out var hdDspSupportsHdcp2) && hdDspSupportsHdcp2)
+                                if (PropertiesConfig.InputSlotSupportsHdcp2.TryGetValue(tempX, out var hdDspSupportsHdcp2) && hdDspSupportsHdcp2)
                                 {
                                     InputCardHdcpCapabilityTypes[tempX] = eHdcpCapabilityType.Hdcp2_2Support;
                                     return (int)(inputCard.Card as Dmc4kHdDspBase).HdmiInput.HdcpReceiveCapability;
@@ -429,6 +437,7 @@ namespace PepperDash.Essentials.DM
                             if (inputCard.Card is Dmc4kCBase)
                             {
                                 if (PropertiesConfig.InputSlotSupportsHdcp2.TryGetValue(tempX, out var c4kCSupportsHdcp2) && c4kCSupportsHdcp2)
+                                if (PropertiesConfig.InputSlotSupportsHdcp2.TryGetValue(tempX, out var c4kCSupportsHdcp2) && c4kCSupportsHdcp2)
                                 {
                                     InputCardHdcpCapabilityTypes[tempX] = eHdcpCapabilityType.HdcpAutoSupport;
                                     return (int)(inputCard.Card as Dmc4kCBase).DmInput.HdcpReceiveCapability;
@@ -440,6 +449,7 @@ namespace PepperDash.Essentials.DM
                             }
                             if (inputCard.Card is Dmc4kCDspBase)
                             {
+                                if (PropertiesConfig.InputSlotSupportsHdcp2.TryGetValue(tempX, out var cDspSupportsHdcp2) && cDspSupportsHdcp2)
                                 if (PropertiesConfig.InputSlotSupportsHdcp2.TryGetValue(tempX, out var cDspSupportsHdcp2) && cDspSupportsHdcp2)
                                 {
                                     InputCardHdcpCapabilityTypes[tempX] = eHdcpCapabilityType.HdcpAutoSupport;
@@ -927,9 +937,31 @@ namespace PepperDash.Essentials.DM
                 {
                     Debug.LogMessage(ex, "Failed to create output slot for card1 on output card {OutputCard}; slot not registered", this, number);
                 }
+            {
+                try
+                {
+                    var name = OutputNames[(number * 2) - 1];
+                    var matrixOutputCard1 = new DmMatrixOutput(card1, this, $"matrixOutput-{(number * 2) - 1}", name);
+                    OutputSlots.Add(matrixOutputCard1.Key, matrixOutputCard1);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogMessage(ex, "Failed to create output slot for card1 on output card {OutputCard}; slot not registered", this, number);
+                }
             }
 
             if (card2 != null)
+            {
+                try
+                {
+                    var name = OutputNames[number * 2];
+                    var matrixOutputCard2 = new DmMatrixOutput(card2, this, $"matrixOutput-{number * 2}", name);
+                    OutputSlots.Add(matrixOutputCard2.Key, matrixOutputCard2);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogMessage(ex, "Failed to create output slot for card2 on output card {OutputCard}; slot not registered", this, number);
+                }
             {
                 try
                 {
@@ -1265,6 +1297,52 @@ namespace PepperDash.Essentials.DM
 
         /// <summary>
         /// Handles chassis output-change events (volume, online, video/audio route, name, USB, HDCP, stream state).
+        #region IRoutingMidpointWithFeedback Members
+
+        // Tracks routes per (output port, signal type) so breakaway audio/video routes to the same
+        // output are represented independently (see DmRouteFeedbackTracker).
+        private readonly DmRouteFeedbackTracker _routeTracker = new DmRouteFeedbackTracker();
+
+        /// <summary>
+        /// Currently active routes on the chassis, per the IRoutingMidpointWithFeedback contract.
+        /// Maintained from the chassis VideoOut/AudioOut feedback events (see UpdateCurrentRoute).
+        /// </summary>
+        public List<RouteSwitchDescriptor> CurrentRoutes => _routeTracker.CurrentRoutes;
+
+        /// <summary>
+        /// Raised when a route changes on the chassis, per IRoutingMidpointWithFeedback.
+        /// </summary>
+        public event RouteChangedEventHandler RouteChanged;
+
+        /// <summary>
+        /// Clears the route to an output. Mirrors the legacy "route off" behaviour by switching a
+        /// null input (no source) to the target output for the given signal type.
+        /// </summary>
+        public void ClearRoute(object outputSelector, eRoutingSignalType signalType)
+        {
+            ExecuteSwitch(null, outputSelector, signalType);
+        }
+
+        /// <summary>
+        /// Maintains <see cref="CurrentRoutes"/> and raises <see cref="RouteChanged"/> from the
+        /// chassis output feedback events. Keyed on the (output port, signal type) pair so breakaway
+        /// audio and video routes to the same output are tracked independently. A null input port
+        /// (no source) clears the route for that output/signal while still firing the change event.
+        /// </summary>
+        private void UpdateCurrentRoute(RoutingOutputPort outputPort, RoutingInputPort inputPort, eRoutingSignalType signalType)
+        {
+            var descriptor = _routeTracker.ApplyRoute(outputPort, inputPort, signalType);
+            if (descriptor == null)
+                return;
+
+            var handler = RouteChanged;
+            handler?.Invoke(this, descriptor);
+        }
+
+        #endregion
+
+        /// <summary>
+        /// Handles chassis output-change events (volume, online, video/audio route, name, USB, HDCP, stream state).
         /// </summary>
         void Chassis_DMOutputChange(Switch device, DMOutputEventArgs args)
         {
@@ -1321,6 +1399,11 @@ namespace PepperDash.Essentials.DM
                         else if (localInputPort == null && inputNumber != 0)
                             Debug.LogWarning(this, "Video route feedback on output {Output}: routed input {Input} has no matching input port; reporting as route-off", output, inputNumber);
                         UpdateCurrentRoute(localOutputPort, localInputPort, eRoutingSignalType.Video);
+                        if (localOutputPort == null)
+                            Debug.LogWarning(this, "Video route feedback on output {Output}: no matching output port; CurrentRoutes not updated", output);
+                        else if (localInputPort == null && inputNumber != 0)
+                            Debug.LogWarning(this, "Video route feedback on output {Output}: routed input {Input} has no matching input port; reporting as route-off", output, inputNumber);
+                        UpdateCurrentRoute(localOutputPort, localInputPort, eRoutingSignalType.Video);
                     }
 
                     if (OutputVideoRouteNameFeedbacks.ContainsKey(output))
@@ -1348,6 +1431,11 @@ namespace PepperDash.Essentials.DM
                             localOutputPort,
                             localInputPort,
                             eRoutingSignalType.Audio));
+                        if (localOutputPort == null)
+                            Debug.LogWarning(this, "Audio route feedback on output {Output}: no matching output port; CurrentRoutes not updated", output);
+                        else if (localInputPort == null && inputNumber != 0)
+                            Debug.LogWarning(this, "Audio route feedback on output {Output}: routed input {Input} has no matching input port; reporting as route-off", output, inputNumber);
+                        UpdateCurrentRoute(localOutputPort, localInputPort, eRoutingSignalType.Audio);
                         if (localOutputPort == null)
                             Debug.LogWarning(this, "Audio route feedback on output {Output}: no matching output port; CurrentRoutes not updated", output);
                         else if (localInputPort == null && inputNumber != 0)
@@ -1442,7 +1530,10 @@ namespace PepperDash.Essentials.DM
 
             // In Essentials v3, eRoutingSignalType.UsbInput and eRoutingSignalType.UsbOutput were merged into eRoutingSignalType.Usb.
             var isUsb = (sigType & eRoutingSignalType.Usb) == eRoutingSignalType.Usb;
+            // In Essentials v3, eRoutingSignalType.UsbInput and eRoutingSignalType.UsbOutput were merged into eRoutingSignalType.Usb.
+            var isUsb = (sigType & eRoutingSignalType.Usb) == eRoutingSignalType.Usb;
 
+            if (output == null && !isUsb)
             if (output == null && !isUsb)
             {
                 Debug.LogInformation(this, "Unable to execute switch for inputSelector {0} to outputSelector {1}", inputSelector,
@@ -1493,6 +1584,7 @@ namespace PepperDash.Essentials.DM
             }
 
             if ((sigType & eRoutingSignalType.Usb) == eRoutingSignalType.Usb)
+            if ((sigType & eRoutingSignalType.Usb) == eRoutingSignalType.Usb)
                 
             {
                Chassis.USBEnter.BoolValue = true;
@@ -1522,6 +1614,7 @@ namespace PepperDash.Essentials.DM
                 }
             }
 
+            if((sigType & eRoutingSignalType.Usb) != eRoutingSignalType.Usb)
             if((sigType & eRoutingSignalType.Usb) != eRoutingSignalType.Usb)
             {
                 return;
@@ -1559,6 +1652,8 @@ namespace PepperDash.Essentials.DM
 
             //Routing for USB input-side: routes a USB source to a switcher input slot
             if ((sigType & eRoutingSignalType.Usb) == eRoutingSignalType.Usb)
+            //Routing for USB input-side: routes a USB source to a switcher input slot
+            if ((sigType & eRoutingSignalType.Usb) == eRoutingSignalType.Usb)
             {
                 Debug.LogVerbose(this, "Executing USB Input switch.\r\n in:{0} to input: {1}", inputSelector, outputSelector);
                 //if clearing a route, then dmCard should be (null)
@@ -1572,6 +1667,7 @@ namespace PepperDash.Essentials.DM
 
                     if (chassisSize == 8)
                     {
+                        outputIndex = (uint) inputSelector - Usb8x8OutputSlotOffset;
                         outputIndex = (uint) inputSelector - Usb8x8OutputSlotOffset;
                     }
                     else
@@ -1630,6 +1726,14 @@ namespace PepperDash.Essentials.DM
                 {
                     outputIndex = inputSelector - chassisSize;
                 }
+                if (chassisSize == 8)
+                {
+                    outputIndex = (uint) inputSelector - Usb8x8OutputSlotOffset;
+                }
+                else
+                {
+                    outputIndex = inputSelector - chassisSize;
+                }
 
                 dmCard = Chassis.Outputs[outputIndex];
             }
@@ -1638,7 +1742,16 @@ namespace PepperDash.Essentials.DM
                 dmCard = Chassis.Inputs[inputSelector];
             }
             Chassis.USBEnter.BoolValue = true;
+                dmCard = Chassis.Outputs[outputIndex];
+            }
+            else
+            {
+                dmCard = Chassis.Inputs[inputSelector];
+            }
+            Chassis.USBEnter.BoolValue = true;
 
+            Debug.LogVerbose(this, "Routing USB for input {0} to {1}", inputSelector, dmCard);
+            ExecuteSwitch(dmCard, Chassis.Outputs[outputSelector], eRoutingSignalType.Usb);
             Debug.LogVerbose(this, "Routing USB for input {0} to {1}", inputSelector, dmCard);
             ExecuteSwitch(dmCard, Chassis.Outputs[outputSelector], eRoutingSignalType.Usb);
         }
@@ -1708,6 +1821,18 @@ namespace PepperDash.Essentials.DM
             Debug.LogDebug("Port is HdmiInputWithCec");
 
             var hdmiInPortWCec = port as HdmiInputWithCEC;
+
+            if (!PropertiesConfig.InputSlotSupportsHdcp2.TryGetValue(ioSlot, out var supportsHdcp2))
+            {
+                Debug.LogInformation(this, "Input Slot Supports HDCP2 setting not found for slot {0}. Setting to false. Program may not function as intended.", ioSlot);
+            }
+
+            SetHdcpStateAction(supportsHdcp2, hdmiInPortWCec, joinMap.HdcpSupportState.JoinNumber + ioSlotJoin, trilist);
+
+            if (!InputCardHdcpStateFeedbacks.ContainsKey(ioSlot))
+            {
+                return;
+            }
 
             if (!PropertiesConfig.InputSlotSupportsHdcp2.TryGetValue(ioSlot, out var supportsHdcp2))
             {
@@ -2032,7 +2157,9 @@ namespace PepperDash.Essentials.DM
                 o => ExecuteNumericSwitch(o, (ushort) ioSlot, eRoutingSignalType.Audio));
             trilist.SetUShortSigAction(joinMap.OutputUsb.JoinNumber + ioSlotJoin,
                 o => ExecuteUsbOutputSwitch(o, (ushort) ioSlot));
+                o => ExecuteUsbOutputSwitch(o, (ushort) ioSlot));
             trilist.SetUShortSigAction(joinMap.InputUsb.JoinNumber + ioSlotJoin,
+                o => ExecuteNumericSwitch(o, (ushort) ioSlot, eRoutingSignalType.Usb));
                 o => ExecuteNumericSwitch(o, (ushort) ioSlot, eRoutingSignalType.Usb));
 
             //Routing Feedbacks
@@ -2306,6 +2433,7 @@ namespace PepperDash.Essentials.DM
         public DmChassisControllerFactory()
         {
             MinimumEssentialsFrameworkVersion = "3.0.0";
+            MinimumEssentialsFrameworkVersion = "3.0.0";
             TypeNames = new List<string>() { "dmmd8x8", "dmmd8x8rps", "dmmd8x8cpu3", "dmmd8x8cpu3rps", 
                 "dmmd16x16", "dmmd16x16rps", "dmmd16x16cpu3", "dmmd16x16cpu3rps", 
                 "dmmd32x32", "dmmd32x32rps", "dmmd32x32cpu3", "dmmd32x32cpu3rps", 
@@ -2339,3 +2467,4 @@ namespace PepperDash.Essentials.DM
     }
 
 }
+

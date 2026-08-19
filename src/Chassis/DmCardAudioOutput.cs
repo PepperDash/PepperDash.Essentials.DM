@@ -15,6 +15,9 @@ namespace PepperDash.Essentials.DM
         public string Key { get; private set; }
         public string Name { get; private set; }
 
+        public string Key { get; private set; }
+        public string Name { get; private set; }
+
         public Audio.Output Output { get; private set; }
 
         public IntFeedback VolumeLevelFeedback { get; private set; }
