@@ -93,6 +93,10 @@ namespace PepperDash.Essentials.DM.Routing
         // Read-only view: all mutations go through SetInputRoute so OutputSlotChanged fires.
         public IReadOnlyDictionary<eRoutingSignalType, IDmInputSlot> CurrentRoutes => currentRoutes;
 
+        // IRoutingOutputSlotInfo view of CurrentRoutes - input slot key instead of the full slot object.
+        public IReadOnlyDictionary<eRoutingSignalType, string> CurrentRouteInputKeys =>
+            currentRoutes.Where(kvp => kvp.Value != null).ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Key);
+
         public int SlotNumber => (int)_device.SwitcherInputOutput.Number;
         public eRoutingSignalType SupportedSignalTypes => eRoutingSignalType.AudioVideo;
         public CardDevice Device => _device;

@@ -12,14 +12,8 @@ namespace PepperDash.Essentials.DM.Routing
     /// core routing does not consume them. This keeps the slot abstraction a plugin-internal concept.
     /// Implemented by <see cref="DmMatrixInput"/> and <see cref="DmMatrixClearInput"/>.
     /// </summary>
-    public interface IDmInputSlot : IKeyName
+    public interface IDmInputSlot : IRoutingSlotInfo
     {
-        /// <summary>Matrix slot number (0 for the clear/none input).</summary>
-        int SlotNumber { get; }
-
-        /// <summary>Signal types this input can carry.</summary>
-        eRoutingSignalType SupportedSignalTypes { get; }
-
         /// <summary>Online feedback for the backing endpoint.</summary>
         BoolFeedback IsOnline { get; }
 

@@ -25,7 +25,7 @@ namespace PepperDash.Essentials.DM
     ///
     /// </summary>
     [Description("Wrapper class for all DM-MD chassis variants from 8x8 to 32x32")]
-    public class DmChassisController : CrestronGenericBridgeableBaseDevice, IDmSwitchWithEndpointOnlineFeedback, IRoutingMidpointWithFeedback
+    public class DmChassisController : CrestronGenericBridgeableBaseDevice, IDmSwitchWithEndpointOnlineFeedback, IRoutingMidpointWithFeedback, IHasNamedRoutingSlots
     {
         private const string NonePortKey = "inputCard0--None";
         // On an 8x8 chassis the USB slot numbers for outputs start at 17 (inputs 1-8, outputs 17-24).
@@ -78,6 +78,14 @@ namespace PepperDash.Essentials.DM
 
         public Dictionary<string, IDmInputSlot> InputSlots { get; private set; }
         public Dictionary<string, IDmOutputSlot> OutputSlots { get; private set; }
+
+        // IHasNamedRoutingSlots view of the dictionaries above - explicit implementation since the
+        // public InputSlots/OutputSlots properties above already use the plugin-local slot types.
+        // IReadOnlyDictionary<TKey,TValue> has no TValue variance, so values must be converted, not cast.
+        IReadOnlyDictionary<string, IRoutingSlotInfo> IHasNamedRoutingSlots.InputSlots =>
+            InputSlots.ToDictionary(kvp => kvp.Key, kvp => (IRoutingSlotInfo)kvp.Value);
+        IReadOnlyDictionary<string, IRoutingOutputSlotInfo> IHasNamedRoutingSlots.OutputSlots =>
+            OutputSlots.ToDictionary(kvp => kvp.Key, kvp => (IRoutingOutputSlotInfo)kvp.Value);
 
         public const int RouteOffTime = 500;
         Dictionary<PortNumberType, CTimer> RouteOffTimers = new Dictionary<PortNumberType, CTimer>();

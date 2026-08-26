@@ -13,14 +13,8 @@ namespace PepperDash.Essentials.DM.Routing
     /// contract (the chassis dropped <c>IMatrixRouting</c>), so core routing does not consume them.
     /// Implemented by <see cref="DmMatrixOutput"/>.
     /// </summary>
-    public interface IDmOutputSlot : IKeyName
+    public interface IDmOutputSlot : IRoutingOutputSlotInfo
     {
-        /// <summary>Matrix slot number.</summary>
-        int SlotNumber { get; }
-
-        /// <summary>Signal types this output can carry.</summary>
-        eRoutingSignalType SupportedSignalTypes { get; }
-
         /// <summary>Online feedback for the backing endpoint.</summary>
         BoolFeedback IsOnline { get; }
 
@@ -32,8 +26,5 @@ namespace PepperDash.Essentials.DM.Routing
         /// through the implementation so <see cref="OutputSlotChanged"/> fires.
         /// </summary>
         IReadOnlyDictionary<eRoutingSignalType, IDmInputSlot> CurrentRoutes { get; }
-
-        /// <summary>Raised when the routed input on this output changes.</summary>
-        event EventHandler OutputSlotChanged;
     }
 }
