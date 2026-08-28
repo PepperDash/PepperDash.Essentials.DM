@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://pepperdash.com/schemas/PepperDash.Essentials.DM/hdmd4x14kze.schema.json",
+  "title": "hdmd4x14kze",
+  "description": "Device config entry for a device of type \"hdmd4x14kze\". Properties object for a device of type \"hdmd4x14kze\" (Crestron HD-MD-4x1-4K-E), backed by HdMdNxM4kzEPropertiesConfig (HdMdNxM4kzEPropertiesConfig.cs). The same config class is shared by \"hdmd4x24kze\", \"hdmd4x44kze\", \"hdmd8x44kze\", and \"hdmd8x84kze\".",
+  "type": "object",
+  "properties": {
+    "key": {
+      "type": "string",
+      "description": "Unique identifier for this device within the configuration file."
+    },
+    "name": {
+      "type": "string",
+      "description": "Friendly display name for this device."
+    },
+    "type": {
+      "const": "hdmd4x14kze",
+      "description": "Discriminator identifying the plugin factory that instantiates this device."
+    },
+    "properties": {
+      "$ref": "#/$defs/properties",
+      "description": "Properties object for a device of type \"hdmd4x14kze\" (Crestron HD-MD-4x1-4K-E), backed by HdMdNxM4kzEPropertiesConfig (HdMdNxM4kzEPropertiesConfig.cs). The same config class is shared by \"hdmd4x24kze\", \"hdmd4x44kze\", \"hdmd8x44kze\", and \"hdmd8x84kze\"."
+    }
+  },
+  "required": [
+    "key",
+    "name",
+    "type",
+    "properties"
+  ],
+  "$defs": {
+    "properties": {
+      "type": "object",
+      "properties": {
+        "control": {
+          "$ref": "#/$defs/control"
+        },
+        "inputs": {
+          "type": "object",
+          "description": "Friendly names for chassis inputs, keyed by 1-based input number as a string.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "outputs": {
+          "type": "object",
+          "description": "Friendly names for chassis outputs, keyed by 1-based output number as a string.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "control"
+      ]
+    },
+    "control": {
+      "type": "object",
+      "description": "Standard Essentials communication control block. HD-MD-NxM-4K(Z)-E devices are Crestron IpId-controlled.",
+      "properties": {
+        "method": {
+          "type": "string",
+          "pattern": "^(?:[nN][oO][nN][eE]|[cC][oO][mM]|[iI][pP][iI][dD]|[iI][pP][iI][dD][tT][cC][pP]|[iI][rR]|[sS][sS][hH]|[tT][cC][pP][iI][pP]|[tT][eE][lL][nN][eE][tT]|[cC][rR][eE][sS][nN][eE][tT]|[cC][eE][cC]|[uU][dD][pP]|[hH][tT][tT][pP]|[hH][tT][tT][pP][sS]|[wW][sS]|[wW][sS][sS]|[sS][eE][cC][uU][rR][eE][tT][cC][pP][iI][pP]|[cC][oO][mM][bB][rR][iI][dD][gG][eE]|[iI][nN][fF][iI][nN][eE][tT][eE][xX])(?:\\s*,\\s*(?:[nN][oO][nN][eE]|[cC][oO][mM]|[iI][pP][iI][dD]|[iI][pP][iI][dD][tT][cC][pP]|[iI][rR]|[sS][sS][hH]|[tT][cC][pP][iI][pP]|[tT][eE][lL][nN][eE][tT]|[cC][rR][eE][sS][nN][eE][tT]|[cC][eE][cC]|[uU][dD][pP]|[hH][tT][tT][pP]|[hH][tT][tT][pP][sS]|[wW][sS]|[wW][sS][sS]|[sS][eE][cC][uU][rR][eE][tT][cC][pP][iI][pP]|[cC][oO][mM][bB][rR][iI][dD][gG][eE]|[iI][nN][fF][iI][nN][eE][tT][eE][xX]))*$",
+          "description": "Case-insensitive."
+        },
+        "ipid": {
+          "type": "string",
+          "description": "Crestron IP-ID (hex string) of this device."
+        }
+      },
+      "required": [
+        "method",
+        "ipid"
+      ]
+    }
+  }
+}
