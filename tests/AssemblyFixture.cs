@@ -52,17 +52,31 @@ public static class AssemblyFixture
         foreach (var dll in Directory.GetFiles(PluginOutputDir, "*.dll"))
             dllByName[Path.GetFileName(dll)] = dll;
 
-        // Priority 2: .NET runtime
+        // Priority 2: Test host output dir - supplies packages the plugin excludes from its own
+        // output via <ExcludeAssets>runtime</ExcludeAssets> (e.g. PepperDash_Essentials_Core), which
+        // the test project references directly so they land here. Without this the plugin's type
+        // references to Essentials.Core can't be resolved and GetTypes() throws.
+        foreach (var dll in Directory.GetFiles(AppContext.BaseDirectory, "*.dll"))
+            dllByName.TryAdd(Path.GetFileName(dll), dll);
+
+        // Priority 3: .NET runtime
         foreach (var dll in Directory.GetFiles(runtimeDir, "*.dll"))
             dllByName.TryAdd(Path.GetFileName(dll), dll);
 
-        // Priority 3: Deterministic deps.json resolution for transitive packages
+        // Priority 4: Deterministic deps.json resolution for transitive packages
         var depsJsonPath = Path.ChangeExtension(PluginDllPath, ".deps.json");
         if (File.Exists(depsJsonPath))
         {
             foreach (var path in ResolveDepsJsonAssemblies(depsJsonPath))
                 dllByName.TryAdd(Path.GetFileName(path), path);
         }
+
+        // Priority 5: full restore graph from the plugin's project.assets.json. Covers packages the
+        // plugin strips from its own output/deps.json via <ExcludeAssets>runtime</ExcludeAssets>
+        // (PepperDashEssentials and its transitive assemblies - Core, mobile-control-messengers, ...),
+        // which the resolver otherwise can't find, making the plugin's types unresolvable.
+        foreach (var path in ResolveProjectAssetsAssemblies())
+            dllByName.TryAdd(Path.GetFileName(path), path);
 
         return new MetadataLoadContext(new PathAssemblyResolver(dllByName.Values));
     }
@@ -99,6 +113,65 @@ public static class AssemblyFixture
 
             foreach (var dll in Directory.GetFiles(libDir, "*.dll"))
                 yield return dll;
+        }
+    }
+
+    /// <summary>
+    /// Resolves every package assembly in the plugin's project.assets.json restore graph from the
+    /// NuGet cache. Unlike deps.json (which honors <c>ExcludeAssets=runtime</c> and omits the
+    /// Essentials assemblies), the assets file's <c>libraries</c> list records the full dependency
+    /// closure. The per-target <c>runtime</c> section is itself stripped to a <c>_._</c> placeholder
+    /// by the exclusion, so this enumerates each package's <c>lib</c> folder on disk instead.
+    /// </summary>
+    private static IEnumerable<string> ResolveProjectAssetsAssemblies()
+    {
+        // Plugin project dir is four levels above the 4Series/bin/{Config}/net8 output dir.
+        var srcDir = Path.GetFullPath(Path.Combine(PluginOutputDir, "..", "..", "..", ".."));
+        var assetsPath = Path.Combine(srcDir, "obj", "project.assets.json");
+        if (!File.Exists(assetsPath))
+            yield break;
+
+        using var stream = File.OpenRead(assetsPath);
+        using var doc = JsonDocument.Parse(stream);
+        var root = doc.RootElement;
+
+        // Package cache roots: packageFolders from the assets file, plus NUGET_PACKAGES / default.
+        var packageFolders = new List<string>();
+        if (root.TryGetProperty("packageFolders", out var pf))
+            foreach (var folder in pf.EnumerateObject())
+                packageFolders.Add(folder.Name);
+        var envNuget = Environment.GetEnvironmentVariable("NUGET_PACKAGES");
+        if (!string.IsNullOrEmpty(envNuget))
+            packageFolders.Add(envNuget);
+        if (packageFolders.Count == 0)
+            packageFolders.Add(Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages"));
+
+        if (!root.TryGetProperty("libraries", out var libraries))
+            yield break;
+
+        foreach (var lib in libraries.EnumerateObject())
+        {
+            if (!lib.Value.TryGetProperty("type", out var typeProp) || typeProp.GetString() != "package")
+                continue;
+            if (!lib.Value.TryGetProperty("path", out var pathProp))
+                continue;
+            var relPath = pathProp.GetString()!;
+
+            foreach (var folder in packageFolders)
+            {
+                var pkgRoot = Path.Combine(folder, relPath);
+                if (!Directory.Exists(pkgRoot)) continue;
+
+                var libDir = Path.Combine(pkgRoot, "lib", "net8.0");
+                if (!Directory.Exists(libDir))
+                    libDir = Path.Combine(pkgRoot, "lib", "netstandard2.0");
+                if (Directory.Exists(libDir))
+                    foreach (var dll in Directory.GetFiles(libDir, "*.dll"))
+                        yield return dll;
+
+                break; // first cache root that has the package wins
+            }
         }
     }
 
