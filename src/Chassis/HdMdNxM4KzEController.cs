@@ -288,8 +288,10 @@ namespace PepperDash.Essentials.DM.Chassis
 
 		public void ExecuteSwitch(object inputSelector, object outputSelector, eRoutingSignalType signalType)
 		{
-			var input = inputSelector as HdMdNxM4kzEHdmiInput;
-			var output = outputSelector as HdMdNxM4kzEHdmiOutput;
+			// Selector may be the port's own Selector object or, from mobile control's matrix
+			// routing, the named slot key (= port key). See RoutingSelectorResolver.
+			var input = RoutingSelectorResolver.Resolve<HdMdNxM4kzEHdmiInput>(inputSelector, InputPorts);
+			var output = RoutingSelectorResolver.Resolve<HdMdNxM4kzEHdmiOutput>(outputSelector, OutputPorts);
 
 			Debug.LogVerbose(this, "ExecuteSwitch: input={0} output={1}", input, output);
 

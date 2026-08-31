@@ -356,8 +356,10 @@ Selector: {4}
 		/// <param name="signalType"></param>
 		public void ExecuteSwitch(object inputSelector, object outputSelector, eRoutingSignalType signalType)
 		{
-			var input = inputSelector as HdPsXxxInput;
-			var output = outputSelector as HdPsXxxOutput;			
+			// Selector may be the port's own Selector object or, from mobile control's matrix
+			// routing, the named slot key (= port key). See RoutingSelectorResolver.
+			var input = RoutingSelectorResolver.Resolve<HdPsXxxInput>(inputSelector, InputPorts);
+			var output = RoutingSelectorResolver.Resolve<HdPsXxxOutput>(outputSelector, OutputPorts);			
 			
 			Debug.LogVerbose(this, "ExecuteSwitch: input={0}, output={1}", input, output);
 

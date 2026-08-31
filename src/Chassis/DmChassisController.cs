@@ -1454,14 +1454,53 @@ namespace PepperDash.Essentials.DM
             }
         }
 
+        /// <summary>
+        /// Resolves a routing selector to a chassis <see cref="DMInput"/>.
+        ///
+        /// Selectors normally arrive as a routing port's own Selector (already a DMInput). Mobile
+        /// control's matrix routing instead sends back the named slot key this device publishes
+        /// through <see cref="IHasNamedRoutingSlots"/> ("matrixInput-3"), which arrives as a
+        /// string, so map that through the slot's number. Returns null for null - a null input
+        /// selector means "clear this output" - and for anything matching no slot.
+        /// </summary>
+        private DMInput ResolveInput(object selector)
+        {
+            if (selector is DMInput dmInput)
+                return dmInput;
+
+            if (!(selector is string key) || !InputSlots.TryGetValue(key, out var slot))
+                return null;
+
+            var number = (uint)slot.SlotNumber;
+
+            return number > 0 && number <= Chassis.NumberOfInputs ? Chassis.Inputs[number] : null;
+        }
+
+        /// <summary>
+        /// Resolves a routing selector to a chassis <see cref="DMOutput"/>. See
+        /// <see cref="ResolveInput"/> for why a selector may arrive as a named slot key.
+        /// </summary>
+        private DMOutput ResolveOutput(object selector)
+        {
+            if (selector is DMOutput dmOutput)
+                return dmOutput;
+
+            if (!(selector is string key) || !OutputSlots.TryGetValue(key, out var slot))
+                return null;
+
+            var number = (uint)slot.SlotNumber;
+
+            return number > 0 && number <= Chassis.NumberOfOutputs ? Chassis.Outputs[number] : null;
+        }
+
         #region IRouting Members
         public void ExecuteSwitch(object inputSelector, object outputSelector, eRoutingSignalType sigType)
         {
             Debug.LogVerbose(this, "Making an awesome DM route from {0} to {1} {2}", inputSelector, outputSelector, sigType);
 
-            var input = inputSelector as DMInput;//Input Selector could be null...
+            var input = ResolveInput(inputSelector);//Input Selector could be null...
 
-            var output = outputSelector as DMOutput;
+            var output = ResolveOutput(outputSelector);
 
             // In Essentials v3, eRoutingSignalType.UsbInput and eRoutingSignalType.UsbOutput were merged into eRoutingSignalType.Usb.
             var isUsb = (sigType & eRoutingSignalType.Usb) == eRoutingSignalType.Usb;
@@ -1528,7 +1567,7 @@ namespace PepperDash.Essentials.DM
                 if (inputSelector != null && input == null)
                 {
                     //input selector is DMOutput...we're doing a out to out route
-                    var tempInput = inputSelector as DMOutput;
+                    var tempInput = ResolveOutput(inputSelector);
 
                     if (tempInput == null || output == null)
                     {
@@ -1555,7 +1594,7 @@ namespace PepperDash.Essentials.DM
                 output.USBRoutedTo = input;
                 return;
             }
-            var tempOutput = outputSelector as DMInput;
+            var tempOutput = ResolveInput(outputSelector);
 
             if (tempOutput == null)
             {

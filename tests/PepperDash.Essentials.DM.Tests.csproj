@@ -32,5 +32,7 @@
     <Compile Include="..\src\Routing\DmRouteFeedbackTracker.cs" Link="Routing\DmRouteFeedbackTracker.cs" />
     <!-- Pure-logic named-slot model, compiled into the test assembly and exercised directly. -->
     <Compile Include="..\src\Routing\RoutingPortNamedSlots.cs" Link="Routing\RoutingPortNamedSlots.cs" />
+    <!-- Pure-logic slot-key to port-Selector translation, compiled in and exercised directly. -->
+    <Compile Include="..\src\Routing\RoutingSelectorResolver.cs" Link="Routing\RoutingSelectorResolver.cs" />
   </ItemGroup>
 </Project>
