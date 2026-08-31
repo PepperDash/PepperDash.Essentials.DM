@@ -10,6 +10,7 @@ using Crestron.SimplSharpPro.DM;
 using PepperDash.Core;
 using PepperDash.Essentials.Core;
 using PepperDash.Essentials.DM.Config;
+using PepperDash.Essentials.DM.Routing;
 using Crestron.SimplSharpPro.DM.Cards;
 using PepperDash.Essentials.Core.Bridges;
 using PepperDash.Essentials.Core.Config;
@@ -17,7 +18,7 @@ using PepperDash.Essentials.Core.Config;
 namespace PepperDash.Essentials.DM.Chassis
 {
 	[Description("Wrapper class for all HdMd8xN switchers")]
-	public class HdMd8xNController : CrestronGenericBridgeableBaseDevice, IRoutingMidpointWithFeedback, IHasFeedback
+	public class HdMd8xNController : CrestronGenericBridgeableBaseDevice, IRoutingMidpointWithFeedback, IHasNamedRoutingSlots, IHasFeedback
 	{
 		private HdMd8xN _Chassis;
 
@@ -28,6 +29,15 @@ namespace PepperDash.Essentials.DM.Chassis
 
 		public RoutingPortCollection<RoutingInputPort> InputPorts { get; private set; }
 		public RoutingPortCollection<RoutingOutputPort> OutputPorts { get; private set; }
+
+		// Named-slot view over InputPorts/OutputPorts for IHasNamedRoutingSlots (mobile-control matrix
+		// routing). Route state is fed from the same switch-change feedback as CurrentRoutes.
+		private RoutingPortNamedSlots _namedSlots;
+
+		IReadOnlyDictionary<string, IRoutingSlotInfo> IHasNamedRoutingSlots.InputSlots =>
+			_namedSlots?.InputSlots ?? new Dictionary<string, IRoutingSlotInfo>();
+		IReadOnlyDictionary<string, IRoutingOutputSlotInfo> IHasNamedRoutingSlots.OutputSlots =>
+			_namedSlots?.OutputSlots ?? new Dictionary<string, IRoutingOutputSlotInfo>();
 
 		public FeedbackCollection<BoolFeedback> VideoInputSyncFeedbacks { get; private set; }
 		public FeedbackCollection<IntFeedback> VideoOutputRouteFeedbacks { get; private set; }
@@ -145,6 +155,8 @@ namespace PepperDash.Essentials.DM.Chassis
 			_Chassis.DMInputChange += Chassis_DMInputChange;
 			_Chassis.DMOutputChange += Chassis_DMOutputChange;
 
+			_namedSlots = new RoutingPortNamedSlots(InputPorts, OutputPorts);
+
 			AddPostActivationAction(AddFeedbackCollections);
 		}
 		#endregion
@@ -197,6 +209,9 @@ namespace PepperDash.Essentials.DM.Chassis
 			var descriptor = new RouteSwitchDescriptor(e.OutputPort, e.InputPort);
 			if (e.InputPort != null)
 				CurrentRoutes.Add(descriptor);
+
+			// Keep the named-slot view in sync per signal type (CurrentRoutes above collapses A/V).
+			_namedSlots?.HandleRouteChange(e.OutputPort, e.InputPort, e.SigType);
 
 			var handler = RouteChanged;
 			handler?.Invoke(this, descriptor);

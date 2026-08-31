@@ -10,19 +10,29 @@ using Crestron.SimplSharpPro.DM;
 using PepperDash.Core;
 using PepperDash.Essentials.Core;
 using PepperDash.Essentials.DM.Config;
+using PepperDash.Essentials.DM.Routing;
 using PepperDash.Essentials.Core.Bridges;
 using PepperDash.Essentials.Core.Config;
 
 namespace PepperDash.Essentials.DM.Chassis
 {
 	[Description("Wrapper class for all HdMdNxM4E switchers")]
-	public class HdMdNxM4kEBridgeableController : CrestronGenericBridgeableBaseDevice, IRoutingMidpointWithFeedback, IHasFeedback
+	public class HdMdNxM4kEBridgeableController : CrestronGenericBridgeableBaseDevice, IRoutingMidpointWithFeedback, IHasNamedRoutingSlots, IHasFeedback
 	{
 		private HdMdNxM _Chassis;
 		private HdMd4x14kE _Chassis4x1;
 
 		//IroutingNumericEvent
 		public event EventHandler<RoutingNumericEventArgs> NumericSwitchChange;
+
+		// Named-slot view over InputPorts/OutputPorts for IHasNamedRoutingSlots, fed from the same
+		// switch-change feedback as CurrentRoutes.
+		private RoutingPortNamedSlots _namedSlots;
+
+		IReadOnlyDictionary<string, IRoutingSlotInfo> IHasNamedRoutingSlots.InputSlots =>
+			_namedSlots?.InputSlots ?? new Dictionary<string, IRoutingSlotInfo>();
+		IReadOnlyDictionary<string, IRoutingOutputSlotInfo> IHasNamedRoutingSlots.OutputSlots =>
+			_namedSlots?.OutputSlots ?? new Dictionary<string, IRoutingOutputSlotInfo>();
 
 		public Dictionary<uint, string> InputNames { get; set; }
 		public Dictionary<uint, string> OutputNames { get; set; }
@@ -128,6 +138,8 @@ namespace PepperDash.Essentials.DM.Chassis
 			_Chassis.DMInputChange += Chassis_DMInputChange;
 			_Chassis.DMOutputChange += Chassis_DMOutputChange;
 
+			_namedSlots = new RoutingPortNamedSlots(InputPorts, OutputPorts);
+
 			AddPostActivationAction(AddFeedbackCollections);
 		}
 
@@ -181,6 +193,8 @@ namespace PepperDash.Essentials.DM.Chassis
 			var descriptor = new RouteSwitchDescriptor(e.OutputPort, e.InputPort);
 			if (e.InputPort != null)
 				CurrentRoutes.Add(descriptor);
+
+			_namedSlots?.HandleRouteChange(e.OutputPort, e.InputPort, e.SigType);
 
 			var handler = RouteChanged;
 			handler?.Invoke(this, descriptor);

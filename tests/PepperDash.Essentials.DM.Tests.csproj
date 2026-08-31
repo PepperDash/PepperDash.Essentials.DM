@@ -18,10 +18,11 @@
     <PackageReference Include="FluentAssertions" Version="7.0.0" />
     <PackageReference Include="System.Reflection.MetadataLoadContext" Version="9.0.4" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-    <!-- For the linked DmRouteFeedbackTracker pure-logic test: the routing port/descriptor types
-         (RoutingOutputPort/InputPort, RouteSwitchDescriptor, eRoutingSignalType) live here and are
-         Crestron-free, so they load and run in the test host even though the plugin itself cannot. -->
-    <PackageReference Include="PepperDash.Essentials.Core" Version="3.0.0-dev-v3-routing.21" />
+    <!-- For the linked pure-logic tests: the routing port/descriptor/slot types
+         (RoutingOutputPort/InputPort, RouteSwitchDescriptor, IRoutingSlotInfo, eRoutingSignalType)
+         live here and are Crestron-free, so they load and run in the test host even though the
+         plugin itself cannot. -->
+    <PackageReference Include="PepperDash.Essentials.Core" Version="3.0.0-feat-named-routing-slots.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,5 +30,7 @@
     <ProjectReference Include="..\src\PepperDash.Essentials.DM.csproj" ReferenceOutputAssembly="false" />
     <!-- Pure-logic route-tracking bookkeeping, compiled into the test assembly and exercised directly. -->
     <Compile Include="..\src\Routing\DmRouteFeedbackTracker.cs" Link="Routing\DmRouteFeedbackTracker.cs" />
+    <!-- Pure-logic named-slot model, compiled into the test assembly and exercised directly. -->
+    <Compile Include="..\src\Routing\RoutingPortNamedSlots.cs" Link="Routing\RoutingPortNamedSlots.cs" />
   </ItemGroup>
 </Project>
