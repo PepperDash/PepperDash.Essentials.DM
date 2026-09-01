@@ -1228,8 +1228,10 @@ namespace PepperDash.Essentials.DM
 
                 Debug.LogVerbose(this, "Attempting a DM route from input {0} to output {1} {2}", inputSelector, outputSelector, sigType);
 
-                var input = inputSelector as DMInput;
-                var output = outputSelector as DMOutput;
+                // Selector may be the port's own Selector object or, from mobile control's
+                // matrix routing, the named slot key (= port key). See RoutingSelectorResolver.
+                var input = RoutingSelectorResolver.Resolve<DMInput>(inputSelector, InputPorts);
+                var output = RoutingSelectorResolver.Resolve<DMOutput>(outputSelector, OutputPorts);
 
                 if (output == null)
                 {

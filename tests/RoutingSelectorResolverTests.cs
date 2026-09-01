@@ -81,5 +81,34 @@ namespace PepperDash.Essentials.DM.Tests
         {
             RoutingSelectorResolver.Resolve<HardwareSelector>("in1", null).Should().BeNull();
         }
+
+        // ResolveSelector is the untyped path, for devices whose selectors are value types
+        // (a slot number) rather than Crestron objects.
+
+        [Fact]
+        public void Untyped_resolve_maps_a_slot_key_to_a_numeric_selector()
+        {
+            var ports = new[] { Input("hdmiIn1", 2u), Input("vgaIn", 3u) };
+
+            RoutingSelectorResolver.ResolveSelector("vgaIn", ports).Should().Be(3u);
+        }
+
+        [Fact]
+        public void Untyped_resolve_passes_a_non_string_selector_through()
+        {
+            var ports = new[] { Input("hdmiIn1", 2u) };
+
+            // Existing callers already hold the real selector; it must not be re-resolved.
+            RoutingSelectorResolver.ResolveSelector(7u, ports).Should().Be(7u);
+        }
+
+        [Fact]
+        public void Untyped_resolve_returns_an_unmatched_key_unchanged()
+        {
+            var ports = new[] { Input("hdmiIn1", 2u) };
+
+            // The caller then reports it exactly as it did before this translation existed.
+            RoutingSelectorResolver.ResolveSelector("nope", ports).Should().Be("nope");
+        }
     }
 }

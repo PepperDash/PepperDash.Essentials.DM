@@ -21,6 +21,22 @@ namespace PepperDash.Essentials.DM.Routing
     public static class RoutingSelectorResolver
     {
         /// <summary>
+        /// Maps a selector that arrived as a port key to that port's Selector, and passes anything
+        /// else through unchanged. Use this for devices whose selectors are value types (a slot
+        /// number, say) where <see cref="Resolve{T}"/>'s reference-type constraint does not apply.
+        /// An unmatched key is returned as-is, so the caller reports it the same way it always has.
+        /// </summary>
+        public static object ResolveSelector(object selector, IEnumerable<RoutingPort> ports)
+        {
+            if (!(selector is string key) || ports == null)
+                return selector;
+
+            var port = ports.FirstOrDefault(p => p != null && p.Key == key);
+
+            return port != null ? port.Selector : selector;
+        }
+
+        /// <summary>
         /// Returns <paramref name="selector"/> when it is already a <typeparamref name="T"/>,
         /// otherwise treats it as a port key and returns that port's Selector. Null when the
         /// selector is null (callers read a null input selector as "clear this output"), matches no
@@ -28,13 +44,7 @@ namespace PepperDash.Essentials.DM.Routing
         /// </summary>
         public static T Resolve<T>(object selector, IEnumerable<RoutingPort> ports) where T : class
         {
-            if (selector is T typedSelector)
-                return typedSelector;
-
-            if (!(selector is string key) || ports == null)
-                return null;
-
-            return ports.FirstOrDefault(port => port != null && port.Key == key)?.Selector as T;
+            return ResolveSelector(selector, ports) as T;
         }
     }
 }

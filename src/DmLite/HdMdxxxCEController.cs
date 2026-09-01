@@ -229,7 +229,23 @@ namespace PepperDash.Essentials.DM
 
         public void ExecuteSwitch(object inputSelector, object outputSelector, eRoutingSignalType signalType)
         {
-            var number = Convert.ToUInt32(inputSelector); // Cast can sometimes fail
+            // Selector may be the port's own Selector (a slot number) or, from mobile control's
+            // matrix routing, the named slot key (= port key). See RoutingSelectorResolver.
+            var resolved = RoutingSelectorResolver.ResolveSelector(inputSelector, InputPorts);
+
+            uint number;
+
+            try
+            {
+                number = Convert.ToUInt32(resolved);
+            }
+            catch (Exception ex)
+            {
+                // Previously threw straight out of the messenger action for any non-numeric input.
+                Debug.LogInformation(this, "Unable to execute switch for inputSelector {0}: {1}",
+                    inputSelector, ex.Message);
+                return;
+            }
 
             var input = number == 0 ? null : TxRxPair.Inputs[number];
 
