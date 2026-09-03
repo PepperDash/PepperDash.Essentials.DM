@@ -22,7 +22,7 @@
          (RoutingOutputPort/InputPort, RouteSwitchDescriptor, IRoutingSlotInfo, eRoutingSignalType)
          live here and are Crestron-free, so they load and run in the test host even though the
          plugin itself cannot. -->
-    <PackageReference Include="PepperDash.Essentials.Core" Version="3.0.0-feat-named-routing-slots.1" />
+    <PackageReference Include="PepperDash.Essentials.Core" Version="3.0.0-feat-routing-slot-online-sync.1" />
   </ItemGroup>
 
   <ItemGroup>
