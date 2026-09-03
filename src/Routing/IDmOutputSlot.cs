@@ -13,14 +13,8 @@ namespace PepperDash.Essentials.DM.Routing
     /// contract (the chassis dropped <c>IMatrixRouting</c>), so core routing does not consume them.
     /// Implemented by <see cref="DmMatrixOutput"/>.
     /// </summary>
-    public interface IDmOutputSlot : IRoutingOutputSlotInfo
+    public interface IDmOutputSlot : IRoutingOutputSlotStatus
     {
-        /// <summary>Online feedback for the backing endpoint.</summary>
-        BoolFeedback IsOnline { get; }
-
-        /// <summary>Key of the receiver device fed by this output slot, if known.</summary>
-        string RxDeviceKey { get; }
-
         /// <summary>
         /// Current input routed to this output per signal type. Read-only view: mutations must go
         /// through the implementation so <see cref="OutputSlotChanged"/> fires.

@@ -20,7 +20,13 @@ namespace PepperDash.Essentials.DM.Routing
         // throwaway instances and break subscriptions).
         public BoolFeedback IsOnline { get; }
 
+        public bool VideoSyncDetected => false;
+
         public string Key => "none";
+
+#pragma warning disable CS0067
+        public event EventHandler VideoSyncChanged;
+#pragma warning restore CS0067
 
         public DmMatrixClearInput()
         {

@@ -12,12 +12,7 @@ namespace PepperDash.Essentials.DM.Routing
     /// core routing does not consume them. This keeps the slot abstraction a plugin-internal concept.
     /// Implemented by <see cref="DmMatrixInput"/> and <see cref="DmMatrixClearInput"/>.
     /// </summary>
-    public interface IDmInputSlot : IRoutingSlotInfo
+    public interface IDmInputSlot : IRoutingInputSlotInfo
     {
-        /// <summary>Online feedback for the backing endpoint.</summary>
-        BoolFeedback IsOnline { get; }
-
-        /// <summary>Key of the transmitter device feeding this input slot, if known.</summary>
-        string TxDeviceKey { get; }
     }
 }
