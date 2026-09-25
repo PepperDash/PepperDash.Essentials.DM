@@ -90,10 +90,19 @@ namespace PepperDash_Essentials_DM.Chassis
 			if (_chassis.NumberOfOutputs == 1)
 				AutoRouteFeedback = new BoolFeedback(() => _chassis.PriorityRouteOnFeedback.BoolValue);
 
-			InputNames = props.Inputs;
+			// The chassis exposes every physical port, but the config only names the ones an
+			// integrator cares about (e.g. an HD-PS622 has DM inputs 7-8 on top of HDMI 1-6).
+			// Backfill defaults so name lookups never throw for an unnamed physical port.
+			InputNames = props.Inputs != null ? new Dictionary<uint, string>(props.Inputs) : new Dictionary<uint, string>();
+			foreach (var input in _chassis.HdmiInputs)
+				if (!InputNames.ContainsKey(input.Number)) InputNames[input.Number] = string.Format("HDMI Input {0}", input.Number);
+			foreach (var input in _chassis.DmLiteInputs)
+				if (!InputNames.ContainsKey(input.Number)) InputNames[input.Number] = string.Format("DM Input {0}", input.Number);
 			SetupInputs(InputNames);
 
-			OutputNames = props.Outputs;
+			OutputNames = props.Outputs != null ? new Dictionary<uint, string>(props.Outputs) : new Dictionary<uint, string>();
+			foreach (var output in _chassis.HdmiDmLiteOutputs)
+				if (!OutputNames.ContainsKey(output.Number)) OutputNames[output.Number] = string.Format("Output {0}", output.Number);
 			SetupOutputs(OutputNames);
 
 			foreach (var mixer in _chassis.AnalogAuxiliaryMixer)
