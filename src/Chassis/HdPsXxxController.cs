@@ -47,6 +47,19 @@ namespace PepperDash_Essentials_DM.Chassis
 		// switch-change feedback as CurrentRoutes.
 		private RoutingPortNamedSlots _namedSlots;
 
+		// Aux output number -> the HDMI/DM Lite output whose program audio it carries. See
+		// SetupAnalogAuxOutputs for why an aux output follows rather than switches.
+		private readonly Dictionary<uint, uint> _auxFollowsOutput = new Dictionary<uint, uint>();
+
+		// The aux mixer behind each auxOut{n} routing port, so a switch arriving with the port's
+		// Selector can be mapped back to its aux number.
+		private readonly Dictionary<HdPsXxxAnalogAuxMixer, uint> _auxNumberByMixer =
+			new Dictionary<HdPsXxxAnalogAuxMixer, uint>();
+
+		// The auxOut{n} routing ports by aux number, for mirroring an output's route onto them.
+		private readonly Dictionary<uint, RoutingOutputPort> _auxPortByNumber =
+			new Dictionary<uint, RoutingOutputPort>();
+
 		IReadOnlyDictionary<string, IRoutingSlotInfo> IHasNamedRoutingSlots.InputSlots =>
 			_namedSlots?.InputSlots ?? new Dictionary<string, IRoutingSlotInfo>();
 		IReadOnlyDictionary<string, IRoutingOutputSlotInfo> IHasNamedRoutingSlots.OutputSlots =>
@@ -105,13 +118,100 @@ namespace PepperDash_Essentials_DM.Chassis
 				if (!OutputNames.ContainsKey(output.Number)) OutputNames[output.Number] = string.Format("Output {0}", output.Number);
 			SetupOutputs(OutputNames);
 
-			foreach (var mixer in _chassis.AnalogAuxiliaryMixer)
+			SetupAnalogAuxOutputs(props);
+		}
+
+
+		/// <summary>
+		/// Builds the volume control and the <c>auxOut{n}</c> routing port for each analog aux output.
+		///
+		/// <para>An aux output is a mixer, not a switch. Its program channels are the audio of the
+		/// HDMI/DM Lite outputs, mixed with the analog mic/line channels, so it has no input selection
+		/// of its own and can only carry what an output already carries. The port is therefore exposed
+		/// as <see cref="eRoutingSignalType.Audio"/> and follows an output: its route feedback mirrors
+		/// that output's, and a switch to it is delegated to that output.</para>
+		///
+		/// <para>Which output each aux follows is wiring, not something readable from the device, so it
+		/// comes from config and defaults to aux N following output N.</para>
+		/// </summary>
+		private void SetupAnalogAuxOutputs(HdPsXxxPropertiesConfig props)
+		{
+			if (_chassis.AnalogAuxiliaryMixer == null) return;
+
+			foreach (var item in _chassis.AnalogAuxiliaryMixer)
 			{
-				var control = new HdPsAnalogAuxOutputController(string.Format("{0}-analogAux{1}-mixer", Key, mixer.MixerNumber),
-					string.Format("Auxiliary Audio Output {0}", mixer.MixerNumber), mixer);
-				AnalogAuxVolumeControls.Add(mixer.MixerNumber, control);
+				var mixer = item;
+				var index = mixer.MixerNumber;
+
+				var control = new HdPsAnalogAuxOutputController(string.Format("{0}-analogAux{1}-mixer", Key, index),
+					string.Format("Auxiliary Audio Output {0}", index), mixer);
+				AnalogAuxVolumeControls.Add(index, control);
 				DeviceManager.AddDevice(control);
+
+				// Default aux N -> output N, clamped to what the chassis actually has so a single-output
+				// model cannot be configured to follow an output that is not there.
+				uint follows;
+				if (props.AuxAudioFollowsOutput == null || !props.AuxAudioFollowsOutput.TryGetValue(index, out follows))
+					follows = index;
+
+				if (follows < 1 || follows > _chassis.NumberOfOutputs)
+				{
+					Debug.LogWarning(this,
+						"Aux output {0} is configured to follow output {1}, which this chassis does not have ({2} outputs); following output 1 instead",
+						index, follows, _chassis.NumberOfOutputs);
+					follows = 1;
+				}
+
+				_auxFollowsOutput[index] = follows;
+				_auxNumberByMixer[mixer] = index;
+
+				var key = string.Format("auxOut{0}", index);
+				var port = new RoutingOutputPort(key, eRoutingSignalType.Audio, eRoutingPortConnectionType.LineAudio, mixer, this)
+				{
+					FeedbackMatchObject = mixer
+				};
+				Debug.LogInformation(this, "Adding Output port: {0} - Auxiliary Audio Output {1}, follows output {2}",
+					port.Key, index, follows);
+				OutputPorts.Add(port);
+				_auxPortByNumber[index] = port;
+
+				if (props.ApplyAuxSourceMix)
+					ApplyAuxSourceMix(mixer, index, follows);
 			}
+		}
+
+
+		/// <summary>
+		/// Mutes every program channel on an aux mixer except the one for the output it follows, so the
+		/// aux output carries that output alone. Opt-in (<c>applyAuxSourceMix</c>): the mix is normally
+		/// set in the device's web UI and this writes over it. The mic/line channels are left untouched.
+		/// </summary>
+		private void ApplyAuxSourceMix(HdPsXxxAnalogAuxMixer mixer, uint auxNumber, uint follows)
+		{
+			if (mixer.SourceMuteVolumeControl == null)
+			{
+				Debug.LogWarning(this, "Aux output {0} has no program channels to mix", auxNumber);
+				return;
+			}
+
+			for (uint i = 1; i <= _chassis.NumberOfOutputs; i++)
+			{
+				try
+				{
+					var channel = mixer.SourceMuteVolumeControl[i];
+					if (channel == null) continue;
+
+					if (i == follows) channel.MuteOff();
+					else channel.MuteOn();
+				}
+				catch (Exception ex)
+				{
+					Debug.LogWarning(this, "Unable to set program channel {0} on aux output {1}: {2}",
+						i, auxNumber, ex.Message);
+				}
+			}
+
+			Debug.LogInformation(this, "Aux output {0} program mix set to output {1} only", auxNumber, follows);
 		}
 
 		// input setup
@@ -367,9 +467,19 @@ Selector: {4}
 		{
 			// Selector may be the port's own Selector object or, from mobile control's matrix
 			// routing, the named slot key (= port key). See RoutingSelectorResolver.
+			var resolvedOutput = RoutingSelectorResolver.ResolveSelector(outputSelector, OutputPorts);
+
+			// An aux output carries the program audio of the output it follows and has no source
+			// selection of its own, so a switch to it is made on that output instead.
+			if (resolvedOutput is HdPsXxxAnalogAuxMixer auxMixer)
+			{
+				ExecuteAuxSwitch(inputSelector, auxMixer, signalType);
+				return;
+			}
+
 			var input = RoutingSelectorResolver.Resolve<HdPsXxxInput>(inputSelector, InputPorts);
-			var output = RoutingSelectorResolver.Resolve<HdPsXxxOutput>(outputSelector, OutputPorts);			
-			
+			var output = resolvedOutput as HdPsXxxOutput;
+
 			Debug.LogVerbose(this, "ExecuteSwitch: input={0}, output={1}", input, output);
 
 			if (output == null)
@@ -382,6 +492,40 @@ Selector: {4}
 			var current = output.VideoOut;
 			if (current != input)
 				output.VideoOut = input;
+		}
+
+
+		/// <summary>
+		/// Makes a switch requested against an <c>auxOut{n}</c> port on the output that aux follows,
+		/// since the aux mixer itself has no source selection.
+		///
+		/// <para>Where the room routes one source to both a display and its audio, the output already
+		/// carries that source and this is a no-op. Where it does not, the switch moves that output's
+		/// video too - the only way the aux can carry a different source - so it is logged.</para>
+		/// </summary>
+		private void ExecuteAuxSwitch(object inputSelector, HdPsXxxAnalogAuxMixer mixer, eRoutingSignalType signalType)
+		{
+			uint auxNumber;
+			if (!_auxNumberByMixer.TryGetValue(mixer, out auxNumber))
+			{
+				Debug.LogInformation(this, "Unable to make switch, aux mixer does not belong to this chassis");
+				return;
+			}
+
+			var follows = _auxFollowsOutput[auxNumber];
+			var output = _chassis.HdmiDmLiteOutputs[follows];
+			var input = RoutingSelectorResolver.Resolve<HdPsXxxInput>(inputSelector, InputPorts);
+
+			Debug.LogVerbose(this, "ExecuteAuxSwitch: input={0}, auxOut{1} via output {2}", input, auxNumber, follows);
+
+			if (output.VideoOut != input)
+			{
+				Debug.LogInformation(this,
+					"Aux output {0} carries output {1}: routing its audio moves that output's video as well",
+					auxNumber, follows);
+			}
+
+			ExecuteSwitch(inputSelector, output, signalType);
 		}
 
 
@@ -539,6 +683,33 @@ Selector: {4}
 
 			OnSwitchChange(new RoutingNumericEventArgs(
 				output, input, outputPort, inputPort, eRoutingSignalType.AudioVideo));
+
+			MirrorRouteToAuxOutputs(output, input, inputPort);
+		}
+
+
+		/// <summary>
+		/// Records the same source against every <c>auxOut{n}</c> port following <paramref name="outputNumber"/>,
+		/// because an aux output carries that output's program audio. Without this an audio destination
+		/// wired to an aux out would trace back to nothing and report no source, even though the audio
+		/// is there.
+		///
+		/// <para>Updates the route feedback surface only - deliberately not <see cref="NumericSwitchChange"/>,
+		/// whose output number is the chassis' own output numbering, which an aux number would collide
+		/// with.</para>
+		/// </summary>
+		private void MirrorRouteToAuxOutputs(uint outputNumber, uint input, RoutingInputPort inputPort)
+		{
+			foreach (var pair in _auxFollowsOutput)
+			{
+				if (pair.Value != outputNumber) continue;
+
+				RoutingOutputPort auxPort;
+				if (!_auxPortByNumber.TryGetValue(pair.Key, out auxPort)) continue;
+
+				UpdateCurrentRoute(new RoutingNumericEventArgs(
+					pair.Key, input, auxPort, inputPort, eRoutingSignalType.Audio));
+			}
 		}
 
 
@@ -634,6 +805,8 @@ Selector: {4}
 					p => p.FeedbackMatchObject == _chassis.HdmiDmLiteOutputs[i]);
 
 				OnSwitchChange(new RoutingNumericEventArgs(i, input, outputPort, inputPort, eRoutingSignalType.AudioVideo));
+
+				MirrorRouteToAuxOutputs(i, input, inputPort);
 			}
 		}
 
