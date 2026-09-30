@@ -574,22 +574,40 @@ Selector: {4}
 		/// <summary>
 		/// Maintains <see cref="CurrentRoutes"/> and raises <see cref="RouteChanged"/> from a numeric
 		/// switch-change event so the feedback surface tracks the same routes as NumericSwitchChange.
+		///
+		/// <para>Records the route against <em>every</em> output port carrying it. One physical output
+		/// is exposed as two ports — <c>hdmiOut{n}</c> and <c>dmLiteOut{n}</c> — sharing a
+		/// <c>FeedbackMatchObject</c>, so the event's own port is whichever the resolving
+		/// <c>FirstOrDefault</c> reached first, always the HDMI one. A consumer matching on port key,
+		/// as a tie line trace does, would otherwise find nothing for a display wired to the DM Lite
+		/// leg and report that output as carrying no source.</para>
 		/// </summary>
 		private void UpdateCurrentRoute(RoutingNumericEventArgs e)
 		{
 			if (e == null || e.OutputPort == null)
 				return;
 
-			CurrentRoutes.RemoveAll(r => ReferenceEquals(r.OutputPort, e.OutputPort));
+			var ports = OutputPorts
+				.Where(p => ReferenceEquals(p.FeedbackMatchObject, e.OutputPort.FeedbackMatchObject))
+				.ToList();
 
-			var descriptor = new RouteSwitchDescriptor(e.OutputPort, e.InputPort);
-			if (e.InputPort != null)
-				CurrentRoutes.Add(descriptor);
+			if (ports.Count == 0)
+				ports.Add(e.OutputPort);
+
+			foreach (var port in ports)
+			{
+				CurrentRoutes.RemoveAll(r => ReferenceEquals(r.OutputPort, port));
+
+				if (e.InputPort != null)
+					CurrentRoutes.Add(new RouteSwitchDescriptor(port, e.InputPort));
+			}
 
 			_namedSlots?.HandleRouteChange(e.OutputPort, e.InputPort, e.SigType);
 
+			// Raised once for the event's own port - this is one route change on one physical output,
+			// and subscribers recompute from CurrentRoutes rather than counting events.
 			var handler = RouteChanged;
-			handler?.Invoke(this, descriptor);
+			handler?.Invoke(this, new RouteSwitchDescriptor(e.OutputPort, e.InputPort));
 		}
 
 		/// <summary>
