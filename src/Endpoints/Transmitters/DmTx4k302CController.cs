@@ -128,7 +128,7 @@ namespace PepperDash.Essentials.DM
                 FeedbackMatchObject = eVst.Vga
             };
 
-            ActiveVideoInputFeedback = new StringFeedback("ActiveVideoInput",
+            ActiveVideoInputFeedback = new StringFeedback("ActiveVideoInputFeedback",
                 () => ActualActiveVideoInput.ToString());
 
             Tx.HdmiInputs[1].InputStreamChange += InputStreamChangeEvent;
@@ -138,27 +138,27 @@ namespace PepperDash.Essentials.DM
 
             Tx.OnlineStatusChange += Tx_OnlineStatusChange;
 
-            VideoSourceNumericFeedback = new IntFeedback(() => (int)Tx.VideoSourceFeedback);
-            AudioSourceNumericFeedback = new IntFeedback(() => (int)Tx.AudioSourceFeedback);
+            VideoSourceNumericFeedback = new IntFeedback("VideoSourceNumericFeedback", () => (int)Tx.VideoSourceFeedback);
+            AudioSourceNumericFeedback = new IntFeedback("AudioSourceNumericFeedback", () => (int)Tx.AudioSourceFeedback);
 
-            HdmiIn1HdcpCapabilityFeedback = new IntFeedback("HdmiIn1HdcpCapability", () => (int)tx.HdmiInputs[1].HdcpCapabilityFeedback);
+            HdmiIn1HdcpCapabilityFeedback = new IntFeedback("HdmiIn1HdcpCapabilityFeedback", () => (int)tx.HdmiInputs[1].HdcpCapabilityFeedback);
 
-            HdmiIn2HdcpCapabilityFeedback = new IntFeedback("HdmiIn2HdcpCapability", () => (int)tx.HdmiInputs[2].HdcpCapabilityFeedback);
+            HdmiIn2HdcpCapabilityFeedback = new IntFeedback("HdmiIn2HdcpCapabilityFeedback", () => (int)tx.HdmiInputs[2].HdcpCapabilityFeedback);
 
             HdcpSupportCapability = eHdcpCapabilityType.Hdcp2_2Support;
 
-            HdcpStateFeedback = new IntFeedback(() => (int)HdcpSupportCapability);
+            HdcpStateFeedback = new IntFeedback("HdcpStateFeedback", () => (int)HdcpSupportCapability);
 
-            Hdmi1VideoSyncFeedback = new BoolFeedback(() => (bool)tx.HdmiInputs[1].SyncDetectedFeedback.BoolValue);
+            Hdmi1VideoSyncFeedback = new BoolFeedback("Hdmi1VideoSyncFeedback", () => (bool)tx.HdmiInputs[1].SyncDetectedFeedback.BoolValue);
 
-            Hdmi2VideoSyncFeedback = new BoolFeedback(() => (bool)tx.HdmiInputs[2].SyncDetectedFeedback.BoolValue);
+            Hdmi2VideoSyncFeedback = new BoolFeedback("Hdmi2VideoSyncFeedback", () => (bool)tx.HdmiInputs[2].SyncDetectedFeedback.BoolValue);
 
-            VgaVideoSyncFeedback = new BoolFeedback(() => (bool)tx.VgaInput.SyncDetectedFeedback.BoolValue);
+            VgaVideoSyncFeedback = new BoolFeedback("VgaVideoSyncFeedback", () => (bool)tx.VgaInput.SyncDetectedFeedback.BoolValue);
 
-            FreeRunEnabledFeedback = new BoolFeedback(() => tx.VgaInput.FreeRunFeedback == eDmFreeRunSetting.Enabled);
+            FreeRunEnabledFeedback = new BoolFeedback("FreeRunEnabledFeedback", () => tx.VgaInput.FreeRunFeedback == eDmFreeRunSetting.Enabled);
 
-            VgaBrightnessFeedback = new IntFeedback(() => tx.VgaInput.VideoControls.BrightnessFeedback.UShortValue);
-            VgaContrastFeedback = new IntFeedback(() => tx.VgaInput.VideoControls.ContrastFeedback.UShortValue);
+            VgaBrightnessFeedback = new IntFeedback("VgaBrightnessFeedback", () => tx.VgaInput.VideoControls.BrightnessFeedback.UShortValue);
+            VgaContrastFeedback = new IntFeedback("VgaContrastFeedback", () => tx.VgaInput.VideoControls.ContrastFeedback.UShortValue);
 
             tx.VgaInput.VideoControls.ControlChange += new Crestron.SimplSharpPro.DeviceSupport.GenericEventHandler(VideoControls_ControlChange);
 

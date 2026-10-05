@@ -18,10 +18,10 @@ namespace PepperDash.Essentials.DM
         {
             _rmc = rmc;
 
-            EdidManufacturerFeedback = new StringFeedback(() => _rmc.HdmiOutput.ConnectedDevice.Manufacturer.StringValue);
-            EdidNameFeedback = new StringFeedback(() => _rmc.HdmiOutput.ConnectedDevice.Name.StringValue);
-            EdidPreferredTimingFeedback = new StringFeedback(() => _rmc.HdmiOutput.ConnectedDevice.PreferredTiming.StringValue);
-            EdidSerialNumberFeedback = new StringFeedback(() => _rmc.HdmiOutput.ConnectedDevice.SerialNumber.StringValue);
+            EdidManufacturerFeedback = new StringFeedback("EdidManufacturerFeedback", () => _rmc.HdmiOutput.ConnectedDevice.Manufacturer.StringValue);
+            EdidNameFeedback = new StringFeedback("EdidNameFeedback", () => _rmc.HdmiOutput.ConnectedDevice.Name.StringValue);
+            EdidPreferredTimingFeedback = new StringFeedback("EdidPreferredTimingFeedback", () => _rmc.HdmiOutput.ConnectedDevice.PreferredTiming.StringValue);
+            EdidSerialNumberFeedback = new StringFeedback("EdidSerialNumberFeedback", () => _rmc.HdmiOutput.ConnectedDevice.SerialNumber.StringValue);
 
             _rmc.HdmiOutput.OutputStreamChange += HdmiOutput_OutputStreamChange;
 

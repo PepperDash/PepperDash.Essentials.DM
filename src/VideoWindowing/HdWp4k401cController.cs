@@ -58,7 +58,7 @@ namespace PepperDash.Essentials.DM.VideoWindowing
 
             Screens = new Dictionary<uint, ScreenInfo>(props.Screens);
 
-            DeviceNameFeedback = new StringFeedback(() => Name);
+            DeviceNameFeedback = new StringFeedback("DeviceNameFeedback", () => Name);
 
             ScreenNamesFeedbacks = new FeedbackCollection<StringFeedback>();
             ScreenEnablesFeedbacks = new FeedbackCollection<BoolFeedback>();

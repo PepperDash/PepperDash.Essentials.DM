@@ -16,7 +16,7 @@ namespace PepperDash.Essentials.DM.Routing
         {
             _device = device;
             _key = key;
-            IsOnline = new BoolFeedback(() => _device.IsOnline);
+            IsOnline = new BoolFeedback("IsOnlineFeedback", () => _device.IsOnline);
             Name = name;
 
             _device.OnlineStatusChange += _device_OnlineStatusChange;

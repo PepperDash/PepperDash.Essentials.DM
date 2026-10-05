@@ -72,7 +72,7 @@ namespace PepperDash.Essentials.DM.Chassis
 				OutputNames = props.Outputs;
 			}
 
-            DeviceNameFeedback = new StringFeedback(()=>Name);		    
+            DeviceNameFeedback = new StringFeedback("DeviceNameFeedback", ()=>Name);		    
 
 			VideoInputSyncFeedbacks = new FeedbackCollection<BoolFeedback>();
 			VideoOutputRouteFeedbacks = new FeedbackCollection<IntFeedback>();
@@ -87,7 +87,7 @@ namespace PepperDash.Essentials.DM.Chassis
 			if (_Chassis.NumberOfInputs == 1)
 			{
 				_Chassis4x1 = _Chassis as HdMd4x14kE;
-                AutoRouteFeedback = new BoolFeedback(() => _Chassis4x1.AutoModeOnFeedback.BoolValue);			    
+                AutoRouteFeedback = new BoolFeedback("AutoRouteFeedback", () => _Chassis4x1.AutoModeOnFeedback.BoolValue);			    
 			}
 
 			for (uint i = 1; i <= _Chassis.NumberOfInputs; i++)

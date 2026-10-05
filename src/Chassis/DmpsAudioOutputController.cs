@@ -375,8 +375,8 @@ namespace PepperDash.Essentials.DM
                 case eDmpsLevelType.Master:
                     {
                         Level = output.MasterVolume;
-                        MuteFeedback = new BoolFeedback(new Func<bool>(() => output.MasterMuteOnFeedBack.BoolValue));
-                        VolumeLevelFeedback = new IntFeedback(new Func<int>(() => output.MasterVolumeFeedBack.UShortValue));
+                        MuteFeedback = new BoolFeedback("MuteFeedback", new Func<bool>(() => output.MasterMuteOnFeedBack.BoolValue));
+                        VolumeLevelFeedback = new IntFeedback("VolumeLevelFeedback", new Func<int>(() => output.MasterVolumeFeedBack.UShortValue));
                         MuteOnAction = new Action(output.MasterMuteOn);
                         MuteOffAction = new Action(output.MasterMuteOff);
                         VolumeUpAction = new Action<bool>((b) => output.MasterVolumeUp.BoolValue = b);
@@ -389,8 +389,8 @@ namespace PepperDash.Essentials.DM
                         {
                             var micOutput = output.Card as Card.Dmps3OutputBase;
                             Level = micOutput.MicMasterLevel;
-                            MuteFeedback = new BoolFeedback(new Func<bool>(() => micOutput.MicMasterMuteOnFeedBack.BoolValue));
-                            VolumeLevelFeedback = new IntFeedback(new Func<int>(() => micOutput.MicMasterLevelFeedBack.UShortValue));
+                            MuteFeedback = new BoolFeedback("MuteFeedback", new Func<bool>(() => micOutput.MicMasterMuteOnFeedBack.BoolValue));
+                            VolumeLevelFeedback = new IntFeedback("VolumeLevelFeedback", new Func<int>(() => micOutput.MicMasterLevelFeedBack.UShortValue));
                             MuteOnAction = new Action(micOutput.MicMasterMuteOn);
                             MuteOffAction = new Action(micOutput.MicMasterMuteOff);
                             VolumeUpAction = new Action<bool>((b) => micOutput.MicMasterLevelUp.BoolValue = b);
@@ -401,8 +401,8 @@ namespace PepperDash.Essentials.DM
                 case eDmpsLevelType.Source:
                     {
                         Level = output.SourceLevel;
-                        MuteFeedback = new BoolFeedback(new Func<bool>(() => output.SourceMuteOnFeedBack.BoolValue));
-                        VolumeLevelFeedback = new IntFeedback(new Func<int>(() => output.SourceLevelFeedBack.UShortValue));
+                        MuteFeedback = new BoolFeedback("MuteFeedback", new Func<bool>(() => output.SourceMuteOnFeedBack.BoolValue));
+                        VolumeLevelFeedback = new IntFeedback("VolumeLevelFeedback", new Func<int>(() => output.SourceLevelFeedBack.UShortValue));
                         MuteOnAction = new Action(output.SourceMuteOn);
                         MuteOffAction = new Action(output.SourceMuteOff);
                         VolumeUpAction = new Action<bool>((b) => output.SourceLevelUp.BoolValue = b);
@@ -415,8 +415,8 @@ namespace PepperDash.Essentials.DM
                         {
                             var programOutput = output.Card as Card.Dmps3ProgramOutput;
                             Level = programOutput.Codec1Level;
-                            MuteFeedback = new BoolFeedback(new Func<bool>(() => programOutput.CodecMute1OnFeedback.BoolValue));
-                            VolumeLevelFeedback = new IntFeedback(new Func<int>(() => programOutput.Codec1LevelFeedback.UShortValue));
+                            MuteFeedback = new BoolFeedback("MuteFeedback", new Func<bool>(() => programOutput.CodecMute1OnFeedback.BoolValue));
+                            VolumeLevelFeedback = new IntFeedback("VolumeLevelFeedback", new Func<int>(() => programOutput.Codec1LevelFeedback.UShortValue));
                             MuteOnAction = new Action(programOutput.Codec1MuteOn);
                             MuteOffAction = new Action(programOutput.Codec1MuteOff);
                             VolumeUpAction = new Action<bool>((b) => programOutput.Codec1LevelUp.BoolValue = b);
@@ -426,8 +426,8 @@ namespace PepperDash.Essentials.DM
                         {
                             var auxOutput = output.Card as Card.Dmps3Aux2Output;
                             Level = auxOutput.Codec1Level;
-                            MuteFeedback = new BoolFeedback(new Func<bool>(() => auxOutput.CodecMute1OnFeedback.BoolValue));
-                            VolumeLevelFeedback = new IntFeedback(new Func<int>(() => auxOutput.Codec1LevelFeedback.UShortValue));
+                            MuteFeedback = new BoolFeedback("MuteFeedback", new Func<bool>(() => auxOutput.CodecMute1OnFeedback.BoolValue));
+                            VolumeLevelFeedback = new IntFeedback("VolumeLevelFeedback", new Func<int>(() => auxOutput.Codec1LevelFeedback.UShortValue));
                             MuteOnAction = new Action(auxOutput.Codec1MuteOn);
                             MuteOffAction = new Action(auxOutput.Codec1MuteOff);
                             VolumeUpAction = new Action<bool>((b) => auxOutput.Codec1LevelUp.BoolValue = b);
@@ -441,8 +441,8 @@ namespace PepperDash.Essentials.DM
                         {
                             var programOutput = output.Card as Card.Dmps3ProgramOutput;
                             Level = programOutput.Codec2Level;
-                            MuteFeedback = new BoolFeedback(new Func<bool>(() => programOutput.CodecMute1OnFeedback.BoolValue));
-                            VolumeLevelFeedback = new IntFeedback(new Func<int>(() => programOutput.Codec2LevelFeedback.UShortValue));
+                            MuteFeedback = new BoolFeedback("MuteFeedback", new Func<bool>(() => programOutput.CodecMute1OnFeedback.BoolValue));
+                            VolumeLevelFeedback = new IntFeedback("VolumeLevelFeedback", new Func<int>(() => programOutput.Codec2LevelFeedback.UShortValue));
                             MuteOnAction = new Action(programOutput.Codec2MuteOn);
                             MuteOffAction = new Action(programOutput.Codec2MuteOff);
                             VolumeUpAction = new Action<bool>((b) => programOutput.Codec2LevelUp.BoolValue = b);
@@ -453,8 +453,8 @@ namespace PepperDash.Essentials.DM
                             var auxOutput = output.Card as Card.Dmps3Aux1Output;
 
                             Level = auxOutput.Codec2Level;
-                            MuteFeedback = new BoolFeedback(new Func<bool>(() => auxOutput.CodecMute2OnFeedback.BoolValue));
-                            VolumeLevelFeedback = new IntFeedback(new Func<int>(() => auxOutput.Codec2LevelFeedback.UShortValue));
+                            MuteFeedback = new BoolFeedback("MuteFeedback", new Func<bool>(() => auxOutput.CodecMute2OnFeedback.BoolValue));
+                            VolumeLevelFeedback = new IntFeedback("VolumeLevelFeedback", new Func<int>(() => auxOutput.Codec2LevelFeedback.UShortValue));
                             MuteOnAction = new Action(auxOutput.Codec2MuteOn);
                             MuteOffAction = new Action(auxOutput.Codec2MuteOff);
                             VolumeUpAction = new Action<bool>((b) => auxOutput.Codec2LevelUp.BoolValue = b);
@@ -465,7 +465,7 @@ namespace PepperDash.Essentials.DM
             }
             if (VolumeLevelFeedback != null)
             {
-                VolumeLevelScaledFeedback = new IntFeedback(new Func<int>(() => ScaleVolumeFeedback(VolumeLevelFeedback.UShortValue)));
+                VolumeLevelScaledFeedback = new IntFeedback("VolumeLevelScaledFeedback", new Func<int>(() => ScaleVolumeFeedback(VolumeLevelFeedback.UShortValue)));
                 VolumeLevelFeedback.FireUpdate();
                 VolumeLevelScaledFeedback.FireUpdate();
             }

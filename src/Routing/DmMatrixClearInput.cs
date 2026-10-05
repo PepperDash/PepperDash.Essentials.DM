@@ -14,7 +14,7 @@ namespace PepperDash.Essentials.DM.Routing
 
         public string Name => "None";
 
-        public BoolFeedback IsOnline => new BoolFeedback(() => false);
+        public BoolFeedback IsOnline => new BoolFeedback("IsOnlineFeedback", () => false);
 
         public bool VideoSyncDetected => false;
 

@@ -74,7 +74,7 @@ namespace PepperDash_Essentials_DM.Chassis
 			VideoOutputRouteFeedbacks = new FeedbackCollection<IntFeedback>();
 
 			if (_chassis.NumberOfOutputs == 1)
-				AutoRouteFeedback = new BoolFeedback(() => _chassis.PriorityRouteOnFeedback.BoolValue);
+				AutoRouteFeedback = new BoolFeedback("AutoRouteFeedback", () => _chassis.PriorityRouteOnFeedback.BoolValue);
 
 			InputNames = props.Inputs;
 			SetupInputs(InputNames);

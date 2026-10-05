@@ -96,31 +96,31 @@ namespace PepperDash.Essentials.DM.AirMedia
 
             AirMedia.AirMedia.AirMediaChange += new Crestron.SimplSharpPro.DeviceSupport.GenericEventHandler(AirMedia_AirMediaChange);
 
-            IsInSessionFeedback = new BoolFeedback(() => AirMedia.AirMedia.StatusFeedback.UShortValue == 0);
-            ErrorFeedback = new IntFeedback(() => AirMedia.AirMedia.ErrorFeedback.UShortValue);
-            NumberOfUsersConnectedFeedback = new IntFeedback(() => AirMedia.AirMedia.NumberOfUsersConnectedFeedback.UShortValue);
-            LoginCodeFeedback = new IntFeedback(() => AirMedia.AirMedia.LoginCodeFeedback.UShortValue);
-            ConnectionAddressFeedback = new StringFeedback(() => AirMedia.AirMedia.ConnectionAddressFeedback.StringValue);
-            HostnameFeedback = new StringFeedback(() => AirMedia.AirMedia.HostNameFeedback.StringValue);
+            IsInSessionFeedback = new BoolFeedback("IsInSessionFeedback", () => AirMedia.AirMedia.StatusFeedback.UShortValue == 0);
+            ErrorFeedback = new IntFeedback("ErrorFeedback", () => AirMedia.AirMedia.ErrorFeedback.UShortValue);
+            NumberOfUsersConnectedFeedback = new IntFeedback("NumberOfUsersConnectedFeedback", () => AirMedia.AirMedia.NumberOfUsersConnectedFeedback.UShortValue);
+            LoginCodeFeedback = new IntFeedback("LoginCodeFeedback", () => AirMedia.AirMedia.LoginCodeFeedback.UShortValue);
+            ConnectionAddressFeedback = new StringFeedback("ConnectionAddressFeedback", () => AirMedia.AirMedia.ConnectionAddressFeedback.StringValue);
+            HostnameFeedback = new StringFeedback("HostnameFeedback", () => AirMedia.AirMedia.HostNameFeedback.StringValue);
 
             // TODO: Figure out if we can actually get the TSID/Serial
-            SerialNumberFeedback = new StringFeedback(() => "unknown");
+            SerialNumberFeedback = new StringFeedback("SerialNumberFeedback", () => "unknown");
 
             AirMedia.DisplayControl.DisplayControlChange += DisplayControl_DisplayControlChange;
 
-            VideoOutFeedback = new IntFeedback(() => Convert.ToInt16(AirMedia.DisplayControl.VideoOutFeedback));
-            AutomaticInputRoutingEnabledFeedback = new BoolFeedback(() => AirMedia.DisplayControl.EnableAutomaticRoutingFeedback.BoolValue);
+            VideoOutFeedback = new IntFeedback("VideoOutFeedback", () => Convert.ToInt16(AirMedia.DisplayControl.VideoOutFeedback));
+            AutomaticInputRoutingEnabledFeedback = new BoolFeedback("AutomaticInputRoutingEnabledFeedback", () => AirMedia.DisplayControl.EnableAutomaticRoutingFeedback.BoolValue);
 
             // Not all AirMedia versions support HDMI In like the 3200
             if (AirMedia.HdmiIn != null)
             {
                 AirMedia.HdmiIn.StreamChange += HdmiIn_StreamChange;
-                HdmiVideoSyncDetectedFeedback = new BoolFeedback(() => AirMedia.HdmiIn.SyncDetectedFeedback.BoolValue);
+                HdmiVideoSyncDetectedFeedback = new BoolFeedback("HdmiVideoSyncDetectedFeedback", () => AirMedia.HdmiIn.SyncDetectedFeedback.BoolValue);
                 return;
             }
 
             // Return false if the AirMedia device doesn't support HDMI Input
-            HdmiVideoSyncDetectedFeedback = new BoolFeedback(() => false);
+            HdmiVideoSyncDetectedFeedback = new BoolFeedback("HdmiVideoSyncDetectedFeedback", () => false);
         }
 
         public override bool CustomActivate()

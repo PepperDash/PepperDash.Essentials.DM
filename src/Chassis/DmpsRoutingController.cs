@@ -128,24 +128,24 @@ namespace PepperDash.Essentials.DM
             {
                 case eSystemControlType.Dmps34K150CSystemControl:
                     SystemControl = systemControl as Dmps34K150CSystemControl;
-                    SystemPowerOnFeedback = new BoolFeedback(() => { return true; });
-                    SystemPowerOffFeedback = new BoolFeedback(() => { return false; });
+                    SystemPowerOnFeedback = new BoolFeedback("SystemPowerOnFeedback", () => { return true; });
+                    SystemPowerOffFeedback = new BoolFeedback("SystemPowerOffFeedback", () => { return false; });
                     break;
                 case eSystemControlType.Dmps34K200CSystemControl:
                 case eSystemControlType.Dmps34K250CSystemControl:
                 case eSystemControlType.Dmps34K300CSystemControl:
                 case eSystemControlType.Dmps34K350CSystemControl:
                     SystemControl = systemControl as Dmps34K300CSystemControl;
-                    SystemPowerOnFeedback = new BoolFeedback(() => { return true; });
-                    SystemPowerOffFeedback = new BoolFeedback(() => { return false; });
+                    SystemPowerOnFeedback = new BoolFeedback("SystemPowerOnFeedback", () => { return true; });
+                    SystemPowerOffFeedback = new BoolFeedback("SystemPowerOffFeedback", () => { return false; });
                     break;
                 default:
                     SystemControl = systemControl as Dmps3SystemControl;
-                    SystemPowerOnFeedback = new BoolFeedback(() =>
+                    SystemPowerOnFeedback = new BoolFeedback("SystemPowerOnFeedback", () =>
                     {
                         return ((Dmps3SystemControl)SystemControl).SystemPowerOnFeedBack.BoolValue;
                     });
-                    SystemPowerOffFeedback = new BoolFeedback(() =>
+                    SystemPowerOffFeedback = new BoolFeedback("SystemPowerOffFeedback", () =>
                     {
                         return ((Dmps3SystemControl)SystemControl).SystemPowerOffFeedBack.BoolValue;
                     });
@@ -160,11 +160,11 @@ namespace PepperDash.Essentials.DM
             TxDictionary = new Dictionary<uint, string>();
             RxDictionary = new Dictionary<uint, string>();
 
-            FrontPanelLockOnFeedback = new BoolFeedback(() =>
+            FrontPanelLockOnFeedback = new BoolFeedback("FrontPanelLockOnFeedback", () =>
             {
                 return SystemControl.FrontPanelLockOnFeedback.BoolValue;
             });
-            FrontPanelLockOffFeedback = new BoolFeedback(() =>
+            FrontPanelLockOffFeedback = new BoolFeedback("FrontPanelLockOffFeedback", () =>
             {
                 return SystemControl.FrontPanelLockOffFeedback.BoolValue;
             });
@@ -506,13 +506,13 @@ namespace PepperDash.Essentials.DM
                     }
 
                     Debug.LogDebug(this, "Adding Output Card Number {0} Type: {1}", outputCard.Number, outputCard.CardInputOutputType.ToString());
-                    VideoOutputFeedbacks[outputCard.Number] = new IntFeedback(() =>
+                    VideoOutputFeedbacks[outputCard.Number] = new IntFeedback($"{Key}-VideoOutputFeedback-{outputCard.Number}", () =>
                     {
                         if (outputCard.VideoOutFeedback != null) { return (ushort)outputCard.VideoOutFeedback.Number; }
                         return 0;
                         ;
                     });
-                    AudioOutputFeedbacks[outputCard.Number] = new IntFeedback(() =>
+                    AudioOutputFeedbacks[outputCard.Number] = new IntFeedback($"{Key}-AudioOutputFeedback-{outputCard.Number}", () =>
                     {
                         if (!Global.ControlSystemIsDmps4k3xxType)
                         {
@@ -567,7 +567,7 @@ namespace PepperDash.Essentials.DM
                         }
                     });
 
-                    OutputNameFeedbacks[outputCard.Number] = new StringFeedback(() =>
+                    OutputNameFeedbacks[outputCard.Number] = new StringFeedback($"{Key}-OutputNameFeedback-{outputCard.Number}", () =>
                     {
                         if(OutputNames.ContainsKey(outputCard.Number))
                         {
@@ -581,7 +581,7 @@ namespace PepperDash.Essentials.DM
                         return "";
                     });
 
-                    OutputVideoRouteNameFeedbacks[outputCard.Number] = new StringFeedback(() =>
+                    OutputVideoRouteNameFeedbacks[outputCard.Number] = new StringFeedback($"{Key}-OutputVideoRouteNameFeedback-{outputCard.Number}", () =>
                     {
                         if (outputCard.VideoOutFeedback != null && outputCard.VideoOutFeedback.NameFeedback != null)
                         {
@@ -589,7 +589,7 @@ namespace PepperDash.Essentials.DM
                         }
                         return NoRouteText;
                     });
-                    OutputAudioRouteNameFeedbacks[outputCard.Number] = new StringFeedback(() =>
+                    OutputAudioRouteNameFeedbacks[outputCard.Number] = new StringFeedback($"{Key}-OutputAudioRouteNameFeedback-{outputCard.Number}", () =>
                     {
                         if (!Global.ControlSystemIsDmps4k3xxType)
                         {
@@ -622,7 +622,7 @@ namespace PepperDash.Essentials.DM
                         return NoRouteText;
                     });
 
-                    OutputEndpointOnlineFeedbacks[outputCard.Number] = new BoolFeedback(() => outputCard.EndpointOnlineFeedback);
+                    OutputEndpointOnlineFeedbacks[outputCard.Number] = new BoolFeedback($"{Key}-OutputEndpointOnlineFeedback-{outputCard.Number}", () => outputCard.EndpointOnlineFeedback);
 
                     AddOutputCard(outputCard.Number, outputCard);
                 }
@@ -646,14 +646,14 @@ namespace PepperDash.Essentials.DM
                 {
                     Debug.LogDebug(this, "Adding Input Card Number {0} Type: {1}", inputCard.Number, inputCard.CardInputOutputType.ToString());
 
-                    InputEndpointOnlineFeedbacks[inputCard.Number] = new BoolFeedback(() => inputCard.EndpointOnlineFeedback);
+                    InputEndpointOnlineFeedbacks[inputCard.Number] = new BoolFeedback($"{Key}-InputEndpointOnlineFeedback-{inputCard.Number}", () => inputCard.EndpointOnlineFeedback);
 
                     if (inputCard.VideoDetectedFeedback != null && inputCard.VideoDetectedFeedback.Supported)
                     {
-                        VideoInputSyncFeedbacks[inputCard.Number] = new BoolFeedback(() => inputCard.VideoDetectedFeedback.BoolValue);
+                        VideoInputSyncFeedbacks[inputCard.Number] = new BoolFeedback($"{Key}-VideoInputSyncFeedback-{inputCard.Number}", () => inputCard.VideoDetectedFeedback.BoolValue);
                     }
 
-                    InputNameFeedbacks[inputCard.Number] = new StringFeedback(() =>
+                    InputNameFeedbacks[inputCard.Number] = new StringFeedback($"{Key}-InputNameFeedback-{inputCard.Number}", () =>
                     {
                         if (InputNames.ContainsKey(inputCard.Number))
                         {
@@ -746,7 +746,7 @@ namespace PepperDash.Essentials.DM
                 {
                     uint j = i + 1;
                     uint input = i + number;
-                    InputNameFeedbacks[input] = new StringFeedback(() =>
+                    InputNameFeedbacks[input] = new StringFeedback($"{Key}-InputNameFeedback-{input}", () =>
                     {
                         if (InputNames.ContainsKey(input))
                         {
