@@ -63,7 +63,7 @@ namespace PepperDash.Essentials.DM
 
             if (outputCard is Card.Dmps3DmOutputBackend)
             {
-                AudioSourceNumericFeedback = new IntFeedback(() =>
+                AudioSourceNumericFeedback = new IntFeedback("AudioSourceNumericFeedback", () =>
                 {
                     return (int)(outputCard as Card.Dmps3DmOutputBackend).AudioOutSourceDeviceFeedback;
                 });
@@ -72,7 +72,7 @@ namespace PepperDash.Essentials.DM
 
             else if (outputCard is Card.Dmps3HdmiOutputBackend)
             {
-                AudioSourceNumericFeedback = new IntFeedback(() =>
+                AudioSourceNumericFeedback = new IntFeedback("AudioSourceNumericFeedback", () =>
                 {
                     return (int)(outputCard as Card.Dmps3HdmiOutputBackend).AudioOutSourceDeviceFeedback;
                 });

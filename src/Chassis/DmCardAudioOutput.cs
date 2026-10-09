@@ -29,8 +29,8 @@ namespace PepperDash.Essentials.DM
             Key = key;
             Name = name;
             Output = output;
-            VolumeLevelFeedback = new IntFeedback(() => Output.VolumeFeedback.UShortValue);
-            MuteFeedback = new BoolFeedback(() => IsMuted);
+            VolumeLevelFeedback = new IntFeedback("VolumeLevelFeedback", () => Output.VolumeFeedback.UShortValue);
+            MuteFeedback = new BoolFeedback("MuteFeedback", () => IsMuted);
         }
 
         #region IBasicVolumeWithFeedback Members

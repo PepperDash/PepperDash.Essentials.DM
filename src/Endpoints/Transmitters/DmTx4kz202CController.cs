@@ -105,7 +105,7 @@ namespace PepperDash.Essentials.DM
                 FeedbackMatchObject = eVst.Hdmi2
             };
 
-            ActiveVideoInputFeedback = new StringFeedback("ActiveVideoInput",
+            ActiveVideoInputFeedback = new StringFeedback("ActiveVideoInputFeedback",
                 () => ActualActiveVideoInput.ToString());
 
 
@@ -115,17 +115,17 @@ namespace PepperDash.Essentials.DM
             Tx.BaseEvent += Tx_BaseEvent;
             Tx.OnlineStatusChange += Tx_OnlineStatusChange;
 
-            VideoSourceNumericFeedback = new IntFeedback(() => (int)Tx.VideoSourceFeedback);
+            VideoSourceNumericFeedback = new IntFeedback("VideoSourceNumericFeedback", () => (int)Tx.VideoSourceFeedback);
 
             //Return VideoSourceFeedback here as DM-TX-4KZ-202-C does not support audio breakaway
-            AudioSourceNumericFeedback = new IntFeedback(() => (int)Tx.VideoSourceFeedback);
+            AudioSourceNumericFeedback = new IntFeedback("AudioSourceNumericFeedback", () => (int)Tx.VideoSourceFeedback);
 
-            HdmiIn1HdcpCapabilityFeedback = new IntFeedback("HdmiIn1HdcpCapability", () => (int)tx.HdmiInputs[1].HdcpCapabilityFeedback);
+            HdmiIn1HdcpCapabilityFeedback = new IntFeedback("HdmiIn1HdcpCapabilityFeedback", () => (int)tx.HdmiInputs[1].HdcpCapabilityFeedback);
 
-            HdmiIn2HdcpCapabilityFeedback = new IntFeedback("HdmiIn2HdcpCapability", () => (int)tx.HdmiInputs[2].HdcpCapabilityFeedback);
+            HdmiIn2HdcpCapabilityFeedback = new IntFeedback("HdmiIn2HdcpCapabilityFeedback", () => (int)tx.HdmiInputs[2].HdcpCapabilityFeedback);
 
             HdcpStateFeedback =
-                new IntFeedback(
+                new IntFeedback("HdcpStateFeedback", 
                     () =>
                         tx.HdmiInputs[1].HdcpCapabilityFeedback > tx.HdmiInputs[2].HdcpCapabilityFeedback
                             ? (int)tx.HdmiInputs[1].HdcpCapabilityFeedback
@@ -133,9 +133,9 @@ namespace PepperDash.Essentials.DM
 
             HdcpSupportCapability = eHdcpCapabilityType.Hdcp2_2Support;
 
-            Hdmi1VideoSyncFeedback = new BoolFeedback(() => (bool)tx.HdmiInputs[1].SyncDetectedFeedback.BoolValue);
+            Hdmi1VideoSyncFeedback = new BoolFeedback("Hdmi1VideoSyncFeedback", () => (bool)tx.HdmiInputs[1].SyncDetectedFeedback.BoolValue);
 
-            Hdmi2VideoSyncFeedback = new BoolFeedback(() => (bool)tx.HdmiInputs[2].SyncDetectedFeedback.BoolValue);
+            Hdmi2VideoSyncFeedback = new BoolFeedback("Hdmi2VideoSyncFeedback", () => (bool)tx.HdmiInputs[2].SyncDetectedFeedback.BoolValue);
 
             var combinedFuncs = new VideoStatusFuncsWrapper
             {

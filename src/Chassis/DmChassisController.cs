@@ -235,12 +235,12 @@ namespace PepperDash.Essentials.DM
             InputEndpointOnlineFeedbacks = new Dictionary<uint, BoolFeedback>();
             OutputEndpointOnlineFeedbacks = new Dictionary<uint, BoolFeedback>();
 
-            SystemIdFeebdack = new IntFeedback(() => { return (Chassis as DmMDMnxn).SystemIdFeedback.UShortValue; });
-            SystemIdBusyFeedback = new BoolFeedback(() => { return (Chassis as DmMDMnxn).SystemIdBusy.BoolValue; });
+            SystemIdFeebdack = new IntFeedback("SystemIdFeedback", () => { return (Chassis as DmMDMnxn).SystemIdFeedback.UShortValue; });
+            SystemIdBusyFeedback = new BoolFeedback("SystemIdBusyFeedback", () => { return (Chassis as DmMDMnxn).SystemIdBusy.BoolValue; });
             EnableAudioBreakawayFeedback =
-                new BoolFeedback(() => (Chassis as DmMDMnxn).EnableAudioBreakawayFeedback.BoolValue);
+                new BoolFeedback("EnableAudioBreakawayFeedback", () => (Chassis as DmMDMnxn).EnableAudioBreakawayFeedback.BoolValue);
             EnableUsbBreakawayFeedback =
-                new BoolFeedback(() => (Chassis as DmMDMnxn).EnableUSBBreakawayFeedback.BoolValue);
+                new BoolFeedback("EnableUsbBreakawayFeedback", () => (Chassis as DmMDMnxn).EnableUSBBreakawayFeedback.BoolValue);
 
             InputCardHdcpStateFeedbacks = new Dictionary<uint, IntFeedback>();
             InputStreamCardStateFeedbacks = new Dictionary<uint, IntFeedback>();
@@ -256,46 +256,46 @@ namespace PepperDash.Essentials.DM
 
                 if (Chassis.Outputs[tempX] != null)
                 {
-                    VideoOutputFeedbacks[tempX] = new IntFeedback(() => {
+                    VideoOutputFeedbacks[tempX] = new IntFeedback($"{Key}-VideoOutputFeedback-{tempX}", () => {
                         if (Chassis.Outputs[tempX].VideoOutFeedback != null)
                             return (ushort)Chassis.Outputs[tempX].VideoOutFeedback.Number;
 
                         return 0;
                     });
-                    AudioOutputFeedbacks[tempX] = new IntFeedback(() => {
+                    AudioOutputFeedbacks[tempX] = new IntFeedback($"{Key}-AudioOutputFeedback-{tempX}", () => {
                         if (Chassis.Outputs[tempX].AudioOutFeedback != null)
                             return (ushort)Chassis.Outputs[tempX].AudioOutFeedback.Number;
 
                         return 0;
                     });
-                    UsbOutputRoutedToFeebacks[tempX] = new IntFeedback(() => {
+                    UsbOutputRoutedToFeebacks[tempX] = new IntFeedback($"{Key}-UsbOutputRoutedToFeedback-{tempX}", () => {
                         if (Chassis.Outputs[tempX].USBRoutedToFeedback != null)
                             return (ushort)Chassis.Outputs[tempX].USBRoutedToFeedback.Number;
 
                         return 0;
                     });
 
-                    OutputNameFeedbacks[tempX] = new StringFeedback(() => {
+                    OutputNameFeedbacks[tempX] = new StringFeedback($"{Key}-OutputNameFeedback-{tempX}", () => {
                         if (Chassis.Outputs[tempX].NameFeedback != null)
                             return Chassis.Outputs[tempX].NameFeedback.StringValue;
 
                         return "";
                     });
-                    OutputVideoRouteNameFeedbacks[tempX] = new StringFeedback(() => {
+                    OutputVideoRouteNameFeedbacks[tempX] = new StringFeedback($"{Key}-OutputVideoRouteNameFeedback-{tempX}", () => {
                         if (Chassis.Outputs[tempX].VideoOutFeedback != null)
                             return Chassis.Outputs[tempX].VideoOutFeedback.NameFeedback.StringValue;
 
                         return NoRouteText;
                     });
-                    OutputAudioRouteNameFeedbacks[tempX] = new StringFeedback(() => {
+                    OutputAudioRouteNameFeedbacks[tempX] = new StringFeedback($"{Key}-OutputAudioRouteNameFeedback-{tempX}", () => {
                         if (Chassis.Outputs[tempX].AudioOutFeedback != null)
                             return Chassis.Outputs[tempX].AudioOutFeedback.NameFeedback.StringValue;
 
                         return NoRouteText;
                     });
-                    OutputEndpointOnlineFeedbacks[tempX] = new BoolFeedback(() => Chassis.Outputs[tempX].EndpointOnlineFeedback);
+                    OutputEndpointOnlineFeedbacks[tempX] = new BoolFeedback($"{Key}-OutputEndpointOnlineFeedback-{tempX}", () => Chassis.Outputs[tempX].EndpointOnlineFeedback);
                     
-                    OutputDisabledByHdcpFeedbacks[tempX] = new BoolFeedback(() => {
+                    OutputDisabledByHdcpFeedbacks[tempX] = new BoolFeedback($"{Key}-OutputDisabledByHdcpFeedback-{tempX}", () => {
                         var output = Chassis.Outputs[tempX];
 
                         var hdmiTxOutput = output as Card.HdmiTx;
@@ -332,7 +332,7 @@ namespace PepperDash.Essentials.DM
 
                         return false;
                     });
-                    OutputStreamCardStateFeedbacks[tempX] = new IntFeedback(() =>
+                    OutputStreamCardStateFeedbacks[tempX] = new IntFeedback($"{Key}-OutputStreamCardStateFeedback-{tempX}", () =>
                     {
                         try
                         {
@@ -363,28 +363,28 @@ namespace PepperDash.Essentials.DM
 
                 if (Chassis.Inputs[tempX] != null)
                 {
-                    UsbInputRoutedToFeebacks[tempX] = new IntFeedback(() => {
+                    UsbInputRoutedToFeebacks[tempX] = new IntFeedback($"{Key}-UsbInputRoutedToFeedback-{tempX}", () => {
                         if (Chassis.Inputs[tempX].USBRoutedToFeedback != null)
                             return (ushort)Chassis.Inputs[tempX].USBRoutedToFeedback.Number;
 
                         return 0;
                     });
-                    VideoInputSyncFeedbacks[tempX] = new BoolFeedback(() => {
+                    VideoInputSyncFeedbacks[tempX] = new BoolFeedback($"{Key}-VideoInputSyncFeedback-{tempX}", () => {
                         if (Chassis.Inputs[tempX].VideoDetectedFeedback != null)
                             return Chassis.Inputs[tempX].VideoDetectedFeedback.BoolValue;
                         
                         return false;
                     });
-                    InputNameFeedbacks[tempX] = new StringFeedback(() => {
+                    InputNameFeedbacks[tempX] = new StringFeedback($"{Key}-InputNameFeedback-{tempX}", () => {
                         if (Chassis.Inputs[tempX].NameFeedback != null)
                             return Chassis.Inputs[tempX].NameFeedback.StringValue;
 
                         return "";
                     });
 
-                    InputEndpointOnlineFeedbacks[tempX] = new BoolFeedback(() => { return Chassis.Inputs[tempX].EndpointOnlineFeedback; });
+                    InputEndpointOnlineFeedbacks[tempX] = new BoolFeedback($"{Key}-InputEndpointOnlineFeedback-{tempX}", () => { return Chassis.Inputs[tempX].EndpointOnlineFeedback; });
 
-                    InputCardHdcpStateFeedbacks[tempX] = new IntFeedback(() => {
+                    InputCardHdcpStateFeedbacks[tempX] = new IntFeedback($"{Key}-InputCardHdcpStateFeedback-{tempX}", () => {
                         try
                         {
                             var inputCard = Chassis.Inputs[tempX];
@@ -458,7 +458,7 @@ namespace PepperDash.Essentials.DM
                             return 0;
                         }   
                     });
-                    InputStreamCardStateFeedbacks[tempX] = new IntFeedback(() =>
+                    InputStreamCardStateFeedbacks[tempX] = new IntFeedback($"{Key}-InputStreamCardStateFeedback-{tempX}", () =>
                     {
                         try
                         {

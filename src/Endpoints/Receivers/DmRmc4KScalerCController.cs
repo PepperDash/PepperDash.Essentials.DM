@@ -50,26 +50,26 @@ namespace PepperDash.Essentials.DM
             BalancedAudioOut = new RoutingOutputPort(DmPortName.BalancedAudioOut, eRoutingSignalType.Audio,
                 eRoutingPortConnectionType.LineAudio, null, this);
 
-            MuteFeedback = new BoolFeedback(() => false);
+            MuteFeedback = new BoolFeedback("MuteFeedback", () => false);
 
             VolumeLevelFeedback = new IntFeedback("MainVolumeLevelFeedback", () =>
                 rmc.AudioOutput.VolumeFeedback.UShortValue);
 
-            EdidManufacturerFeedback = new StringFeedback(() => _rmc.HdmiOutput.ConnectedDevice.Manufacturer.StringValue);
-            EdidNameFeedback = new StringFeedback(() => _rmc.HdmiOutput.ConnectedDevice.Name.StringValue);
-            EdidPreferredTimingFeedback = new StringFeedback(() => _rmc.HdmiOutput.ConnectedDevice.PreferredTiming.StringValue);
-            EdidSerialNumberFeedback = new StringFeedback(() => _rmc.HdmiOutput.ConnectedDevice.SerialNumber.StringValue);
+            EdidManufacturerFeedback = new StringFeedback("EdidManufacturerFeedback", () => _rmc.HdmiOutput.ConnectedDevice.Manufacturer.StringValue);
+            EdidNameFeedback = new StringFeedback("EdidNameFeedback", () => _rmc.HdmiOutput.ConnectedDevice.Name.StringValue);
+            EdidPreferredTimingFeedback = new StringFeedback("EdidPreferredTimingFeedback", () => _rmc.HdmiOutput.ConnectedDevice.PreferredTiming.StringValue);
+            EdidSerialNumberFeedback = new StringFeedback("EdidSerialNumberFeedback", () => _rmc.HdmiOutput.ConnectedDevice.SerialNumber.StringValue);
 
             InputPorts = new RoutingPortCollection<RoutingInputPort> { DmIn };
             OutputPorts = new RoutingPortCollection<RoutingOutputPort> { HdmiOut, BalancedAudioOut };
 
-            VideoOutputResolutionFeedback = new StringFeedback(() => _rmc.HdmiOutput.GetVideoResolutionString());
-            DmInHdcpStateFeedback = new IntFeedback("DmInHdcpCapability",
+            VideoOutputResolutionFeedback = new StringFeedback("VideoOutputResolutionFeedback", () => _rmc.HdmiOutput.GetVideoResolutionString());
+            DmInHdcpStateFeedback = new IntFeedback("DmInHdcpCapabilityFeedback",
                 () => (int)_rmc.DmInput.HdcpCapabilityFeedback);
 
             AddToFeedbackList(DmInHdcpStateFeedback);
 
-            VideoMuteIsOn = new BoolFeedback("HdmiOutputVideoMuteIsOn", () => _rmc.HdmiOutput.BlankEnabledFeedback.BoolValue);
+            VideoMuteIsOn = new BoolFeedback("HdmiOutputVideoMuteIsOnFeedback", () => _rmc.HdmiOutput.BlankEnabledFeedback.BoolValue);
 
             _rmc.HdmiOutput.OutputStreamChange += HdmiOutput_OutputStreamChange;
             _rmc.HdmiOutput.ConnectedDevice.DeviceInformationChange += ConnectedDevice_DeviceInformationChange;

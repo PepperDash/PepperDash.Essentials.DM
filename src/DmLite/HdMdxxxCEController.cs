@@ -75,13 +75,13 @@ namespace PepperDash.Essentials.DM
 
             TxRxPair = txRxPair;
 
-            RemoteEndDetectedFeedback = new BoolFeedback(() => TxRxPair.RemoteEndDetectedOnFeedback.BoolValue);
+            RemoteEndDetectedFeedback = new BoolFeedback("RemoteEndDetectedFeedback", () => TxRxPair.RemoteEndDetectedOnFeedback.BoolValue);
 
-            AutoRouteOnFeedback = new BoolFeedback(() => TxRxPair.TransmitterAutoModeOnFeedback.BoolValue);
+            AutoRouteOnFeedback = new BoolFeedback("AutoRouteOnFeedback", () => TxRxPair.TransmitterAutoModeOnFeedback.BoolValue);
 
-            PriorityRoutingOnFeedback = new BoolFeedback(() => TxRxPair.PriorityRoutingOnFeedback.BoolValue);
+            PriorityRoutingOnFeedback = new BoolFeedback("PriorityRoutingOnFeedback", () => TxRxPair.PriorityRoutingOnFeedback.BoolValue);
 
-            InputOnScreenDisplayEnabledFeedback = new BoolFeedback(() => TxRxPair.OnScreenDisplayEnabledFeedback.BoolValue);
+            InputOnScreenDisplayEnabledFeedback = new BoolFeedback("InputOnScreenDisplayEnabledFeedback", () => TxRxPair.OnScreenDisplayEnabledFeedback.BoolValue);
 
             InputPorts = new RoutingPortCollection<RoutingInputPort>();
 
@@ -91,21 +91,21 @@ namespace PepperDash.Essentials.DM
             InputPorts.Add(new RoutingInputPort(DmPortName.Hdmi, eRoutingSignalType.Audio | eRoutingSignalType.Video,
                 eRoutingPortConnectionType.Hdmi, 1, this));
 
-            SyncDetectedFeedbacks.Add(1, new BoolFeedback( () => TxRxPair.HdmiInputs[1].VideoDetectedFeedback.BoolValue));
+            SyncDetectedFeedbacks.Add(1, new BoolFeedback($"{Key}-SyncDetectedFeedback-{1}",  () => TxRxPair.HdmiInputs[1].VideoDetectedFeedback.BoolValue));
 
             if(txRxPair is HdMd400CE)
             {
                 InputPorts.Add(new RoutingInputPort(DmPortName.HdmiIn1, eRoutingSignalType.Audio | eRoutingSignalType.Video,
                 eRoutingPortConnectionType.Hdmi, 2, this));
-                SyncDetectedFeedbacks.Add(2, new BoolFeedback(() => TxRxPair.HdmiInputs[2].VideoDetectedFeedback.BoolValue));
+                SyncDetectedFeedbacks.Add(2, new BoolFeedback($"{Key}-SyncDetectedFeedback-{2}", () => TxRxPair.HdmiInputs[2].VideoDetectedFeedback.BoolValue));
 
                 InputPorts.Add(new RoutingInputPort(DmPortName.HdmiIn2, eRoutingSignalType.Audio | eRoutingSignalType.Video,
                 eRoutingPortConnectionType.Hdmi, 3, this));
-                SyncDetectedFeedbacks.Add(3, new BoolFeedback(() => TxRxPair.HdmiInputs[3].VideoDetectedFeedback.BoolValue));
+                SyncDetectedFeedbacks.Add(3, new BoolFeedback($"{Key}-SyncDetectedFeedback-{3}", () => TxRxPair.HdmiInputs[3].VideoDetectedFeedback.BoolValue));
 
                 InputPorts.Add(new RoutingInputPort(DmPortName.VgaIn, eRoutingSignalType.Video | eRoutingSignalType.Audio,
                     eRoutingPortConnectionType.Vga, 4, this));
-                SyncDetectedFeedbacks.Add(4, new BoolFeedback(() => TxRxPair.VgaInputs[1].VideoDetectedFeedback.BoolValue));
+                SyncDetectedFeedbacks.Add(4, new BoolFeedback($"{Key}-SyncDetectedFeedback-{4}", () => TxRxPair.VgaInputs[1].VideoDetectedFeedback.BoolValue));
 
                 // Set Ports for CEC
                 InputPorts[DmPortName.HdmiIn1].Port = TxRxPair.HdmiInputs[1];
@@ -115,11 +115,11 @@ namespace PepperDash.Essentials.DM
             {
                 InputPorts.Add(new RoutingInputPort(DmPortName.HdmiIn, eRoutingSignalType.Audio | eRoutingSignalType.Video,
                     eRoutingPortConnectionType.Hdmi, 2, this));
-                SyncDetectedFeedbacks.Add(2, new BoolFeedback(() => TxRxPair.HdmiInputs[2].VideoDetectedFeedback.BoolValue));
+                SyncDetectedFeedbacks.Add(2, new BoolFeedback($"{Key}-SyncDetectedFeedback-{2}", () => TxRxPair.HdmiInputs[2].VideoDetectedFeedback.BoolValue));
 
                 InputPorts.Add(new RoutingInputPort(DmPortName.VgaIn, eRoutingSignalType.Video | eRoutingSignalType.Audio,
                     eRoutingPortConnectionType.Vga, 3, this));
-                SyncDetectedFeedbacks.Add(3, new BoolFeedback(() => TxRxPair.VgaInputs[1].VideoDetectedFeedback.BoolValue));
+                SyncDetectedFeedbacks.Add(3, new BoolFeedback($"{Key}-SyncDetectedFeedback-{3}", () => TxRxPair.VgaInputs[1].VideoDetectedFeedback.BoolValue));
 
                 // Set Ports for CEC
                 InputPorts[DmPortName.HdmiIn].Port = TxRxPair.HdmiInputs[1];
@@ -128,7 +128,7 @@ namespace PepperDash.Essentials.DM
             {
                 InputPorts.Add(new RoutingInputPort(DmPortName.HdmiIn, eRoutingSignalType.Audio | eRoutingSignalType.Video,
                     eRoutingPortConnectionType.Hdmi, 2, this));
-                SyncDetectedFeedbacks.Add(2, new BoolFeedback(() => TxRxPair.HdmiInputs[2].VideoDetectedFeedback.BoolValue));
+                SyncDetectedFeedbacks.Add(2, new BoolFeedback($"{Key}-SyncDetectedFeedback-{2}", () => TxRxPair.HdmiInputs[2].VideoDetectedFeedback.BoolValue));
 
                 // Set Ports for CEC
                 InputPorts[DmPortName.HdmiIn].Port = TxRxPair.HdmiInputs[1];
@@ -149,7 +149,7 @@ namespace PepperDash.Essentials.DM
             TxRxPair.DMOutputChange += new DMOutputEventHandler(TxRxPair_DMOutputChange);
             TxRxPair.DMSystemChange += new DMSystemEventHandler(TxRxPair_DMSystemChange);
 
-            VideoSourceFeedback = new IntFeedback(() => (int)TxRxPair.HdmiOutputs[1].VideoOutFeedback.Number);
+            VideoSourceFeedback = new IntFeedback("VideoSourceFeedback", () => (int)TxRxPair.HdmiOutputs[1].VideoOutFeedback.Number);
         }
 
         void TxRxPair_DMSystemChange(Switch device, DMSystemEventArgs args)

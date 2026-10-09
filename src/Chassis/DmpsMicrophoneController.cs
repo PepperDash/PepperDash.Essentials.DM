@@ -75,10 +75,10 @@ namespace PepperDash.Essentials.DM
             MinLevel = 0;
             MaxLevel = 600;
            
-            MuteFeedback = new BoolFeedback(new Func<bool>(() => Mic.MuteOnFeedBack.BoolValue));
-            VolumeLevelFeedback = new IntFeedback(new Func<int>(() => Mic.GainFeedBack.UShortValue));
-            VolumeLevelScaledFeedback = new IntFeedback(new Func<int>(() => ScaleVolumeFeedback(VolumeLevelFeedback.UShortValue)));
-            NameFeedback = new StringFeedback(new Func<string>(() => "Microphone " + Mic.ID));
+            MuteFeedback = new BoolFeedback("MuteFeedback", new Func<bool>(() => Mic.MuteOnFeedBack.BoolValue));
+            VolumeLevelFeedback = new IntFeedback("VolumeLevelFeedback", new Func<int>(() => Mic.GainFeedBack.UShortValue));
+            VolumeLevelScaledFeedback = new IntFeedback("VolumeLevelScaledFeedback", new Func<int>(() => ScaleVolumeFeedback(VolumeLevelFeedback.UShortValue)));
+            NameFeedback = new StringFeedback("NameFeedback", new Func<string>(() => "Microphone " + Mic.ID));
             MuteOnAction = new Action(Mic.MuteOn);
             MuteOffAction = new Action(Mic.MuteOff);
 

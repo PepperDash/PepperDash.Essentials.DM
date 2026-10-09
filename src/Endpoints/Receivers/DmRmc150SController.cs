@@ -44,10 +44,10 @@ namespace PepperDash.Essentials.DM
             HdmiOut = new RoutingOutputPort(DmPortName.HdmiOut, eRoutingSignalType.AudioVideo,
                 eRoutingPortConnectionType.Hdmi, null, this);
 
-            EdidManufacturerFeedback = new StringFeedback(() => _rmc.HdmiOutput.ConnectedDevice.Manufacturer.StringValue);
-            EdidNameFeedback = new StringFeedback(() => _rmc.HdmiOutput.ConnectedDevice.Name.StringValue);
-            EdidPreferredTimingFeedback = new StringFeedback(() => _rmc.HdmiOutput.ConnectedDevice.PreferredTiming.StringValue);
-            EdidSerialNumberFeedback = new StringFeedback(() => _rmc.HdmiOutput.ConnectedDevice.SerialNumber.StringValue);
+            EdidManufacturerFeedback = new StringFeedback("EdidManufacturerFeedback", () => _rmc.HdmiOutput.ConnectedDevice.Manufacturer.StringValue);
+            EdidNameFeedback = new StringFeedback("EdidNameFeedback", () => _rmc.HdmiOutput.ConnectedDevice.Name.StringValue);
+            EdidPreferredTimingFeedback = new StringFeedback("EdidPreferredTimingFeedback", () => _rmc.HdmiOutput.ConnectedDevice.PreferredTiming.StringValue);
+            EdidSerialNumberFeedback = new StringFeedback("EdidSerialNumberFeedback", () => _rmc.HdmiOutput.ConnectedDevice.SerialNumber.StringValue);
 
             InputPorts = new RoutingPortCollection<RoutingInputPort> {DmIn};
             OutputPorts = new RoutingPortCollection<RoutingOutputPort> {HdmiOut};

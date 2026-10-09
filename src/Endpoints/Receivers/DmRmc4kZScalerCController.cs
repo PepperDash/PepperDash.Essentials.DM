@@ -70,22 +70,22 @@ namespace PepperDash.Essentials.DM
             HdmiOut = new RoutingOutputPort(DmPortName.HdmiOut, eRoutingSignalType.AudioVideo,
                 eRoutingPortConnectionType.Hdmi, null, this);
 
-            HdmiInHdcpStateFeedback = new IntFeedback("HdmiInHdcpCapability",
+            HdmiInHdcpStateFeedback = new IntFeedback("HdmiInHdcpCapabilityFeedback",
                 () => (int)_rmc.HdmiIn.HdcpCapabilityFeedback);
-            DmInHdcpStateFeedback = new IntFeedback("DmInHdcpCapability",
+            DmInHdcpStateFeedback = new IntFeedback("DmInHdcpCapabilityFeedback",
                 () => (int)_rmc.DmInput.HdcpCapabilityFeedback);
-            HdmiVideoSyncFeedback = new BoolFeedback("HdmiInVideoSync",
+            HdmiVideoSyncFeedback = new BoolFeedback("HdmiInVideoSyncFeedback",
                 () => _rmc.HdmiIn.SyncDetectedFeedback.BoolValue);
 
             AddToFeedbackList(HdmiInHdcpStateFeedback, DmInHdcpStateFeedback, HdmiVideoSyncFeedback);
 
 
-            EdidManufacturerFeedback = new StringFeedback(() => _rmc.HdmiOutput.ConnectedDevice.Manufacturer.StringValue);
-            EdidNameFeedback = new StringFeedback(() => _rmc.HdmiOutput.ConnectedDevice.Name.StringValue);
-            EdidPreferredTimingFeedback = new StringFeedback(() => _rmc.HdmiOutput.ConnectedDevice.PreferredTiming.StringValue);
-            EdidSerialNumberFeedback = new StringFeedback(() => _rmc.HdmiOutput.ConnectedDevice.SerialNumber.StringValue);
+            EdidManufacturerFeedback = new StringFeedback("EdidManufacturerFeedback", () => _rmc.HdmiOutput.ConnectedDevice.Manufacturer.StringValue);
+            EdidNameFeedback = new StringFeedback("EdidNameFeedback", () => _rmc.HdmiOutput.ConnectedDevice.Name.StringValue);
+            EdidPreferredTimingFeedback = new StringFeedback("EdidPreferredTimingFeedback", () => _rmc.HdmiOutput.ConnectedDevice.PreferredTiming.StringValue);
+            EdidSerialNumberFeedback = new StringFeedback("EdidSerialNumberFeedback", () => _rmc.HdmiOutput.ConnectedDevice.SerialNumber.StringValue);
 
-            VideoOutputResolutionFeedback = new StringFeedback(() => _rmc.HdmiOutput.GetVideoResolutionString());
+            VideoOutputResolutionFeedback = new StringFeedback("VideoOutputResolutionFeedback", () => _rmc.HdmiOutput.GetVideoResolutionString());
 
             InputPorts = new RoutingPortCollection<RoutingInputPort> { DmIn, HdmiIn };
             OutputPorts = new RoutingPortCollection<RoutingOutputPort> { HdmiOut };
@@ -100,7 +100,7 @@ namespace PepperDash.Essentials.DM
             // Set Ports for CEC
             HdmiOut.Port = _rmc.HdmiOutput;
 
-            AudioVideoSourceNumericFeedback = new IntFeedback(() => (ushort)(_rmc.SelectedSourceFeedback));
+            AudioVideoSourceNumericFeedback = new IntFeedback("AudioVideoSourceNumericFeedback", () => (ushort)(_rmc.SelectedSourceFeedback));
         }
 
         void InputStreamChangeEvent(EndpointInputStream inputStream, EndpointInputStreamEventArgs args)

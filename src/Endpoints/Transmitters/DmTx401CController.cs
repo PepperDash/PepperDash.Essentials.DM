@@ -150,30 +150,30 @@ namespace PepperDash.Essentials.DM
             tx.VgaInput.VideoControls.ControlChange += VideoControls_ControlChange;
 
 
-			ActiveVideoInputFeedback = new StringFeedback("ActiveVideoInput",
+			ActiveVideoInputFeedback = new StringFeedback("ActiveVideoInputFeedback",
 				() => ActualVideoInput.ToString());
 
-            VideoSourceNumericFeedback = new IntFeedback(() => (int)Tx.VideoSourceFeedback);
+            VideoSourceNumericFeedback = new IntFeedback("VideoSourceNumericFeedback", () => (int)Tx.VideoSourceFeedback);
 
-            AudioSourceNumericFeedback = new IntFeedback(() => (int)Tx.AudioSourceFeedback);
+            AudioSourceNumericFeedback = new IntFeedback("AudioSourceNumericFeedback", () => (int)Tx.AudioSourceFeedback);
 
-            HdmiInHdcpCapabilityFeedback = new IntFeedback("HdmiInHdcpCapability", () => tx.HdmiInput.HdcpSupportOnFeedback.BoolValue ? 1 : 0);
+            HdmiInHdcpCapabilityFeedback = new IntFeedback("HdmiInHdcpCapabilityFeedback", () => tx.HdmiInput.HdcpSupportOnFeedback.BoolValue ? 1 : 0);
 
 		    HdcpStateFeedback = HdmiInHdcpCapabilityFeedback;
 
             HdcpSupportCapability = eHdcpCapabilityType.HdcpAutoSupport;
 
-            DisplayPortVideoSyncFeedback = new BoolFeedback("DisplayPortVideoSync", () => (bool)tx.DisplayPortInput.SyncDetectedFeedback.BoolValue);
+            DisplayPortVideoSyncFeedback = new BoolFeedback("DisplayPortVideoSyncFeedback", () => (bool)tx.DisplayPortInput.SyncDetectedFeedback.BoolValue);
 
-            HdmiVideoSyncFeedback = new BoolFeedback(() => (bool)tx.HdmiInput.SyncDetectedFeedback.BoolValue);
+            HdmiVideoSyncFeedback = new BoolFeedback("HdmiVideoSyncFeedback", () => (bool)tx.HdmiInput.SyncDetectedFeedback.BoolValue);
 
-            VgaVideoSyncFeedback = new BoolFeedback(() => (bool)tx.VgaInput.SyncDetectedFeedback.BoolValue);
+            VgaVideoSyncFeedback = new BoolFeedback("VgaVideoSyncFeedback", () => (bool)tx.VgaInput.SyncDetectedFeedback.BoolValue);
 
-            FreeRunEnabledFeedback = new BoolFeedback(() => tx.VgaInput.FreeRunFeedback == eDmFreeRunSetting.Enabled);
+            FreeRunEnabledFeedback = new BoolFeedback("FreeRunEnabledFeedback", () => tx.VgaInput.FreeRunFeedback == eDmFreeRunSetting.Enabled);
 
-            VgaBrightnessFeedback = new IntFeedback(() => tx.VgaInput.VideoControls.BrightnessFeedback.UShortValue);
+            VgaBrightnessFeedback = new IntFeedback("VgaBrightnessFeedback", () => tx.VgaInput.VideoControls.BrightnessFeedback.UShortValue);
 
-            VgaContrastFeedback = new IntFeedback(() => tx.VgaInput.VideoControls.ContrastFeedback.UShortValue);
+            VgaContrastFeedback = new IntFeedback("VgaContrastFeedback", () => tx.VgaInput.VideoControls.ContrastFeedback.UShortValue);
 
 
 			var combinedFuncs = new VideoStatusFuncsWrapper

@@ -65,7 +65,7 @@ namespace PepperDash.Essentials.DM.Chassis
 				OutputNames = props.OutputNames;
 			}
 
-            DeviceNameFeedback = new StringFeedback(()=> Name);		    
+            DeviceNameFeedback = new StringFeedback("DeviceNameFeedback", ()=> Name);		    
 
 			VideoInputSyncFeedbacks = new FeedbackCollection<BoolFeedback>();
 			VideoOutputRouteFeedbacks = new FeedbackCollection<IntFeedback>();

@@ -116,7 +116,7 @@ namespace PepperDash.Essentials.DM
             {
                 FeedbackMatchObject = eVst.DisplayPort
             };
-            ActiveVideoInputFeedback = new StringFeedback("ActiveVideoInput",
+            ActiveVideoInputFeedback = new StringFeedback("ActiveVideoInputFeedback",
                 () => ActualActiveVideoInput.ToString());
 
             Tx.HdmiInputs[1].InputStreamChange += InputStreamChangeEvent;
@@ -125,19 +125,19 @@ namespace PepperDash.Essentials.DM
             Tx.BaseEvent += Tx_BaseEvent;
             Tx.OnlineStatusChange += Tx_OnlineStatusChange;
 
-            VideoSourceNumericFeedback = new IntFeedback(() => (int)Tx.VideoSourceFeedback);
-            AudioSourceNumericFeedback = new IntFeedback(() => (int)Tx.VideoSourceFeedback);
+            VideoSourceNumericFeedback = new IntFeedback("VideoSourceNumericFeedback", () => (int)Tx.VideoSourceFeedback);
+            AudioSourceNumericFeedback = new IntFeedback("AudioSourceNumericFeedback", () => (int)Tx.VideoSourceFeedback);
 
-            HdmiIn1HdcpCapabilityFeedback = new IntFeedback("HdmiIn1HdcpCapability", () => (int)tx.HdmiInputs[1].HdcpCapabilityFeedback);
+            HdmiIn1HdcpCapabilityFeedback = new IntFeedback("HdmiIn1HdcpCapabilityFeedback", () => (int)tx.HdmiInputs[1].HdcpCapabilityFeedback);
 
-            HdmiIn2HdcpCapabilityFeedback = new IntFeedback("HdmiIn2HdcpCapability", () => (int)tx.HdmiInputs[2].HdcpCapabilityFeedback);
-            DisplayPortInHdcpCapabilityFeedback = new IntFeedback("DisplayPortInHdcpCapability",
+            HdmiIn2HdcpCapabilityFeedback = new IntFeedback("HdmiIn2HdcpCapabilityFeedback", () => (int)tx.HdmiInputs[2].HdcpCapabilityFeedback);
+            DisplayPortInHdcpCapabilityFeedback = new IntFeedback("DisplayPortInHdcpCapabilityFeedback",
                 () => (int)tx.DisplayPortInput.HdcpCapabilityFeedback);
 
 
             /*
             HdcpStateFeedback =
-                new IntFeedback(
+                new IntFeedback("HdcpStateFeedback", 
                     () =>
                         tx.HdmiInputs[1].HdcpCapabilityFeedback > tx.HdmiInputs[2].HdcpCapabilityFeedback
                             ? (int)tx.HdmiInputs[1].HdcpCapabilityFeedback
@@ -146,7 +146,7 @@ namespace PepperDash.Essentials.DM
 
             //yeah this is gross - but it's the quickest way to do this...
             /*
-            HdcpStateFeedback = new IntFeedback(() => {
+            HdcpStateFeedback = new IntFeedback("HdcpStateFeedback", () => {
                 var states = new[] {(int) tx.DisplayPortInput.HdcpCapabilityFeedback, (int) tx.HdmiInputs[1].HdcpCapabilityFeedback, (int) tx.HdmiInputs[2].HdcpCapabilityFeedback};
 
                 return states.Max();
@@ -156,13 +156,13 @@ namespace PepperDash.Essentials.DM
             HdcpSupportCapability = eHdcpCapabilityType.Hdcp2_2Support;
             // I feel like we have had this as a misnomer for so long, that it really needed to be fixed 
             // All we were doing was reporting the best of the current statuses - not the actual capability of the device.
-            HdcpStateFeedback = new IntFeedback(() => (int)HdcpSupportCapability);
+            HdcpStateFeedback = new IntFeedback("HdcpStateFeedback", () => (int)HdcpSupportCapability);
 
-            Hdmi1VideoSyncFeedback = new BoolFeedback(() => (bool)tx.HdmiInputs[1].SyncDetectedFeedback.BoolValue);
+            Hdmi1VideoSyncFeedback = new BoolFeedback("Hdmi1VideoSyncFeedback", () => (bool)tx.HdmiInputs[1].SyncDetectedFeedback.BoolValue);
 
-            Hdmi2VideoSyncFeedback = new BoolFeedback(() => (bool)tx.HdmiInputs[2].SyncDetectedFeedback.BoolValue);
+            Hdmi2VideoSyncFeedback = new BoolFeedback("Hdmi2VideoSyncFeedback", () => (bool)tx.HdmiInputs[2].SyncDetectedFeedback.BoolValue);
 
-            DisplayPortVideoSyncFeedback = new BoolFeedback(() => (bool)tx.DisplayPortInput.SyncDetectedFeedback.BoolValue);
+            DisplayPortVideoSyncFeedback = new BoolFeedback("DisplayPortVideoSyncFeedback", () => (bool)tx.DisplayPortInput.SyncDetectedFeedback.BoolValue);
 
             var combinedFuncs = new VideoStatusFuncsWrapper
             {

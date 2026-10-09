@@ -48,18 +48,18 @@ namespace PepperDash.Essentials.DM
             BalancedAudioOut = new RoutingOutputPort(DmPortName.BalancedAudioOut, eRoutingSignalType.Audio,
                 eRoutingPortConnectionType.LineAudio, null, this);
 
-            MuteFeedback = new BoolFeedback(() => false);
+            MuteFeedback = new BoolFeedback("MuteFeedback", () => false);
             VolumeLevelFeedback = new IntFeedback("MainVolumeLevelFeedback", () =>
                 rmc.AudioOutput.VolumeFeedback.UShortValue);
 
-            EdidManufacturerFeedback = new StringFeedback(() => _rmc.HdmiOutput.ConnectedDevice.Manufacturer.StringValue);
-            EdidNameFeedback = new StringFeedback(() => _rmc.HdmiOutput.ConnectedDevice.Name.StringValue);
-            EdidPreferredTimingFeedback = new StringFeedback(() => _rmc.HdmiOutput.ConnectedDevice.PreferredTiming.StringValue);
-            EdidSerialNumberFeedback = new StringFeedback(() => _rmc.HdmiOutput.ConnectedDevice.SerialNumber.StringValue);
+            EdidManufacturerFeedback = new StringFeedback("EdidManufacturerFeedback", () => _rmc.HdmiOutput.ConnectedDevice.Manufacturer.StringValue);
+            EdidNameFeedback = new StringFeedback("EdidNameFeedback", () => _rmc.HdmiOutput.ConnectedDevice.Name.StringValue);
+            EdidPreferredTimingFeedback = new StringFeedback("EdidPreferredTimingFeedback", () => _rmc.HdmiOutput.ConnectedDevice.PreferredTiming.StringValue);
+            EdidSerialNumberFeedback = new StringFeedback("EdidSerialNumberFeedback", () => _rmc.HdmiOutput.ConnectedDevice.SerialNumber.StringValue);
 
-            VideoOutputResolutionFeedback = new StringFeedback(() => _rmc.HdmiOutput.GetVideoResolutionString());
+            VideoOutputResolutionFeedback = new StringFeedback("VideoOutputResolutionFeedback", () => _rmc.HdmiOutput.GetVideoResolutionString());
 
-            DmInHdcpStateFeedback = new IntFeedback("DmInHdcpCapability",
+            DmInHdcpStateFeedback = new IntFeedback("DmInHdcpCapabilityFeedback",
                 () => (int) _rmc.DmInput.HdcpCapabilityFeedback);
 
             AddToFeedbackList(DmInHdcpStateFeedback);

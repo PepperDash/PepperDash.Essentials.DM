@@ -149,18 +149,18 @@ namespace PepperDash.Essentials.DM
                 AnyVideoInput = new RoutingInputPortWithVideoStatuses(DmPortName.AnyVideoIn,
                     eRoutingSignalType.Audio | eRoutingSignalType.Video, eRoutingPortConnectionType.None, eDmps3InputVideoSource.Auto, this, combinedFuncs);
 
-                ActiveVideoInputFeedback = new StringFeedback("ActiveVideoInput", () => ActualVideoInput.ToString());
+                ActiveVideoInputFeedback = new StringFeedback("ActiveVideoInputFeedback", () => ActualVideoInput.ToString());
 
-                VideoSourceNumericFeedback = new IntFeedback(() =>
+                VideoSourceNumericFeedback = new IntFeedback("VideoSourceNumericFeedback", () =>
                 {
                     return (int)InputCard.VideoSourceFeedback;
                 });
-                AudioSourceNumericFeedback = new IntFeedback(() =>
+                AudioSourceNumericFeedback = new IntFeedback("AudioSourceNumericFeedback", () =>
                 {
                     return (int)InputCard.AudioSourceFeedback;
                 });
 
-                HdmiInHdcpCapabilityFeedback = new IntFeedback("HdmiInHdcpCapability", () =>
+                HdmiInHdcpCapabilityFeedback = new IntFeedback("HdmiInHdcpCapabilityFeedback", () =>
                 {
                     if (InputCard.HdmiInputPort.HdcpSupportOnFeedback.BoolValue)
                         return 1;
@@ -381,18 +381,18 @@ namespace PepperDash.Essentials.DM
             AnyVideoInput = new RoutingInputPortWithVideoStatuses(DmPortName.AnyVideoIn,
                 eRoutingSignalType.Audio | eRoutingSignalType.Video, eRoutingPortConnectionType.None, 0, this, combinedFuncs);
 
-            ActiveVideoInputFeedback = new StringFeedback("ActiveVideoInput", () => ActualVideoInput.ToString());
+            ActiveVideoInputFeedback = new StringFeedback("ActiveVideoInputFeedback", () => ActualVideoInput.ToString());
 
-            VideoSourceNumericFeedback = new IntFeedback(() =>
+            VideoSourceNumericFeedback = new IntFeedback("VideoSourceNumericFeedback", () =>
             {
                 return (int)InputCard.VideoSourceFeedback;
             });
-            AudioSourceNumericFeedback = new IntFeedback(() =>
+            AudioSourceNumericFeedback = new IntFeedback("AudioSourceNumericFeedback", () =>
             {
                 return (int)InputCard.AudioSourceFeedback;
             });
 
-            HdmiInHdcpCapabilityFeedback = new IntFeedback("HdmiInHdcpCapability", () =>
+            HdmiInHdcpCapabilityFeedback = new IntFeedback("HdmiInHdcpCapabilityFeedback", () =>
             {
                 if (InputCard.HdmiInputPort.HdcpSupportOnFeedback.BoolValue)
                     return 1;
