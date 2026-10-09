@@ -515,7 +515,7 @@ namespace PepperDash.Essentials.DM
         /// </summary>
         void AddVolumeControl(uint number, Audio.Output audio)
         {
-            VolumeControls.Add(number, new DmCardAudioOutputController(audio));
+            VolumeControls.Add(number, new DmCardAudioOutputController(Key + "-audioOut" + number, Name + " Audio Out " + number, audio));
         }
 
         //public void SetInputHdcpSupport(uint input, ePdtHdcpSupport hdcpSetting)
